@@ -5,16 +5,16 @@ using UnityEngine;
 public class JeffDoBeGoing : MonoBehaviour
 {
     public Dictionary<GameObject, JeffJoint> joints = new Dictionary<GameObject, JeffJoint>();
-    new Rigidbody2D rigidbody;
-    GameObject jointPrefab;
+    protected new Rigidbody2D rigidbody;
+    protected GameObject jointPrefab;
 
     // Start is called before the first frame update
-    void Start()
+    protected void Start()
     {
-        var force = new Vector2(Random.Range(-500f, 500f), Random.Range(-500f, 500f));
+        //var force = new Vector2(Random.Range(-500f, 500f), Random.Range(-500f, 500f));
 
         rigidbody = GetComponent<Rigidbody2D>();
-        rigidbody.AddForce(force);
+        // rigidbody.AddForce(force);
 
         jointPrefab = Resources.Load<GameObject>("Joint");
     }

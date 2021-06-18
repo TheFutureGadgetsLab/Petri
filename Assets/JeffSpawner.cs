@@ -11,11 +11,22 @@ public class JeffSpawner : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Jeff = Resources.Load<GameObject>("Jeff");
+        List<GameObject> jeffs = new List<GameObject>(){
+            Resources.Load<GameObject>("Jeff"),
+            Resources.Load<GameObject>("Propulsion")
+        };
+
+        var bounds = GameObject.Find("Bounds");
 
         for (int i = 0; i < nJeffs; i++)
         {
-            var jeff = GameObject.Instantiate(Jeff, new Vector3(Random.Range(-9f, 9f), Random.Range(-4f, 4f), 0), Quaternion.identity);
+            var jeff = GameObject.Instantiate(jeffs[i % 2], new Vector3(
+                Random.Range(
+                    bounds.transform.Find("left").transform.position.x,
+                    bounds.transform.Find("right").transform.position.x), 
+                Random.Range(
+                    bounds.transform.Find("bottom").transform.position.y,
+                    bounds.transform.Find("top").transform.position.y), 0), Quaternion.identity);
             jeff.transform.localScale = jeffScale;
         }
         
