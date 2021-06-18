@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 188598267694826087}
   - component: {fileID: 6405817605003273857}
   - component: {fileID: 7767585597347009446}
+  - component: {fileID: 7775209578536793626}
   m_Layer: 0
   m_Name: Propulsion
   m_TagString: Untagged
@@ -155,6 +156,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d702e2cac81f9743a8591571191b063, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  food: 0
+--- !u!247 &7775209578536793626
+ConstantForce2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5191007394767565875}
+  m_Enabled: 1
+  m_Force: {x: 0, y: 0}
+  m_RelativeForce: {x: 0, y: 0}
+  m_Torque: 0
 --- !u!1 &9083704860037641897
 GameObject:
   m_ObjectHideFlags: 0
