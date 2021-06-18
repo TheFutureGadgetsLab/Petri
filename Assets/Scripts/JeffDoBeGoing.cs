@@ -8,6 +8,8 @@ public class JeffDoBeGoing : MonoBehaviour
     protected new Rigidbody2D rigidbody;
     protected GameObject jointPrefab;
 
+    public double food = 0.0;
+
     // Start is called before the first frame update
     protected void Start()
     {
@@ -25,11 +27,21 @@ public class JeffDoBeGoing : MonoBehaviour
     }
 
     // Called when colliding with another rigidbody
-    void OnCollisionEnter2D(Collision2D col) {
-        if (col.gameObject.GetComponent<JeffDoBeGoing>()
-            && col.relativeVelocity.magnitude > 10.0f
+    void OnCollisionEnter2D(Collision2D col)
+    {
+        handleCollision(col);
+    }
+
+    void handleCollision(Collision2D col)
+    {
+        if (col.gameObject.GetComponent<JeffDoBeGoing>() == null) {
+            return;
+        }
+
+        if (col.relativeVelocity.magnitude > 10.0f
             && !joints.ContainsKey(col.gameObject)
-            && !col.gameObject.GetComponent<JeffDoBeGoing>().joints.ContainsKey(gameObject)) {
+            && !col.gameObject.GetComponent<JeffDoBeGoing>().joints.ContainsKey(gameObject))
+        {
             var obj = GameObject.Instantiate(jointPrefab, Vector3.zero, Quaternion.identity);
             obj.transform.parent = transform;
             var jeffJoint = obj.GetComponent<JeffJoint>();
@@ -37,5 +49,17 @@ public class JeffDoBeGoing : MonoBehaviour
             jeffJoint.ConnectTo(col.gameObject.GetComponent<JeffDoBeGoing>());
             joints.Add(col.gameObject, jeffJoint);
         }
+    }
+
+    private void OnTriggerEnter2D(Collider2D col)
+    {
+        var foodObj = col.gameObject.GetComponent<Food>();
+        if (foodObj == null) {
+            return;
+        }
+
+        food += foodObj.food;
+        
+        GameObject.Destroy(col.gameObject);
     }
 }

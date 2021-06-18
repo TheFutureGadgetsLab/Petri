@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &5313889142979260230
+--- !u!1 &6340336763261038578
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,39 +8,40 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 5313889142979260228}
-  - component: {fileID: 5313889142979260229}
+  - component: {fileID: 4955807590189563470}
+  - component: {fileID: 3466322127576140242}
   m_Layer: 0
-  m_Name: JeffSpawner
+  m_Name: FoodSpawner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &5313889142979260228
+--- !u!4 &4955807590189563470
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5313889142979260230}
+  m_GameObject: {fileID: 6340336763261038578}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 3.1731513, y: -3.6977034, z: -8.609141}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5313889142979260229
+--- !u!114 &3466322127576140242
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5313889142979260230}
+  m_GameObject: {fileID: 6340336763261038578}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5b75964b39c2d664db4035c9e69ed66f, type: 3}
+  m_Script: {fileID: 11500000, guid: 04199794e5e02d34da368532371fb12a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nJeffs: 10
+  minMaxSpawn: {x: 10, y: 100}
+  FoodScale: {x: 1, y: 1}

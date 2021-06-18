@@ -16,20 +16,17 @@ public class JeffSpawner : MonoBehaviour
             Resources.Load<GameObject>("Propulsion")
         };
 
-        var bounds = GameObject.Find("Bounds");
+        var bounds = GameObject.Find("Bounds").GetComponent<Bounds>();
 
         for (int i = 0; i < nJeffs; i++)
         {
-            var jeff = GameObject.Instantiate(jeffs[i % 2], new Vector3(
-                Random.Range(
-                    bounds.transform.Find("left").transform.position.x,
-                    bounds.transform.Find("right").transform.position.x), 
-                Random.Range(
-                    bounds.transform.Find("bottom").transform.position.y,
-                    bounds.transform.Find("top").transform.position.y), 0), Quaternion.identity);
+            var jeff = GameObject.Instantiate(
+                jeffs[i % 2], 
+                bounds.GetRandomPos(),
+                Quaternion.identity
+            );
             jeff.transform.localScale = jeffScale;
         }
-        
     }
 
     // Update is called once per frame
