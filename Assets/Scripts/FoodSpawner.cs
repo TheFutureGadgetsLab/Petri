@@ -29,7 +29,7 @@ public class FoodSpawner : MonoBehaviour
         curTime = config.spawnInterval;
 
         var nFood  = (int)Random.Range(config.spawnNum.min, config.spawnNum.max);
-        for (int i = 0; i < 1; i++)
+        for (int i = 0; i < nFood; i++)
         {
             var food = GameObject.Instantiate(
                 Food, 

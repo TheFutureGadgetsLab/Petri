@@ -28,19 +28,20 @@ public class Cell : MonoBehaviour
 
     void handleCollision(Collision2D col)
     {
-        if (col.gameObject.GetComponent<Cell>() == null) {
+        var otherCell = col.gameObject.GetComponent<Cell>();
+        if (otherCell == null) {
             return;
         }
 
         if (col.relativeVelocity.magnitude > 10.0f
             && !joints.ContainsKey(col.gameObject)
-            && !col.gameObject.GetComponent<Cell>().joints.ContainsKey(gameObject))
+            && !otherCell.joints.ContainsKey(gameObject))
         {
             var obj = GameObject.Instantiate(bondPrefab, Vector3.zero, Quaternion.identity);
             obj.transform.parent = transform;
             var cellJoint = obj.GetComponent<Bond>();
             cellJoint.transform.localPosition = Vector3.zero;
-            cellJoint.ConnectTo(col.gameObject.GetComponent<Cell>());
+            cellJoint.ConnectTo(otherCell);
             joints.Add(col.gameObject, cellJoint);
         }
     }
