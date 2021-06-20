@@ -2,21 +2,22 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Propulsion : JeffDoBeGoing
+public class Propulsion : Cell
 {
-    public Vector2 minMaxForce = new Vector2(0.0f, 10.0f);
-    public Vector2 minMaxTorque = new Vector2(-7.0f, 7.0f);
+    PropulsionParams config;
 
     new protected void Start() {
         base.Start();
-        Debug.Log("Setting force");
+
+        config = GameObject.Find("Settings").GetComponent<Settings>().propulsionParams;
 
         // Set a random rotation
         transform.Rotate(Vector3.forward * Random.Range(-180, 180));
 
         var constantForce = GetComponent<ConstantForce2D>();
-        constantForce.relativeForce = new Vector2(Random.Range(minMaxForce.x, minMaxForce.y), Random.Range(minMaxForce.x, minMaxForce.y));
+        constantForce.relativeForce = new Vector2(config.force.sample(), config.force.sample());
 
-        constantForce.torque = Random.Range(minMaxTorque.x, minMaxTorque.y);
+        constantForce.torque = config.torque.sample();
     }
 }
+

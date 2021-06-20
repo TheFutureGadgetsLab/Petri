@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class JeffJoint : MonoBehaviour
+public class Bond : MonoBehaviour
 {
     SpringJoint2D spring;
     FixedJoint2D joint;
@@ -22,7 +22,6 @@ public class JeffJoint : MonoBehaviour
         joint.connectedBody = transform.parent.GetComponent<Rigidbody2D>();
     }
 
-    // Update is called once per frame
     void FixedUpdate()
     {    
         if (spring.connectedBody) {
@@ -32,7 +31,7 @@ public class JeffJoint : MonoBehaviour
     }
 
     // Connect to another given jeff
-    public void ConnectTo(JeffDoBeGoing otherJeff) {
+    public void ConnectTo(Cell otherJeff) {
         spring.connectedBody = otherJeff.GetComponent<Rigidbody2D>();
         spring.distance = 0.2f;
     }

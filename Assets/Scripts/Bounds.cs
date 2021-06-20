@@ -4,17 +4,6 @@ using UnityEngine;
 
 public class Bounds : MonoBehaviour
 {
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
     public List<float> GetBounds()
     {
         return new List<float>(){

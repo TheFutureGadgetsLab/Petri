@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5313889142979260228}
   - component: {fileID: 6318202980093239587}
   m_Layer: 0
-  m_Name: JeffSpawner
+  m_Name: CellSpawner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -40,8 +40,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 5313889142979260230}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5b75964b39c2d664db4035c9e69ed66f, type: 3}
+  m_Script: {fileID: 11500000, guid: 898a376089fc98546baae444490b8ba0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nJeffs: 0
-  jeffScale: {x: 1, y: 1}

@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 188598267694826087}
   - component: {fileID: 6405817605003273857}
   m_Layer: 0
-  m_Name: Jeff
+  m_Name: Cell
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -81,9 +81,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 5191007394767565875}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9f465a64d5fdb54479f89e50787c5386, type: 3}
+  m_Script: {fileID: 11500000, guid: 9d2d3ffa8f747834e90f6c8fa49fc7b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  food: 0
 --- !u!114 &188598267694826087
 MonoBehaviour:
   m_ObjectHideFlags: 0
