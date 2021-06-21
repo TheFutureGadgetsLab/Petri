@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Bond : MonoBehaviour
 {
-    SpringJoint2D spring;
+    DistanceJoint2D spring;
     FixedJoint2D joint;
     LineRenderer line;
     new Rigidbody2D rigidbody;
@@ -12,7 +12,7 @@ public class Bond : MonoBehaviour
     // Start is called before the first frame update
     void OnEnable()
     {
-        spring = GetComponent<SpringJoint2D>();
+        spring = GetComponent<DistanceJoint2D>();
         joint = GetComponent<FixedJoint2D>();
         line = GetComponent<LineRenderer>();
         rigidbody = GetComponent<Rigidbody2D>();

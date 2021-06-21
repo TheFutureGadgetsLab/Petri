@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
+[Serializable]
 public class Settings : MonoBehaviour
 {
     public FoodParams foodParams;
@@ -22,6 +23,7 @@ public struct PropulsionParams
 public struct FoodParams
 {
     public MinMaxI spawnNum;
+    public MinMaxF value;
     public float spawnInterval; // Spawn interval in seconds
     public Vector2 scale;
 }
