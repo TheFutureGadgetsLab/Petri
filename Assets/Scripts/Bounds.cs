@@ -4,25 +4,38 @@ using UnityEngine;
 
 public class Bounds : MonoBehaviour
 {
-    List<float> bounds;
+    public MinMaxF boundsX; 
+    public MinMaxF boundsY; 
+
+    public BoundaryParams config;
 
     void Awake()
     {
-        bounds = new List<float>(){
-            transform.Find("left").transform.position.x + 5,
-            transform.Find("right").transform.position.x - 5,
-            transform.Find("bottom").transform.position.y + 5,
-            transform.Find("top").transform.position.y - 5
-        };
-    }
+        config = GameObject.Find("Settings").GetComponent<Settings>().boundaryParams;
 
-    public List<float> GetBounds()
-    {
-        return bounds;
+        var left   = transform.Find("left");
+        var right  = transform.Find("right");
+        var bottom = transform.Find("bottom");
+        var top    = transform.Find("top");
+
+        left.transform.position.Set(-config.width/2, 0, 0);
+        right.transform.position.Set(config.width/2, 0, 0);
+        bottom.transform.position.Set(0, -config.height/2, 0);
+        top.transform.position.Set(0, config.height/2, 0);
+        
+        left.transform.localScale.Set(config.thickness, config.height, 0);
+        right.transform.localScale.Set(config.thickness, config.height, 0);
+        bottom.transform.localScale.Set(config.width, config.thickness, 0);
+        top.transform.localScale.Set(config.width, config.thickness, 0);
+
+        boundsX.min = -config.width/2;
+        boundsX.max =  config.width/2;
+        boundsY.min = -config.height/2;
+        boundsY.max =  config.height/2;
     }
 
     public Vector3 GetRandomPos()
     {
-        return new Vector3(Random.Range(bounds[0], bounds[1]), Random.Range(bounds[2], bounds[3]), 0.0f);
+        return new Vector3(boundsX.sample(), boundsY.sample(), 0.0f);
     }
 }
