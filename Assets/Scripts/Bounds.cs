@@ -5,14 +5,24 @@ using UnityEngine;
 public class Bounds : MonoBehaviour
 {
     List<float> bounds;
+    BoundsParams config;
 
     void Awake()
     {
-        bounds = new List<float>(){
-            transform.Find("left").transform.position.x + 5,
-            transform.Find("right").transform.position.x - 5,
-            transform.Find("bottom").transform.position.y + 5,
-            transform.Find("top").transform.position.y - 5
+        config = GameObject.Find("Settings").GetComponent<Settings>().boundsParams;
+
+        var left = transform.Find("left");
+        var right = transform.Find("right");
+        var bottom = transform.Find("bottom");
+        var top = transform.Find("top");
+        
+        transform.localScale = Vector2.one * config.size;
+        
+        bounds = new List<float>() {
+            left.transform.position.x + left.transform.lossyScale.x / 2f,
+            right.transform.position.x - right.transform.lossyScale.x / 2f,
+            bottom.transform.position.y + bottom.transform.lossyScale.y / 2f,
+            top.transform.position.y - top.transform.lossyScale.y / 2f
         };
     }
 

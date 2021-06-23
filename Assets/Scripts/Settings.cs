@@ -9,6 +9,13 @@ public class Settings : MonoBehaviour
     public FoodParams foodParams;
     public CellParams cellParams;
     public PropulsionParams propulsionParams;
+    public BoundsParams boundsParams;
+}
+
+[Serializable]
+public struct BoundsParams
+{
+    public float size;
 }
 
 [Serializable]
