@@ -587,14 +587,16 @@ MonoBehaviour:
   cellParams:
     spawnNum: 500
     scale: {x: 1, y: 1}
+    shareRate: 0.75
+    bondForce: 5
+    maxBonds: 6
   propulsionParams:
-    force:
-      min: 0
-      max: 10
+    force: 6
     torque:
       min: -20
       max: 20
     cost: 0.5
+    speedLimit: 8
   boundsParams:
     size: 100
 --- !u!4 &1277020876
