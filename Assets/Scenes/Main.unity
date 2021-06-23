@@ -306,7 +306,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 595839523}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 2.1, y: 0.1, z: 1}
   m_Children: []
   m_Father: {fileID: 2128682226}
@@ -438,7 +438,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 626172077}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -1, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 2.1, y: 0.1, z: 1}
   m_Children: []
   m_Father: {fileID: 2128682226}
@@ -597,8 +597,10 @@ MonoBehaviour:
       max: 20
     cost: 0.5
     speedLimit: 8
-  boundsParams:
-    size: 100
+  boundaryParams:
+    width: 200
+    height: 200
+    thickness: 4
 --- !u!4 &1277020876
 Transform:
   m_ObjectHideFlags: 0
@@ -739,7 +741,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1474378132}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.1, y: 2.1, z: 1}
   m_Children: []
   m_Father: {fileID: 2128682226}
@@ -871,7 +873,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1482395330}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -1, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.1, y: 2.1, z: 1.55792}
   m_Children: []
   m_Father: {fileID: 2128682226}
@@ -903,7 +905,7 @@ Transform:
   m_GameObject: {fileID: 2128682225}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 100, y: 100, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 595839527}
   - {fileID: 626172081}
@@ -924,6 +926,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0425ab7c0f98cb8418aac54a9ab46ca4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  boundsX:
+    min: 0
+    max: 0
+  boundsY:
+    min: 0
+    max: 0
+  config:
+    width: 0
+    height: 0
+    thickness: 0
 --- !u!1001 &4002596616604969188
 PrefabInstance:
   m_ObjectHideFlags: 0

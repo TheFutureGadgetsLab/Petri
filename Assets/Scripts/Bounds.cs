@@ -18,20 +18,20 @@ public class Bounds : MonoBehaviour
         var bottom = transform.Find("bottom");
         var top    = transform.Find("top");
 
-        left.transform.position.Set(-config.width/2, 0, 0);
-        right.transform.position.Set(config.width/2, 0, 0);
-        bottom.transform.position.Set(0, -config.height/2, 0);
-        top.transform.position.Set(0, config.height/2, 0);
+        left.transform.Translate(-config.width/2, 0, 0);
+        right.transform.Translate(config.width/2, 0, 0);
+        bottom.transform.Translate(0, -config.height/2, 0);
+        top.transform.Translate(0, config.height/2, 0);
         
-        left.transform.localScale.Set(config.thickness, config.height, 0);
-        right.transform.localScale.Set(config.thickness, config.height, 0);
-        bottom.transform.localScale.Set(config.width, config.thickness, 0);
-        top.transform.localScale.Set(config.width, config.thickness, 0);
+        left.transform.localScale = new Vector3(config.thickness, config.height, 0);
+        right.transform.localScale = new Vector3(config.thickness, config.height, 0);
+        bottom.transform.localScale = new Vector3(config.width, config.thickness, 0);
+        top.transform.localScale = new Vector3(config.width, config.thickness, 0);
 
-        boundsX.min = -config.width/2;
-        boundsX.max =  config.width/2;
-        boundsY.min = -config.height/2;
-        boundsY.max =  config.height/2;
+        boundsX.min = -config.width/2 + config.thickness/2;
+        boundsX.max =  config.width/2 - config.thickness/2;
+        boundsY.min = -config.height/2 + config.thickness/2;
+        boundsY.max =  config.height/2 - config.thickness/2;
     }
 
     public Vector3 GetRandomPos()
