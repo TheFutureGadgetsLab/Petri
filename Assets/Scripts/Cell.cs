@@ -10,14 +10,33 @@ public class Cell : MonoBehaviour
 
     public double food = 0.0;
 
+    private CellParams config;
+
+    private void Awake() {
+        config = GameObject.Find("Settings").GetComponent<Settings>().cellParams;
+    }
+
     protected void Start()
     {
         rigidbody = GetComponent<Rigidbody2D>();
         bondPrefab = Resources.Load<GameObject>("Bond");
     }
 
-    void FixedUpdate()
+    protected void FixedUpdate()
     {
+        foreach (var joint in joints) {
+            Cell neighbor = null;
+
+            if (joint.Key.GetComponent<Cell>())
+                neighbor = joint.Key.GetComponent<Cell>();
+            else if (joint.Key.GetComponent<Propulsion>())
+                neighbor = joint.Key.GetComponent<Propulsion>();
+
+            if (food >= config.shareRate) {
+                neighbor.food += config.shareRate;
+                food -= config.shareRate;
+            }
+        }
     }
 
     // Called when colliding with another rigidbody
@@ -34,7 +53,8 @@ public class Cell : MonoBehaviour
             return;
         }
 
-        if (col.relativeVelocity.magnitude > 10.0f
+        if (joints.Count < config.maxBonds
+            && col.relativeVelocity.magnitude > config.bondForce
             && !joints.ContainsKey(col.gameObject)
             && !otherCell.joints.ContainsKey(gameObject))
         {
@@ -44,6 +64,7 @@ public class Cell : MonoBehaviour
             cellJoint.transform.localPosition = Vector3.zero;
             cellJoint.ConnectTo(otherCell);
             joints.Add(col.gameObject, cellJoint);
+            otherCell.joints.Add(gameObject, cellJoint);
         }
     }
 

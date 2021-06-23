@@ -21,9 +21,10 @@ public struct BoundsParams
 [Serializable]
 public struct PropulsionParams
 {
-    public MinMaxF force;
+    public float   force;
     public MinMaxF torque;
     public float   cost;
+    public float   speedLimit;
 }
 
 
@@ -42,6 +43,9 @@ public struct CellParams
 {
     public int spawnNum;
     public Vector2 scale;
+    public float shareRate;
+    public float bondForce;
+    public int maxBonds;
 }
 
 [Serializable]

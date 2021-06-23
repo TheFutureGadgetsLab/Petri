@@ -7,26 +7,44 @@ public class Propulsion : Cell
     PropulsionParams config;
 
     ConstantForce2D prop;
+    SpriteRenderer icon;
     Vector2 force;
     float torque;
+
+    private void Awake() {
+        icon = transform.Find("Icon").GetComponent<SpriteRenderer>();
+        config = GameObject.Find("Settings").GetComponent<Settings>().propulsionParams;
+    }
 
     new protected void Start() {
         base.Start();
 
-        config = GameObject.Find("Settings").GetComponent<Settings>().propulsionParams;
-
         prop = GetComponent<ConstantForce2D>();
-        force = new Vector2(config.force.sample(), config.force.sample());
+        force = Vector2.right * config.force;
         torque = config.torque.sample();
+        transform.Rotate(Vector3.forward * 360f * Random.Range(0.0f, 1.0f));
     }
 
-    private void FixedUpdate() {
+    new private void FixedUpdate() {
         if (food > config.cost) {
-            food -= config.cost;
-            prop.relativeForce = force;
-            prop.torque = torque;
+            if (rigidbody.velocity.magnitude < config.speedLimit) {
+                food -= config.cost;
+                prop.relativeForce = force;
+                prop.torque = torque;
+                icon.color = Color.white;
+            } else {
+                prop.relativeForce = Vector2.zero;
+                prop.torque = 0.0f;
+                icon.color = Color.grey;
+                // We have more food than we need, let's share it
+                base.FixedUpdate();
+            }
         } else {
             prop.relativeForce = Vector2.zero;
+            prop.torque = 0.0f;
+            icon.color = Color.black;
+        }
+        if (Mathf.Abs(rigidbody.angularVelocity) > Mathf.Abs(torque)) {
             prop.torque = 0.0f;
         }
     }
