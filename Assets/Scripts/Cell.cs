@@ -24,6 +24,7 @@ public class Cell : MonoBehaviour
     void OnCollisionEnter2D(Collision2D col)
     {
         handleCollision(col);
+        handleFood(col);
     }
 
     void handleCollision(Collision2D col)
@@ -46,7 +47,7 @@ public class Cell : MonoBehaviour
         }
     }
 
-    private void OnTriggerEnter2D(Collider2D col)
+    void handleFood(Collision2D col)
     {
         var foodObj = col.gameObject.GetComponent<Food>();
         if (foodObj == null) {

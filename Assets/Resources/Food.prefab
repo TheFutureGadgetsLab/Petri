@@ -10,9 +10,9 @@ GameObject:
   m_Component:
   - component: {fileID: 5191007394767565878}
   - component: {fileID: 5191007394767565877}
-  - component: {fileID: 188598267694826087}
   - component: {fileID: 6405817605003273857}
   - component: {fileID: 2916823960581133201}
+  - component: {fileID: 999171348207563144}
   m_Layer: 0
   m_Name: Food
   m_TagString: Untagged
@@ -45,30 +45,12 @@ CircleCollider2D:
   m_Enabled: 1
   m_Density: 1
   m_Material: {fileID: 0}
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
   serializedVersion: 2
   m_Radius: 0.5
---- !u!114 &188598267694826087
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5191007394767565875}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9aa06092e0908a84585e814e7c214a51, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_MaxArrayCount: 80
-  m_PosArray: []
-  m_Uv0Array: []
-  m_TanArray: []
-  m_IndexArray: 
-  m_GeomArray: []
 --- !u!212 &6405817605003273857
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -134,6 +116,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   food: 0
+--- !u!50 &999171348207563144
+Rigidbody2D:
+  serializedVersion: 4
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5191007394767565875}
+  m_BodyType: 0
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 0.0001
+  m_LinearDrag: 0
+  m_AngularDrag: 0
+  m_GravityScale: 1
+  m_Material: {fileID: 0}
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0
 --- !u!1 &9083704860037641897
 GameObject:
   m_ObjectHideFlags: 0

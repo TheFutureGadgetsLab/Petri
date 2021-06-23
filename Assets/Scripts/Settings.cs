@@ -16,6 +16,7 @@ public struct PropulsionParams
 {
     public MinMaxF force;
     public MinMaxF torque;
+    public float   cost;
 }
 
 
@@ -26,6 +27,7 @@ public struct FoodParams
     public MinMaxF value;
     public float spawnInterval; // Spawn interval in seconds
     public Vector2 scale;
+    public MinMaxF velocity;
 }
 
 [Serializable]
