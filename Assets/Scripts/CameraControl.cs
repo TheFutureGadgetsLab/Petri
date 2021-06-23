@@ -38,7 +38,7 @@ public class CameraControl : MonoBehaviour
 
         float scroll = Input.GetAxis("Mouse ScrollWheel");
         if (scroll != 0.0f) {
-            targetOrtho -= scroll * zoomSpeed;
+            targetOrtho -= (scroll * zoomSpeed) * (targetOrtho / maxOrtho);
             targetOrtho = Mathf.Clamp(targetOrtho, minOrtho, maxOrtho);
         }
         Camera.main.orthographicSize = targetOrtho;
