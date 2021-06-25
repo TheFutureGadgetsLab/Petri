@@ -38,12 +38,12 @@ public struct FoodParams
     public float spawnInterval; // Spawn interval in seconds
     public Vector2 scale;
     public MinMaxF velocity;
+    public float toCellThresh;
 }
 
 [Serializable]
 public struct CellParams
 {
-    public int spawnNum;
     public Vector2 scale;
     public float shareRate;
     public float bondForce;

@@ -5,6 +5,7 @@ using UnityEngine;
 public class Food : MonoBehaviour
 {
     public float _food;
+    public static List<GameObject> instances = new List<GameObject>();
 
     public float food {
         get => _food;
@@ -46,5 +47,15 @@ public class Food : MonoBehaviour
         col.gameObject.SetActive(false);
         food += foodObj.food;
         GameObject.Destroy(col.gameObject);
+    }
+
+    // Add to static list of instances on enable
+    private void OnEnable() {
+        instances.Add(transform.gameObject);
+    }
+
+    // Remove from static list of instances on disable
+    private void OnDisable() {
+        instances.Remove(transform.gameObject);
     }
 }
