@@ -12,12 +12,8 @@ public class Cell : MonoBehaviour
 
     private CellParams config;
 
-    private void Awake() {
+    protected void Awake() {
         config = GameObject.Find("Settings").GetComponent<Settings>().cellParams;
-    }
-
-    protected void Start()
-    {
         rigidbody = GetComponent<Rigidbody2D>();
         bondPrefab = Resources.Load<GameObject>("Bond");
     }

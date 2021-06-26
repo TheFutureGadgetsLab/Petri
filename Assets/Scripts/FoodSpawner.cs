@@ -17,11 +17,6 @@ public class FoodSpawner : MonoBehaviour
     void Start()
     {
         FoodPrefab = Resources.Load<GameObject>("Food");
-        
-        CellPrefabs = new List<GameObject>(){
-            Resources.Load<GameObject>("Cell"),
-            Resources.Load<GameObject>("Propulsion")
-        };
 
         config = GameObject.Find("Settings").GetComponent<Settings>().foodParams;
         bounds = GameObject.Find("Bounds").GetComponent<Bounds>();
@@ -33,30 +28,6 @@ public class FoodSpawner : MonoBehaviour
     void FixedUpdate()
     {
         spawnFood();
-        transformFood();
-    }
-
-    void transformFood()
-    {
-        // Copy list so we can remove during iter
-        // Can probably use reverse iterator to remove copy
-        var copy = Food.instances.ToList();
-        foreach (var obj in copy) {
-            var inst = obj.GetComponent<Food>();
-            if (inst.food < config.toCellThresh) {
-                continue;
-            }
-
-            var newCell = GameObject.Instantiate(
-                CellPrefabs[(int)Random.Range(0, CellPrefabs.Count)], 
-                obj.transform.position,
-                Quaternion.identity
-            );
-            newCell.transform.localScale = config.scale;
-            newCell.GetComponent<Cell>().food = inst.food;
-
-            GameObject.Destroy(obj);
-        }
     }
 
     void spawnFood()

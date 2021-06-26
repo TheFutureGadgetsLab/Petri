@@ -18,11 +18,18 @@ public class Food : MonoBehaviour
         }
     }
 
+    List<GameObject> CellPrefabs;
+
     FoodParams config;
     SpriteRenderer sprite;
 
     void Awake()
     {
+        CellPrefabs = new List<GameObject>(){
+            Resources.Load<GameObject>("Cell"),
+            Resources.Load<GameObject>("Propulsion")
+        };
+
         sprite = GetComponent<SpriteRenderer>();
         config = GameObject.Find("Settings").GetComponent<Settings>().foodParams;
         food = config.value.sample();
@@ -31,6 +38,20 @@ public class Food : MonoBehaviour
     private void Start() {
         var body = GetComponent<Rigidbody2D>();
         body.AddForce(new Vector2(config.velocity.sample(), config.velocity.sample()));
+    }
+
+    private void FixedUpdate() {
+        if (food >= config.toCellThresh) {
+            var newCell = GameObject.Instantiate(
+                CellPrefabs[(int)Random.Range(0, CellPrefabs.Count)], 
+                transform.position,
+                Quaternion.identity
+            );
+            newCell.transform.localScale = config.scale;
+            newCell.GetComponent<Cell>().food = food;
+
+            GameObject.Destroy(gameObject);
+        }
     }
 
     void OnCollisionEnter2D(Collision2D col)

@@ -11,13 +11,13 @@ public class Propulsion : Cell
     Vector2 force;
     float torque;
 
-    private void Awake() {
+    new private void Awake() {
+        base.Awake();
         icon = transform.Find("Icon").GetComponent<SpriteRenderer>();
         config = GameObject.Find("Settings").GetComponent<Settings>().propulsionParams;
     }
 
-    new protected void Start() {
-        base.Start();
+    protected void Start() {
 
         prop = GetComponent<ConstantForce2D>();
         force = Vector2.right * config.force;
