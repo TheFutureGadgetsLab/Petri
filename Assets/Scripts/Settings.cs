@@ -25,6 +25,7 @@ public struct BoundaryParams
 public struct WeaponParams
 {
     public float attackCost;
+    public float attackRadius;
 }
 
 [Serializable]

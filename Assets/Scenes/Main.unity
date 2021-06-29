@@ -544,6 +544,9 @@ MonoBehaviour:
     width: 200
     height: 200
     thickness: 4
+  weaponParams:
+    attackCost: 10
+    attackRadius: 10
 --- !u!4 &1277020876
 Transform:
   m_ObjectHideFlags: 0
@@ -890,15 +893,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4955807590189563470, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 3.1731513
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4955807590189563470, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -3.6977034
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4955807590189563470, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -8.609141
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4955807590189563470, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
       propertyPath: m_LocalRotation.w

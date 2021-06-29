@@ -7,9 +7,6 @@ public class Weapon : Cell
 {
     WeaponParams weaponConfig;
 
-    Vector2 force;
-    float torque;
-
     new private void Awake() {
         base.Awake();
         weaponConfig = GameObject.Find("Settings").GetComponent<Settings>().weaponParams;
@@ -18,7 +15,16 @@ public class Weapon : Cell
     new private void FixedUpdate()
     {
         base.FixedUpdate();
-        Collider2D[] near = Physics2D.OverlapCircleAll(transform.position, 2.0f);
+        Collider2D[] near = Physics2D.OverlapCircleAll(transform.position, weaponConfig.attackRadius);
+
+        foreach (var collider in near) {
+            Cell obj = collider.GetComponentInParent<Cell>();
+            if (obj == null) {
+                continue;
+            }
+
+            Debug.Log(obj);
+        }
     }
 }
 
