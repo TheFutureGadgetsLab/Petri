@@ -9,7 +9,7 @@ public class FoodSpawner : MonoBehaviour
 
     List<GameObject> CellPrefabs;
 
-    FoodParams config;
+    FoodParams foodConfig;
     Bounds bounds;
 
     private float curTime;
@@ -18,10 +18,10 @@ public class FoodSpawner : MonoBehaviour
     {
         FoodPrefab = Resources.Load<GameObject>("Food");
 
-        config = GameObject.Find("Settings").GetComponent<Settings>().foodParams;
+        foodConfig = GameObject.Find("Settings").GetComponent<Settings>().foodParams;
         bounds = GameObject.Find("Bounds").GetComponent<Bounds>();
 
-        curTime = config.spawnInterval;
+        curTime = foodConfig.spawnInterval;
     }
 
     // Update is called once per frame
@@ -36,9 +36,9 @@ public class FoodSpawner : MonoBehaviour
         if (curTime >= 0) {
             return;
         }
-        curTime = config.spawnInterval;
+        curTime = foodConfig.spawnInterval;
 
-        var nFood  = (int)Random.Range(config.spawnNum.min, config.spawnNum.max);
+        var nFood  = (int)Random.Range(foodConfig.spawnNum.min, foodConfig.spawnNum.max);
         for (int i = 0; i < nFood; i++)
         {
             var food = GameObject.Instantiate(
@@ -46,7 +46,7 @@ public class FoodSpawner : MonoBehaviour
                 bounds.GetRandomPos(),
                 Quaternion.identity
             );
-            food.transform.localScale = config.scale;
+            food.transform.localScale = foodConfig.scale;
         }
 
     }

@@ -20,7 +20,7 @@ public class Food : MonoBehaviour
 
     List<GameObject> CellPrefabs;
 
-    FoodParams config;
+    FoodParams foodConfig;
     SpriteRenderer sprite;
 
     void Awake()
@@ -32,23 +32,23 @@ public class Food : MonoBehaviour
         };
 
         sprite = GetComponent<SpriteRenderer>();
-        config = GameObject.Find("Settings").GetComponent<Settings>().foodParams;
-        food = config.value.sample();
+        foodConfig = GameObject.Find("Settings").GetComponent<Settings>().foodParams;
+        food = foodConfig.value.sample();
     }
 
     private void Start() {
         var body = GetComponent<Rigidbody2D>();
-        body.AddForce(new Vector2(config.velocity.sample(), config.velocity.sample()));
+        body.AddForce(new Vector2(foodConfig.velocity.sample(), foodConfig.velocity.sample()));
     }
 
     private void FixedUpdate() {
-        if (food >= config.toCellThresh) {
+        if (food >= foodConfig.toCellThresh) {
             var newCell = GameObject.Instantiate(
                 CellPrefabs[(int)Random.Range(0, CellPrefabs.Count)], 
                 transform.position,
                 Quaternion.identity
             );
-            newCell.transform.localScale = config.scale;
+            newCell.transform.localScale = foodConfig.scale;
             newCell.GetComponent<Cell>().food = food;
 
             GameObject.Destroy(gameObject);

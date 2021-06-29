@@ -10,10 +10,10 @@ public class Cell : MonoBehaviour
 
     public double food = 0.0;
 
-    private CellParams config;
+    private CellParams cellConfig;
 
     protected void Awake() {
-        config = GameObject.Find("Settings").GetComponent<Settings>().cellParams;
+        cellConfig = GameObject.Find("Settings").GetComponent<Settings>().cellParams;
         rigidbody = GetComponent<Rigidbody2D>();
         bondPrefab = Resources.Load<GameObject>("Bond");
     }
@@ -26,9 +26,9 @@ public class Cell : MonoBehaviour
             if (joint.Key.GetComponent<Cell>())
                 neighbor = joint.Key.GetComponent<Cell>();
 
-            if (food >= config.shareRate) {
-                neighbor.food += config.shareRate;
-                food -= config.shareRate;
+            if (food >= cellConfig.shareRate) {
+                neighbor.food += cellConfig.shareRate;
+                food -= cellConfig.shareRate;
             }
         }
     }
@@ -47,8 +47,8 @@ public class Cell : MonoBehaviour
             return;
         }
 
-        if (joints.Count < config.maxBonds
-            && col.relativeVelocity.magnitude > config.bondForce
+        if (joints.Count < cellConfig.maxBonds
+            && col.relativeVelocity.magnitude > cellConfig.bondForce
             && !joints.ContainsKey(col.gameObject)
             && !otherCell.joints.ContainsKey(gameObject))
         {

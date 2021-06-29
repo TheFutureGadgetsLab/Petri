@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Propulsion : Cell
 {
-    PropulsionParams config;
+    PropulsionParams propulsionConfig;
 
     ConstantForce2D prop;
     SpriteRenderer icon;
@@ -14,21 +14,21 @@ public class Propulsion : Cell
     new private void Awake() {
         base.Awake();
         icon = transform.Find("Icon").GetComponent<SpriteRenderer>();
-        config = GameObject.Find("Settings").GetComponent<Settings>().propulsionParams;
+        propulsionConfig = GameObject.Find("Settings").GetComponent<Settings>().propulsionParams;
     }
 
     protected void Start() {
 
         prop = GetComponent<ConstantForce2D>();
-        force = Vector2.right * config.force;
-        torque = config.torque.sample();
+        force = Vector2.right * propulsionConfig.force;
+        torque = propulsionConfig.torque.sample();
         transform.Rotate(Vector3.forward * 360f * Random.Range(0.0f, 1.0f));
     }
 
     new private void FixedUpdate() {
-        if (food > config.cost) {
-            if (rigidbody.velocity.magnitude < config.speedLimit) {
-                food -= config.cost;
+        if (food > propulsionConfig.cost) {
+            if (rigidbody.velocity.magnitude < propulsionConfig.speedLimit) {
+                food -= propulsionConfig.cost;
                 prop.relativeForce = force;
                 prop.torque = torque;
                 icon.color = Color.white;
