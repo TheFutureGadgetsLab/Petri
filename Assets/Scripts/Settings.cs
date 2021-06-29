@@ -10,6 +10,7 @@ public class Settings : MonoBehaviour
     public CellParams cellParams;
     public PropulsionParams propulsionParams;
     public BoundaryParams boundaryParams;
+    public WeaponParams weaponParams;
 }
 
 [Serializable]
@@ -18,6 +19,12 @@ public struct BoundaryParams
     public float width;
     public float height;
     public float thickness;
+}
+
+[Serializable]
+public struct WeaponParams
+{
+    public float attackCost;
 }
 
 [Serializable]

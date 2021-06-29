@@ -869,16 +869,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0425ab7c0f98cb8418aac54a9ab46ca4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  boundsX:
-    min: 0
-    max: 0
-  boundsY:
-    min: 0
-    max: 0
-  config:
-    width: 0
-    height: 0
-    thickness: 0
 --- !u!1001 &4002596616604969188
 PrefabInstance:
   m_ObjectHideFlags: 0

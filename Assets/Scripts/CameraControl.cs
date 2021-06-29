@@ -18,7 +18,7 @@ public class CameraControl : MonoBehaviour
     {
         cam = GetComponent<Camera>();        
         targetOrtho = Camera.main.orthographicSize;
-        maxOrtho = targetOrtho;
+        maxOrtho = 1000;
     }
 
  

@@ -27,7 +27,8 @@ public class Food : MonoBehaviour
     {
         CellPrefabs = new List<GameObject>(){
             Resources.Load<GameObject>("Cell"),
-            Resources.Load<GameObject>("Propulsion")
+            Resources.Load<GameObject>("Propulsion"),
+            Resources.Load<GameObject>("Weapon"),
         };
 
         sprite = GetComponent<SpriteRenderer>();

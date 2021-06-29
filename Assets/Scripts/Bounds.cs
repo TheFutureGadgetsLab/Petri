@@ -4,10 +4,10 @@ using UnityEngine;
 
 public class Bounds : MonoBehaviour
 {
-    public MinMaxF boundsX; 
-    public MinMaxF boundsY; 
+    MinMaxF boundsX; 
+    MinMaxF boundsY; 
 
-    public BoundaryParams config;
+    BoundaryParams config;
 
     void Awake()
     {

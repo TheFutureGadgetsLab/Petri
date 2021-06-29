@@ -25,8 +25,6 @@ public class Cell : MonoBehaviour
 
             if (joint.Key.GetComponent<Cell>())
                 neighbor = joint.Key.GetComponent<Cell>();
-            else if (joint.Key.GetComponent<Propulsion>())
-                neighbor = joint.Key.GetComponent<Propulsion>();
 
             if (food >= config.shareRate) {
                 neighbor.food += config.shareRate;
