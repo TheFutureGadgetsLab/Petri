@@ -26,9 +26,9 @@ public class Propulsion : Cell
     }
 
     new private void FixedUpdate() {
-        if (food > propulsionConfig.cost) {
+        if (energy > propulsionConfig.cost) {
             if (rigidbody.velocity.magnitude < propulsionConfig.speedLimit) {
-                food -= propulsionConfig.cost;
+                energy -= propulsionConfig.cost;
                 prop.relativeForce = force;
                 prop.torque = torque;
                 icon.color = Color.white;
@@ -36,7 +36,7 @@ public class Propulsion : Cell
                 prop.relativeForce = Vector2.zero;
                 prop.torque = 0.0f;
                 icon.color = Color.grey;
-                // We have more food than we need, let's share it
+                // We have more energy than we need, let's share it
                 base.FixedUpdate();
             }
         } else {

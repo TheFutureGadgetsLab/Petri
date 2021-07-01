@@ -6,7 +6,7 @@ using System;
 [Serializable]
 public class Settings : MonoBehaviour
 {
-    public FoodParams foodParams;
+    public EnergyParams energyParams;
     public CellParams cellParams;
     public PropulsionParams propulsionParams;
     public BoundaryParams boundaryParams;
@@ -26,6 +26,7 @@ public struct WeaponParams
 {
     public float attackCost;
     public float attackRadius;
+    public float drainRate;
 }
 
 [Serializable]
@@ -39,7 +40,7 @@ public struct PropulsionParams
 
 
 [Serializable]
-public struct FoodParams
+public struct EnergyParams
 {
     public MinMaxI spawnNum;
     public MinMaxF value;
@@ -56,6 +57,7 @@ public struct CellParams
     public float shareRate;
     public float bondForce;
     public int maxBonds;
+    public float minEnergy;
 }
 
 [Serializable]

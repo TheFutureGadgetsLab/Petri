@@ -387,6 +387,63 @@ Transform:
   m_Father: {fileID: 2128682226}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1137649122
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4955807590189563470, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
+      propertyPath: m_RootOrder
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 4955807590189563470, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 3.1731513
+      objectReference: {fileID: 0}
+    - target: {fileID: 4955807590189563470, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -3.6977034
+      objectReference: {fileID: 0}
+    - target: {fileID: 4955807590189563470, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -8.609141
+      objectReference: {fileID: 0}
+    - target: {fileID: 4955807590189563470, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4955807590189563470, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4955807590189563470, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4955807590189563470, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4955807590189563470, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4955807590189563470, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4955807590189563470, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6340336763261038578, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
+      propertyPath: m_Name
+      value: EnergySpawner
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
 --- !u!1 &1164658091
 GameObject:
   m_ObjectHideFlags: 0
@@ -485,7 +542,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   targetOrtho: 0
   minOrtho: 1
-  zoomSpeed: 70
+  zoomSpeed: 200
 --- !u!1 &1277020874
 GameObject:
   m_ObjectHideFlags: 0
@@ -515,24 +572,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 368ff113d9b8b924eaf0b36b3b6016a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  foodParams:
+  energyParams:
     spawnNum:
-      min: 100
-      max: 200
-    value:
       min: 1
-      max: 10
+      max: 20
+    value:
+      min: 5
+      max: 20
     spawnInterval: 1
     scale: {x: 1, y: 1}
     velocity:
-      min: -0.1
-      max: 0.1
-    toCellThresh: 20
+      min: -0.2
+      max: 0.2
+    toCellThresh: 50
   cellParams:
     scale: {x: 1, y: 1}
     shareRate: 0.75
     bondForce: 5
     maxBonds: 6
+    minEnergy: 15
   propulsionParams:
     force: 6
     torque:
@@ -547,6 +605,7 @@ MonoBehaviour:
   weaponParams:
     attackCost: 10
     attackRadius: 10
+    drainRate: 0.5
 --- !u!4 &1277020876
 Transform:
   m_ObjectHideFlags: 0
@@ -872,68 +931,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0425ab7c0f98cb8418aac54a9ab46ca4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!1001 &4002596616604969188
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 3466322127576140242, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
-      propertyPath: minMaxSpawn.x
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3466322127576140242, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
-      propertyPath: minMaxSpawn.y
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 4955807590189563470, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
-      propertyPath: m_RootOrder
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 4955807590189563470, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4955807590189563470, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4955807590189563470, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4955807590189563470, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4955807590189563470, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4955807590189563470, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4955807590189563470, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4955807590189563470, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4955807590189563470, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4955807590189563470, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6340336763261038578, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}
-      propertyPath: m_Name
-      value: FoodSpawner
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: c7ee05a19a0f3864096663e8a487eba5, type: 3}

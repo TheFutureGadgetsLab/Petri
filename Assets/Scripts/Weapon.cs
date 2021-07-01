@@ -15,15 +15,31 @@ public class Weapon : Cell
     new private void FixedUpdate()
     {
         base.FixedUpdate();
-        Collider2D[] near = Physics2D.OverlapCircleAll(transform.position, weaponConfig.attackRadius);
+        attack();
+    }
 
+    void attack()
+    {
+        if (energy < weaponConfig.attackCost) {
+            return;
+        }
+
+        Collider2D[] near = Physics2D.OverlapCircleAll(transform.position, weaponConfig.attackRadius);
         foreach (var collider in near) {
+            if (energy < weaponConfig.attackCost) {
+                return;
+            }
+
             Cell obj = collider.GetComponentInParent<Cell>();
-            if (obj == null) {
+            if (obj == null || obj == this) {
                 continue;
             }
 
-            Debug.Log(obj);
+            var stolen = obj.energy * weaponConfig.drainRate;
+            energy += stolen;
+            obj.energy -= stolen;
+
+            energy -= weaponConfig.attackCost;
         }
     }
 }

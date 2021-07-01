@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 2916823960581133201}
   - component: {fileID: 999171348207563144}
   m_Layer: 0
-  m_Name: Food
+  m_Name: Energy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -112,10 +112,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 5191007394767565875}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b01610fc889408f48bb01542174dcb36, type: 3}
+  m_Script: {fileID: 11500000, guid: 2504d360d5870d04790a0aa0b57e529e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _food: 0
+  _energy: 0
 --- !u!50 &999171348207563144
 Rigidbody2D:
   serializedVersion: 4

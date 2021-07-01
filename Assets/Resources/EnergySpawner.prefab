@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4955807590189563470}
   - component: {fileID: 3466322127576140242}
   m_Layer: 0
-  m_Name: FoodSpawner
+  m_Name: EnergySpawner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -40,8 +40,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 6340336763261038578}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 04199794e5e02d34da368532371fb12a, type: 3}
+  m_Script: {fileID: 11500000, guid: 890544c2c66c9b64aab1479eef606733, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  minMaxSpawn: {x: 10, y: 100}
-  FoodScale: {x: 1, y: 1}
