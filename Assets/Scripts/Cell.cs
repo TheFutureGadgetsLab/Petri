@@ -54,8 +54,6 @@ public class Cell : MonoBehaviour
         );
         newEnergy.GetComponent<Energy>().energy = energy;
 
-        GameObject.Destroy(gameObject);
-
         joints.Clear();
         GameObject.Destroy(gameObject);
     }
