@@ -574,12 +574,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   energyParams:
     spawnNum:
-      min: 1
-      max: 20
+      min: 25
+      max: 50
     value:
       min: 5
       max: 20
-    spawnInterval: 1
+    spawnInterval: 0.25
     scale: {x: 1, y: 1}
     velocity:
       min: -0.2
@@ -603,9 +603,9 @@ MonoBehaviour:
     height: 200
     thickness: 4
   weaponParams:
-    attackCost: 10
-    attackRadius: 10
-    drainRate: 0.5
+    attackCost: 0.5
+    attackRadius: 5
+    drainRate: 0.005
 --- !u!4 &1277020876
 Transform:
   m_ObjectHideFlags: 0

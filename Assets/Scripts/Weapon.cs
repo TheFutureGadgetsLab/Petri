@@ -31,7 +31,7 @@ public class Weapon : Cell
             }
 
             Cell obj = collider.GetComponentInParent<Cell>();
-            if (obj == null || obj == this) {
+            if (obj == null || obj.organismID == organismID) {
                 continue;
             }
 

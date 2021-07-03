@@ -13,7 +13,10 @@ public class Cell : MonoBehaviour
     private CellParams cellConfig;
     private GameObject EnergyPrefab;
 
+    public uint organismID;
+
     protected void Awake() {
+        organismID = (uint)Random.Range(int.MinValue, int.MaxValue);
         cellConfig = GameObject.Find("Settings").GetComponent<Settings>().cellParams;
         rigidbody = GetComponent<Rigidbody2D>();
         bondPrefab = Resources.Load<GameObject>("Bond");
@@ -41,10 +44,9 @@ public class Cell : MonoBehaviour
 
     void destabilize()
     {
-        Debug.Log("Destroying!");
         foreach (var joint in joints) {
             var cell = joint.Key.GetComponent<Cell>();
-            GameObject.Destroy(joint.Value);
+            GameObject.Destroy(joint.Value.gameObject);
             cell.joints.Remove(gameObject);
         }
         var newEnergy = GameObject.Instantiate(
@@ -72,10 +74,10 @@ public class Cell : MonoBehaviour
             return;
         }
 
+        //Bond formation
         if (joints.Count < cellConfig.maxBonds
             && col.relativeVelocity.magnitude > cellConfig.bondForce
-            && !joints.ContainsKey(col.gameObject)
-            && !otherCell.joints.ContainsKey(gameObject))
+            && otherCell.organismID != organismID)
         {
             var obj = GameObject.Instantiate(bondPrefab, Vector3.zero, Quaternion.identity);
             obj.transform.parent = transform;
@@ -84,6 +86,8 @@ public class Cell : MonoBehaviour
             cellJoint.ConnectTo(otherCell);
             joints.Add(col.gameObject, cellJoint);
             otherCell.joints.Add(gameObject, cellJoint);
+
+            otherCell.organismID = organismID;
         }
     }
 
