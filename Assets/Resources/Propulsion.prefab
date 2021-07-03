@@ -156,7 +156,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d702e2cac81f9743a8591571191b063, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  food: 0
+  energy: 0
+  organismID: 0
 --- !u!247 &7775209578536793626
 ConstantForce2D:
   m_ObjectHideFlags: 0
@@ -241,7 +242,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 1
   m_Sprite: {fileID: 21300000, guid: 1bb69cd91685d9248a58b144052746f3, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0

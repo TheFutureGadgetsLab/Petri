@@ -5,8 +5,13 @@ using UnityEngine;
 
 public class Weapon : Cell
 {
+    SpriteRenderer icon;
+    LineRenderer line;
+
     new private void Awake() {
         base.Awake();
+        icon = transform.Find("Icon").GetComponent<SpriteRenderer>();
+        line = GetComponent<LineRenderer>();
     }
 
     new private void FixedUpdate()
@@ -17,13 +22,16 @@ public class Weapon : Cell
 
     void attack()
     {
-        if (energy < Settings.inst.weapon.attackCost) {
+        icon.color = Color.black;
+        line.SetPosition(0, transform.position);
+        line.SetPosition(1, transform.position);
+        if (energy < Settings.inst.energy.toCellThresh) {
             return;
         }
 
         Collider2D[] near = Physics2D.OverlapCircleAll(transform.position, Settings.inst.weapon.attackRadius);
         foreach (var collider in near) {
-            if (energy < Settings.inst.weapon.attackCost) {
+            if (energy < Settings.inst.energy.toCellThresh) {
                 return;
             }
 
@@ -37,6 +45,8 @@ public class Weapon : Cell
             obj.energy -= stolen;
 
             energy -= Settings.inst.weapon.attackCost;
+            icon.color = Color.white;
+            line.SetPosition(1, obj.transform.position);
         }
     }
 }

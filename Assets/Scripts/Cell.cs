@@ -4,9 +4,8 @@ using UnityEngine;
 
 public class Cell : MonoBehaviour
 {
-    public Dictionary<GameObject, Bond> joints = new Dictionary<GameObject, Bond>();
+    public Dictionary<GameObject, FixedJoint2D> joints = new Dictionary<GameObject, FixedJoint2D>();
     protected new Rigidbody2D rigidbody;
-    protected GameObject bondPrefab;
 
     public float energy = 0.0f;
 
@@ -17,7 +16,6 @@ public class Cell : MonoBehaviour
     protected void Awake() {
         organismID = Random.Range(int.MinValue, int.MaxValue);
         rigidbody = GetComponent<Rigidbody2D>();
-        bondPrefab = Resources.Load<GameObject>("Bond");
     }
 
     protected void FixedUpdate()
@@ -30,7 +28,8 @@ public class Cell : MonoBehaviour
                 organismID = maxID;
             }
 
-            if (energy >= Settings.inst.cell.shareRate && neighbor.energy < energy) {
+            if (energy > Settings.inst.energy.toCellThresh
+                && energy >= Settings.inst.cell.shareRate && neighbor.energy < energy) {
                 neighbor.energy += Settings.inst.cell.shareRate;
                 energy -= Settings.inst.cell.shareRate;
             }
@@ -45,7 +44,7 @@ public class Cell : MonoBehaviour
     {
         foreach (var joint in joints) {
             var cell = joint.Key.GetComponent<Cell>();
-            GameObject.Destroy(joint.Value.gameObject);
+            GameObject.Destroy(joint.Value);
             cell.joints.Remove(gameObject);
             cell.organismID = Random.Range(int.MinValue, int.MaxValue);
         }
@@ -81,13 +80,15 @@ public class Cell : MonoBehaviour
             && !joints.ContainsKey(otherCell.gameObject)
             && !otherCell.joints.ContainsKey(gameObject))
         {
-            var obj = GameObject.Instantiate(bondPrefab, Vector3.zero, Quaternion.identity);
-            obj.transform.parent = transform;
-            var cellJoint = obj.GetComponent<Bond>();
-            cellJoint.transform.localPosition = Vector3.zero;
-            cellJoint.ConnectTo(otherCell);
-            joints.Add(col.gameObject, cellJoint);
-            otherCell.joints.Add(gameObject, cellJoint);
+            var joint = gameObject.AddComponent<FixedJoint2D>();
+            otherCell.transform.position =
+                transform.position + (otherCell.transform.position - transform.position).normalized * 1.15f;
+            joint.connectedBody = otherCell.rigidbody;
+            joint.enableCollision = true;
+            joint.dampingRatio = 1f;
+            joint.frequency = 0f;
+            joints.Add(col.gameObject, joint);
+            otherCell.joints.Add(gameObject, joint);
 
             otherCell.organismID = organismID;
         }

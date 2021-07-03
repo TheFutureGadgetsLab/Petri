@@ -542,7 +542,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   targetOrtho: 0
   minOrtho: 1
-  zoomSpeed: 200
+  zoomSpeed: 600
 --- !u!1 &1277020874
 GameObject:
   m_ObjectHideFlags: 0
@@ -603,7 +603,7 @@ MonoBehaviour:
     height: 200
     thickness: 4
   weapon:
-    attackCost: 0.5
+    attackCost: 0.1
     attackRadius: 5
     drainRate: 0.005
 --- !u!4 &1277020876
