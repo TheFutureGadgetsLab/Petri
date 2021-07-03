@@ -572,7 +572,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 368ff113d9b8b924eaf0b36b3b6016a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  energyParams:
+  energy:
     spawnNum:
       min: 25
       max: 50
@@ -585,24 +585,24 @@ MonoBehaviour:
       min: -0.2
       max: 0.2
     toCellThresh: 50
-  cellParams:
+  cell:
     scale: {x: 1, y: 1}
     shareRate: 0.75
     bondForce: 5
     maxBonds: 6
     minEnergy: 15
-  propulsionParams:
+  propulsion:
     force: 6
     torque:
       min: -20
       max: 20
     cost: 0.5
     speedLimit: 8
-  boundaryParams:
+  boundary:
     width: 200
     height: 200
     thickness: 4
-  weaponParams:
+  weapon:
     attackCost: 0.5
     attackRadius: 5
     drainRate: 0.005

@@ -6,11 +6,22 @@ using System;
 [Serializable]
 public class Settings : MonoBehaviour
 {
-    public EnergyParams energyParams;
-    public CellParams cellParams;
-    public PropulsionParams propulsionParams;
-    public BoundaryParams boundaryParams;
-    public WeaponParams weaponParams;
+    public EnergyParams energy;
+    public CellParams cell;
+    public PropulsionParams propulsion;
+    public BoundaryParams boundary;
+    public WeaponParams weapon;
+
+    public static Settings inst;
+
+    private void OnEnable() {
+        inst = this;
+        Cell.prefabs = new List<(GameObject prefab, float chance)>{
+            ((Resources.Load<GameObject>("Cell"), 0.6f)),
+            ((Resources.Load<GameObject>("Propulsion"), 0.3f)),
+            ((Resources.Load<GameObject>("Weapon"), 0.1f))
+        };
+    }
 }
 
 [Serializable]

@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class Energy : MonoBehaviour
 {
-    public float _energy;
-    public static List<GameObject> instances = new List<GameObject>();
+    static public GameObject prefab;
 
+    public float _energy;
     public float energy {
         get => _energy;
         set
@@ -18,37 +18,42 @@ public class Energy : MonoBehaviour
         }
     }
 
-    List<GameObject> CellPrefabs;
-
-    EnergyParams energyConfig;
     SpriteRenderer sprite;
+
+    private void OnEnable() {
+        prefab = Resources.Load<GameObject>("Energy");
+    }
 
     void Awake()
     {
-        CellPrefabs = new List<GameObject>(){
-            Resources.Load<GameObject>("Cell"),
-            Resources.Load<GameObject>("Propulsion"),
-            Resources.Load<GameObject>("Weapon"),
-        };
 
         sprite = GetComponent<SpriteRenderer>();
-        energyConfig = GameObject.Find("Settings").GetComponent<Settings>().energyParams;
-        energy = energyConfig.value.sample();
+        energy = Settings.inst.energy.value.sample();
     }
 
     private void Start() {
         var body = GetComponent<Rigidbody2D>();
-        body.AddForce(new Vector2(energyConfig.velocity.sample(), energyConfig.velocity.sample()));
+        body.AddForce(new Vector2(Settings.inst.energy.velocity.sample(), Settings.inst.energy.velocity.sample()));
     }
 
     private void FixedUpdate() {
-        if (energy >= energyConfig.toCellThresh) {
+        //Cell genesis
+        if (energy >= Settings.inst.energy.toCellThresh) {
+            //Random weighted sample to get new cell prefab
+            GameObject newCellPrefab = null;
+            while (newCellPrefab == null) {
+                int i = Random.Range(0, Cell.prefabs.Count);
+                if (Random.value < Cell.prefabs[i].chance) {
+                    newCellPrefab = Cell.prefabs[i].prefab;
+                }
+            }
+            //Instantiate new cell and delete self
             var newCell = GameObject.Instantiate(
-                CellPrefabs[(int)Random.Range(0, CellPrefabs.Count)], 
+                newCellPrefab, 
                 transform.position,
                 Quaternion.identity
             );
-            newCell.transform.localScale = energyConfig.scale;
+            newCell.transform.localScale = Settings.inst.energy.scale;
             newCell.GetComponent<Cell>().energy = energy;
 
             GameObject.Destroy(gameObject);
@@ -69,15 +74,5 @@ public class Energy : MonoBehaviour
         col.gameObject.SetActive(false);
         energy += energyObj.energy;
         GameObject.Destroy(col.gameObject);
-    }
-
-    // Add to static list of instances on enable
-    private void OnEnable() {
-        instances.Add(transform.gameObject);
-    }
-
-    // Remove from static list of instances on disable
-    private void OnDisable() {
-        instances.Remove(transform.gameObject);
     }
 }

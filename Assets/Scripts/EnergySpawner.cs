@@ -9,7 +9,6 @@ public class EnergySpawner : MonoBehaviour
 
     List<GameObject> CellPrefabs;
 
-    EnergyParams energyConfig;
     Bounds bounds;
 
     private float curTime;
@@ -18,10 +17,9 @@ public class EnergySpawner : MonoBehaviour
     {
         EnergyPrefab = Resources.Load<GameObject>("Energy");
 
-        energyConfig = GameObject.Find("Settings").GetComponent<Settings>().energyParams;
         bounds = GameObject.Find("Bounds").GetComponent<Bounds>();
 
-        curTime = energyConfig.spawnInterval;
+        curTime = Settings.inst.energy.spawnInterval;
     }
 
     // Update is called once per frame
@@ -36,9 +34,9 @@ public class EnergySpawner : MonoBehaviour
         if (curTime >= 0) {
             return;
         }
-        curTime = energyConfig.spawnInterval;
+        curTime = Settings.inst.energy.spawnInterval;
 
-        var nEnergy  = (int)Random.Range(energyConfig.spawnNum.min, energyConfig.spawnNum.max);
+        var nEnergy  = (int)Random.Range(Settings.inst.energy.spawnNum.min, Settings.inst.energy.spawnNum.max);
         for (int i = 0; i < nEnergy; i++)
         {
             var energy = GameObject.Instantiate(
@@ -46,7 +44,7 @@ public class EnergySpawner : MonoBehaviour
                 bounds.GetRandomPos(),
                 Quaternion.identity
             );
-            energy.transform.localScale = energyConfig.scale;
+            energy.transform.localScale = Settings.inst.energy.scale;
         }
 
     }

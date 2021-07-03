@@ -5,11 +5,8 @@ using UnityEngine;
 
 public class Weapon : Cell
 {
-    WeaponParams weaponConfig;
-
     new private void Awake() {
         base.Awake();
-        weaponConfig = GameObject.Find("Settings").GetComponent<Settings>().weaponParams;
     }
 
     new private void FixedUpdate()
@@ -20,13 +17,13 @@ public class Weapon : Cell
 
     void attack()
     {
-        if (energy < weaponConfig.attackCost) {
+        if (energy < Settings.inst.weapon.attackCost) {
             return;
         }
 
-        Collider2D[] near = Physics2D.OverlapCircleAll(transform.position, weaponConfig.attackRadius);
+        Collider2D[] near = Physics2D.OverlapCircleAll(transform.position, Settings.inst.weapon.attackRadius);
         foreach (var collider in near) {
-            if (energy < weaponConfig.attackCost) {
+            if (energy < Settings.inst.weapon.attackCost) {
                 return;
             }
 
@@ -35,11 +32,11 @@ public class Weapon : Cell
                 continue;
             }
 
-            var stolen = obj.energy * weaponConfig.drainRate;
+            var stolen = obj.energy * Settings.inst.weapon.drainRate;
             energy += stolen;
             obj.energy -= stolen;
 
-            energy -= weaponConfig.attackCost;
+            energy -= Settings.inst.weapon.attackCost;
         }
     }
 }
