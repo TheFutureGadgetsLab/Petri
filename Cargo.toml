@@ -1,8 +1,8 @@
 [package]
 name = "petri"
 version = "0.1.0"
+authors = ["Haydn Jones <haydnjonest@gmail.com", "Benjamin Mastripolitio <schwalegos@gmail.com>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
+amethyst = { git = "https://github.com/amethyst/amethyst", branch = "main", features = ["optional"]}
