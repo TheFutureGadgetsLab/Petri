@@ -1,64 +1,48 @@
-//! Pong Tutorial 6
+use glutin_window::GlutinWindow as Window;
+use opengl_graphics::{GlGraphics, OpenGL};
+use piston::EventLoop;
+use piston::event_loop::{EventSettings, Events};
+use piston::input::{RenderEvent, UpdateEvent};
+use piston::window::WindowSettings;
+mod app;
+use fps_counter::*;
 
-mod bundle;
-mod pong;
-mod systems;
 
-use amethyst::{
-    assets::LoaderBundle,
-    audio::AudioBundle,
-    core::transform::TransformBundle,
-    input::InputBundle,
-    prelude::*,
-    renderer::{
-        plugins::{RenderFlat2D, RenderToWindow},
-        rendy::hal::command::ClearColor,
-        types::DefaultBackend,
-        RenderingBundle,
-    },
-    ui::{RenderUi, UiBundle},
-    utils::application_root_dir,
-};
+fn main() {
+    // Change this to OpenGL::V2_1 if not working.
+    let opengl = OpenGL::V4_5;
 
-use crate::{bundle::PongBundle, pong::Pong};
+    // Create an Glutin window.
+    let mut window: Window = WindowSettings::new("spinning-square", [200, 200])
+        .graphics_api(opengl)
+        .exit_on_esc(true)
+        .build()
+        .unwrap();
 
-fn main() -> amethyst::Result<()> {
-    amethyst::start_logger(Default::default());
 
-    let app_root = application_root_dir()?;
-    let display_config_path = app_root.join("config/display.ron");
+    // Create a new game and run it.
+    let mut app = app::App {
+        gl: GlGraphics::new(opengl),
+        rotation: 0.0,
+    };
 
-    // This line is not mentioned in the pong tutorial as it is specific to the context
-    // of the git repository. It only is a different location to load the assets from.
-    let assets_dir = app_root.join("assets/");
+    let mut a = FPSCounter::default();
+    let mut i = 0;
 
-    let mut dispatcher = DispatcherBuilder::default();
-    dispatcher
-        .add_bundle(LoaderBundle)
-        // Add the transform bundle which handles tracking entity positions
-        .add_bundle(TransformBundle)
-        .add_bundle(
-            InputBundle::new().with_bindings_from_file(app_root.join("config/bindings.ron"))?,
-        )
-        .add_bundle(AudioBundle)
-        // We have now added our own systems, defined in the systems module
-        .add_bundle(PongBundle)
-        .add_bundle(UiBundle::<u32>::default())
-        .add_bundle(
-            RenderingBundle::<DefaultBackend>::new()
-                // The RenderToWindow plugin provides all the scaffolding for opening a window and
-                // drawing on it
-                .with_plugin(
-                    RenderToWindow::from_config_path(display_config_path)?.with_clear(ClearColor {
-                        float32: [0.0, 0.0, 0.0, 1.0],
-                    }),
-                )
-                // RenderFlat2D plugin is used to render entities with `SpriteRender` component.
-                .with_plugin(RenderFlat2D::default())
-                .with_plugin(RenderUi::default()),
-        );
+    let mut events = Events::new(EventSettings::new());
+    events.set_bench_mode(true);
+    while let Some(e) = events.next(&mut window) {
+        if let Some(args) = e.render_args() {
+            app.render(&args);
+            let fps = a.tick();
+            i += 1;
+            if (i % 1000) == 0 {
+                println!("{:?}", fps);
+            }
+        }
 
-    let game = Application::new(assets_dir, Pong::default(), dispatcher)?;
-    game.run();
-    Ok(())
+        if let Some(args) = e.update_args() {
+            app.update(&args);
+        }
+    }
 }

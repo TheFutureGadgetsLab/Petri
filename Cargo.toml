@@ -1,8 +1,19 @@
 [package]
 name = "petri"
 version = "0.1.0"
-authors = ["Haydn Jones <haydnjonest@gmail.com", "Benjamin Mastripolitio <schwalegos@gmail.com>"]
+authors = ["Haydn Jones <haydnjonest@gmail.com>", "Benjamin Mastripolitio <schwalegos@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-amethyst = { git = "https://github.com/amethyst/amethyst", branch = "main", features = ["optional"]}
+piston = "0.53.0"
+piston_window = "*"
+piston2d-graphics = "0.40.0"
+pistoncore-glutin_window = "0.69.0"
+piston2d-opengl_graphics = "0.78.0"
+rand = "*"
+fps_counter = "*"
+legion = "*"
+
+[profile.release]
+codegen-units = 1
+lto = true
