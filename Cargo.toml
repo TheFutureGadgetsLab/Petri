@@ -5,15 +5,15 @@ authors = ["Haydn Jones <haydnjonest@gmail.com>", "Benjamin Mastripolitio <schwa
 edition = "2018"
 
 [dependencies]
-piston = "0.53.0"
-piston_window = "*"
-piston2d-graphics = "0.40.0"
-pistoncore-glutin_window = "0.69.0"
-piston2d-opengl_graphics = "0.78.0"
-rand = "*"
-fps_counter = "*"
-legion = "*"
+ggez = "0.6.0-rc2"
+
+gfx_core = "0.9.2"
+gfx_device_gl = "0.16.2"
+
+imgui = "0.7.0"
+imgui-gfx-renderer = "0.7.0"
+glam = "*"
 
 [profile.release]
-#codegen-units = 1
-#lto = true
+codegen-units = 1
+lto =  true
