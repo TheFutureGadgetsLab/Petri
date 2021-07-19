@@ -2,9 +2,8 @@ mod imgui_wrapper;
 
 use crate::imgui_wrapper::ImGuiWrapper;
 use ggez::event::{self, EventHandler, KeyCode, KeyMods, MouseButton};
-use ggez::graphics::{self, Mesh, Color};
-use ggez::{conf, GameError};
-use ggez::{Context, GameResult, timer};
+use ggez::graphics::{self, Color, Mesh, MeshBatch};
+use ggez::{Context, GameResult, timer, conf};
 use glam::Vec2 as Point2;
 
 struct MainState {
@@ -111,8 +110,7 @@ pub fn main() -> ggez::GameResult {
     let (mut ctx, event_loop) = cb.build()?;
 
     let hidpi_factor = event_loop
-        .primary_monitor()
-        .ok_or_else(|| GameError::RenderError(String::from("Cant get primary monitor!")))?
+        .primary_monitor().unwrap()
         .scale_factor() as f32;
     println!("main hidpi_factor = {}", hidpi_factor);
 
