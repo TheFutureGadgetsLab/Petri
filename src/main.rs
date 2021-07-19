@@ -2,7 +2,7 @@ mod imgui_wrapper;
 
 use crate::imgui_wrapper::ImGuiWrapper;
 use ggez::event::{self, EventHandler, KeyCode, KeyMods, MouseButton};
-use ggez::graphics::{self, Color, Mesh, MeshBatch};
+use ggez::graphics::{self, Color, Mesh};
 use ggez::{Context, GameResult, timer, conf};
 use glam::Vec2 as Point2;
 

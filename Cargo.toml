@@ -14,6 +14,6 @@ imgui = "0.7.0"
 imgui-gfx-renderer = "0.7.0"
 glam = { version = "0.17.3", features = ["mint"] }
 
-#[profile.release]
-#codegen-units = 1
-#lto =  true
+[profile.release]
+codegen-units = 1
+lto = true
