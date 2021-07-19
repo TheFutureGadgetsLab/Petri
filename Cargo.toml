@@ -12,8 +12,8 @@ gfx_device_gl = "0.16.2"
 
 imgui = "0.7.0"
 imgui-gfx-renderer = "0.7.0"
-glam = "*"
+glam = { version = "0.17.3", features = ["mint"] }
 
-[profile.release]
-codegen-units = 1
-lto =  true
+#[profile.release]
+#codegen-units = 1
+#lto =  true

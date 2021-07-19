@@ -5,7 +5,7 @@ use ggez::event::{self, EventHandler, KeyCode, KeyMods, MouseButton};
 use ggez::graphics;
 use ggez::graphics::Color;
 use ggez::{conf, GameError};
-use ggez::{Context, GameResult};
+use ggez::{Context, GameResult, timer};
 use glam::Vec2 as Point2;
 
 struct MainState {
@@ -27,8 +27,9 @@ impl MainState {
 }
 
 impl EventHandler<ggez::GameError> for MainState {
-    fn update(&mut self, _ctx: &mut Context) -> GameResult<()> {
-        self.pos_x = self.pos_x % 800.0 + 1.0;
+    fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
+        let (width, _height) = ggez::graphics::size(ctx);
+        self.pos_x = (self.pos_x + 100.0 * timer::delta(ctx).as_secs_f32()) % width;
         Ok(())
     }
 
