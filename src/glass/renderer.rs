@@ -1,63 +1,68 @@
-mod imgui_wrapper;
-mod camera;
-
-use core::f32;
-
-use crate::imgui_wrapper::ImGuiWrapper;
-use camera::Camera;
+use super::imgui_wrapper::ImGuiWrapper;
+use super::camera::Camera;
 use ggez::event::{self, EventHandler, KeyCode, KeyMods, MouseButton};
 use ggez::graphics::{self, Color, DrawParam, Mesh};
-use ggez::{Context, GameResult, timer, conf};
-use glam::Vec2 as Point2;
+use ggez::{Context, GameResult, timer};
+use glam::Vec2 as Vec2;
 
-struct MainState {
-    pos_x: f32,
-    imgui_wrapper: ImGuiWrapper,
-    hidpi_factor: f32,
-    circle: Mesh,
-    cam: Camera,
-    pos: Point2
+pub struct MainState {
+    pub imgui_wrapper: ImGuiWrapper,
+    pub hidpi_factor: f32,
+    pub circle: Mesh,
+    pub cam: Camera,
 }
 
 impl MainState {
-    fn new(mut ctx: &mut Context, hidpi_factor: f32) -> GameResult<MainState> {
+    pub fn new(mut ctx: &mut Context, hidpi_factor: f32) -> GameResult<MainState> {
         let imgui_wrapper = ImGuiWrapper::new(&mut ctx);
-        let (width, height) = ggez::graphics::size(ctx);
+        let win_size: Vec2 = ggez::graphics::size(ctx).into();
 
         let s = MainState {
-            pos_x: 0.0,
             imgui_wrapper,
             hidpi_factor,
             circle: graphics::Mesh::new_circle(
                 ctx,
                 graphics::DrawMode::fill(),
-                Point2::ZERO,
-                10.0,
+                Vec2::ZERO,
+                2.0,
                 1.0,
                 Color::WHITE,
             )?,
-            cam: Camera::new(width as u32, height as u32, width, height),
-            pos: Point2::new(0.0, 0.0)
+            cam: Camera::new(win_size, win_size)
         };
         Ok(s)
     }
 }
 
 impl EventHandler<ggez::GameError> for MainState {
-    fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
-        let (width, _height) = ggez::graphics::size(ctx);
-        self.pos_x = (self.pos_x + 100.0 * timer::delta(ctx).as_secs_f32()) % width;
+    fn update(&mut self, _ctx: &mut Context) -> GameResult<()> {
+        //let (width, _height) = ggez::graphics::size(ctx);
+        //self.pos_x = (self.pos_x + 100.0 * timer::delta(ctx).as_secs_f32()) % width;
         Ok(())
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
         graphics::clear(ctx, Color::BLACK);
+        let w: f32 = 300.0;
+        let h: f32 = 300.0;
+        let t = timer::time_since_start(ctx).as_secs_f32();
 
-        graphics::draw(
-            ctx, 
-            &self.circle,
-            DrawParam::default().dest(self.cam.world_to_screen_coords(self.pos))
-        )?;
+        for i in 1..1000u32 {
+            let i = i as f32;
+            let f = i as i32;
+            let pos = Vec2::new(
+                ((i * 0.6 + t).sin() * 0.5 + 0.5) * w,
+                ((i + (16. + t * 0.5)).cos() * 0.5 + 0.5) * h
+            );
+            let color = Color::from_rgb(f as u8, (f + 50) as u8, (f / 2 + 178) as u8);
+            let scale = ((i * 4.5 + t * 0.34).sin() * 0.5 + 0.5) * 4.0;
+            graphics::draw(ctx, &self.circle,
+                DrawParam::default()
+                        .dest(self.cam.world_to_screen_coords(pos))
+                        .scale([scale, scale])
+                        .color(color)
+            )?;
+        }
 
         self.imgui_wrapper.render(ctx, self.hidpi_factor);
 
@@ -91,10 +96,10 @@ impl EventHandler<ggez::GameError> for MainState {
         _repeat: bool,
     ) {
         match keycode {
-            event::KeyCode::Up => self.cam.move_by(Point2::new(0.0, 10.)),
-            event::KeyCode::Left => self.cam.move_by(Point2::new(-10., 0.)),
-            event::KeyCode::Down => self.cam.move_by(Point2::new(0.0, -10.)),
-            event::KeyCode::Right => self.cam.move_by(Point2::new(10., 0.0)),
+            event::KeyCode::Up => self.cam.move_by(Vec2::new(0.0, 10.)),
+            event::KeyCode::Left => self.cam.move_by(Vec2::new(-10., 0.)),
+            event::KeyCode::Down => self.cam.move_by(Vec2::new(0.0, -10.)),
+            event::KeyCode::Right => self.cam.move_by(Vec2::new(10., 0.0)),
             _ => (),
         };
 
@@ -112,31 +117,11 @@ impl EventHandler<ggez::GameError> for MainState {
     fn resize_event(&mut self, ctx: &mut Context, width: f32, height: f32) {
         graphics::set_screen_coordinates(ctx, graphics::Rect::new(0.0, 0.0, width, height))
             .unwrap();
+        self.cam.screen_size.x = width;
+        self.cam.screen_size.y = height;
     }
 
     fn mouse_wheel_event(&mut self, _ctx: &mut Context, x: f32, y: f32) {
         self.imgui_wrapper.update_scroll(x, y);
     }
-}
-
-pub fn main() -> ggez::GameResult {
-    let cb = ggez::ContextBuilder::new("super_simple with imgui", "ggez")
-        .window_setup(
-            conf::WindowSetup::default()
-                .title("super_simple with imgui")
-                .vsync(false),
-        )
-        .window_mode(
-            conf::WindowMode::default().resizable(true), /*.dimensions(750.0, 500.0)*/
-        );
-    let (mut ctx, event_loop) = cb.build()?;
-
-    let hidpi_factor = event_loop
-        .primary_monitor().unwrap()
-        .scale_factor() as f32;
-    println!("main hidpi_factor = {}", hidpi_factor);
-
-    let state = MainState::new(&mut ctx, hidpi_factor)?;
-
-    event::run(ctx, event_loop, state)
 }

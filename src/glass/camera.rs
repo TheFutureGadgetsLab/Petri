@@ -17,33 +17,16 @@
 //! http://www.gamasutra.com/blogs/ItayKeren/20150511/243083/Scroll_Back_The_Theory_and_Practice_of_Cameras_in_SideScrollers.php
 
 // TODO: Debug functions to draw world and camera grid!
+#![allow(dead_code)]
 
 use core::f32;
-
 use ggez;
 use ggez::graphics;
-use ggez::mint;
 use ggez::GameResult;
 use glam::Vec2;
 
 // Used for mint interoperability.
 struct Vector2(Vec2);
-struct MintPoint2(mint::Point2<f32>);
-
-impl Into<mint::Point2<f32>> for Vector2 {
-    fn into(self) -> mint::Point2<f32> {
-        mint::Point2 {
-            x: self.0.x,
-            y: self.0.y,
-        }
-    }
-}
-
-impl Into<Vec2> for MintPoint2 {
-    fn into(self) -> Vec2 {
-        Vec2::new(self.0.x, self.0.y)
-    }
-}
 
 // Hmm.  Could, instead, use a 2d transformation
 // matrix, or create one of such.
@@ -54,9 +37,7 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(screen_width: u32, screen_height: u32, view_width: f32, view_height: f32) -> Self {
-        let screen_size = Vec2::new(screen_width as f32, screen_height as f32);
-        let view_size = Vec2::new(view_width as f32, view_height as f32);
+    pub fn new(screen_size: Vec2, view_size: Vec2) -> Self {
         Camera {
             screen_size: screen_size,
             view_size: view_size,
@@ -94,10 +75,8 @@ impl Camera {
     // p_screen - max_p/2 = max_p - p
     // p_screen - max_p/2 + max_p = -p
     // -p_screen - max_p/2 + max_p = p
-    pub fn screen_to_world_coords(&self, from: (i32, i32)) -> Vec2 {
-        let (sx, sy) = from;
-        let sx = sx as f32;
-        let sy = sy as f32;
+    pub fn screen_to_world_coords(&self, from: Vec2) -> Vec2 {
+        let (sx, sy) = from.into();
         let flipped_x = sx - (self.screen_size.x / 2.0);
         let flipped_y = -sy + self.screen_size.y / 2.0;
         let screen_coords = Vec2::new(flipped_x, flipped_y);
@@ -110,11 +89,6 @@ impl Camera {
 
     pub fn location(&self) -> Vec2 {
         self.view_center
-    }
-
-    fn calculate_dest_point(&self, location: Vec2) -> Vec2 {
-        let (sx, sy) = self.world_to_screen_coords(location).into();
-        Vec2::new(sx as f32, sy as f32)
     }
 }
 
@@ -129,7 +103,7 @@ where
         dest: Vec2,
         rotation: f32,
     ) -> GameResult<()> {
-        let dest = camera.calculate_dest_point(dest);
+        let dest = camera.world_to_screen_coords(dest);
         let draw_param = ggez::graphics::DrawParam::default();
         self.draw(ctx, draw_param.rotation(rotation).dest(dest))
     }
