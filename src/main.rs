@@ -2,7 +2,7 @@ mod imgui_wrapper;
 
 use crate::imgui_wrapper::ImGuiWrapper;
 use ggez::event::{self, EventHandler, KeyCode, KeyMods, MouseButton};
-use ggez::graphics::{self, Color, Mesh};
+use ggez::graphics::{self, Color, DrawParam, Mesh, Transform};
 use ggez::{Context, GameResult, timer, conf};
 use glam::Vec2 as Point2;
 
@@ -24,7 +24,7 @@ impl MainState {
                 ctx,
                 graphics::DrawMode::fill(),
                 Point2::ZERO,
-                100.0,
+                2.0,
                 1.0,
                 Color::WHITE,
             )?
@@ -42,8 +42,20 @@ impl EventHandler<ggez::GameError> for MainState {
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
         graphics::clear(ctx, Color::BLACK);
+        let (w, h) = ggez::graphics::size(ctx);
+        let t = timer::time_since_start(ctx).as_secs_f32();
 
-        graphics::draw(ctx, &self.circle, (Point2::new(self.pos_x, 380.),))?;
+        for i in 1..1000u32 {
+            let i = i as f32;
+            let f = i as i32;
+            let pos = [
+                ((i * 0.6 + t).sin() * 0.5 + 0.5) * w,
+                ((i + (16. + t * 0.5)).cos() * 0.5 + 0.5) * h];
+            let color = Color::from_rgb(f as u8, (f + 50) as u8, (f / 2 + 178) as u8);
+            let scale = ((i * 4.5 + t * 0.34).sin() * 0.5 + 0.5) * 4.0;
+            graphics::draw(ctx, &self.circle,
+                DrawParam::default().dest(pos).scale([scale, scale]).color(color))?;
+        }
 
         self.imgui_wrapper.render(ctx, self.hidpi_factor);
 
