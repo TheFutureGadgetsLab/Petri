@@ -34,14 +34,16 @@ pub struct Camera {
     pub screen_size: Vec2,
     pub view_size: Vec2,
     pub view_center: Vec2,
+    pub zoom: f32
 }
 
 impl Camera {
     pub fn new(screen_size: Vec2, view_size: Vec2) -> Self {
         Camera {
-            screen_size: screen_size,
-            view_size: view_size,
+            screen_size,
+            view_size,
             view_center: Vec2::new(0.0, 0.0),
+            zoom: 1.0
         }
     }
 
@@ -62,7 +64,7 @@ impl Camera {
     /// that's not its job.
     pub fn world_to_screen_coords(&self, from: Vec2) -> Vec2 {
         //let pixels_per_unit = self.screen_size.component_div(&self.view_size);
-        let pixels_per_unit = self.screen_size / self.view_size;
+        let pixels_per_unit = self.screen_size / (self.view_size * self.zoom);
         let view_offset = from - self.view_center;
         let view_scale = view_offset * pixels_per_unit;
 
@@ -80,7 +82,7 @@ impl Camera {
         let flipped_x = sx - (self.screen_size.x / 2.0);
         let flipped_y = -sy + self.screen_size.y / 2.0;
         let screen_coords = Vec2::new(flipped_x, flipped_y);
-        let units_per_pixel = self.view_size / self.screen_size;
+        let units_per_pixel = (self.view_size * self.zoom) / self.screen_size;
         let view_scale = screen_coords * units_per_pixel;
         let view_offset = self.view_center + view_scale;
 
@@ -105,6 +107,11 @@ where
     ) -> GameResult<()> {
         let dest = camera.world_to_screen_coords(dest);
         let draw_param = ggez::graphics::DrawParam::default();
-        self.draw(ctx, draw_param.rotation(rotation).dest(dest))
+        self.draw(ctx, draw_param
+            .rotation(rotation)
+            .dest(dest)
+            .scale([1./camera.zoom, 1./camera.zoom]))
     }
 }
+
+impl<T> CameraDraw for T where T: graphics::Drawable {}
