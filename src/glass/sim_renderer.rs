@@ -5,44 +5,60 @@ use ggez::{Context, GameResult, timer};
 use glam::Vec2 as Vec2;
 
 pub struct SimRenderer {
-    pub circle: Mesh,
     pub cam: Camera,
-    pub click: bool
+    pub click: bool,
+    meshes: Vec<Circ>,
+}
+
+struct Circ {
+    pub circle: Mesh,
+    pub pos: Vec2
 }
 
 impl SimRenderer {
     pub fn new(ctx: &mut Context) -> GameResult<SimRenderer> {
         let win_size: Vec2 = ggez::graphics::size(ctx).into();
 
+        let mut meshes: Vec<Circ> = Vec::new();
+        for _i in 1..1000u32 {
+            meshes.push( Circ {
+                circle: graphics::Mesh::new_circle(
+                    ctx,
+                    graphics::DrawMode::fill(),
+                    Vec2::ZERO,
+                    2.0,
+                    1.0,
+                    Color::WHITE,
+                )?,
+                pos: Vec2::ZERO
+                }
+            );
+        }
+
         let s = SimRenderer {
-            circle: graphics::Mesh::new_circle(
-                ctx,
-                graphics::DrawMode::fill(),
-                Vec2::ZERO,
-                2.0,
-                1.0,
-                Color::WHITE,
-            )?,
             cam: Camera::new(win_size, win_size),
-            click: false
+            click: false,
+            meshes: meshes
         };
         Ok(s)
     }
 
-    pub fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
-        graphics::clear(ctx, Color::BLACK);
+    pub fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
         let w: f32 = 300.0;
         let h: f32 = 300.0;
         let t = timer::time_since_start(ctx).as_secs_f32();
 
-        for i in 1..1000u32 {
+        for (i, circ) in self.meshes.iter_mut().enumerate() {
             let i = i as f32;
-            // let f = i as i32;
-            let pos = Vec2::new(
-                ((i * 0.6 + t).sin() * 0.5 + 0.5) * w,
-                ((i + (16. + t * 0.5)).cos() * 0.5 + 0.5) * h
-            );
-            self.circle.draw_camera(&self.cam, ctx, pos, 0.0)?;
+            circ.pos.x = ((i * 0.6 + t).sin() * 0.5 + 0.5) * w;
+            circ.pos.y = ((i + (16. + t * 0.5)).cos() * 0.5 + 0.5) * h;
+        }
+        Ok(())
+    }
+
+    pub fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
+        for circ in self.meshes.iter() {
+            circ.circle.draw_camera(&self.cam, ctx, circ.pos, 0.0)?;
         }
         Ok(())
     }

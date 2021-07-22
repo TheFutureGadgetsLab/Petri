@@ -1,7 +1,8 @@
 use super::gui_renderer::GUIRenderer;
 use super::sim_renderer::SimRenderer;
 use ggez::event::{EventHandler, KeyCode, KeyMods, MouseButton, EventLoop};
-use ggez::{Context, GameResult, graphics};
+use ggez::{Context, GameResult};
+use ggez::graphics::{self, Color};
 
 pub struct Renderer {
     pub gui: GUIRenderer,
@@ -28,13 +29,16 @@ impl Renderer {
 }
 
 impl EventHandler<ggez::GameError> for Renderer {
-    fn update(&mut self, _ctx: &mut Context) -> GameResult<()> {
-        Ok(())
+    fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
+        self.sim.update(ctx)
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
+        graphics::clear(ctx, Color::BLACK);
+
         self.sim.draw(ctx)?;
         self.gui.draw(ctx, self.hidpi_factor);
+
         graphics::present(ctx)?;
         Ok(())
     }
