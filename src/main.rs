@@ -15,7 +15,7 @@ pub fn main() -> ggez::GameResult {
             conf::WindowMode::default().resizable(true), /*.dimensions(750.0, 500.0)*/
         );
     let (mut ctx, event_loop) = cb.build()?;
-    let state = Renderer::new(&mut ctx, &event_loop)?;
+    let renderer = Renderer::new(&mut ctx, &event_loop)?;
 
-    event::run(ctx, event_loop, state)
+    event::run(ctx, event_loop, renderer)
 }
