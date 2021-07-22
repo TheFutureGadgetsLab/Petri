@@ -21,17 +21,19 @@ struct MouseState {
     wheel_h: f32,
 }
 
-pub struct ImGuiWrapper {
+pub struct GUIRenderer {
     pub imgui: imgui::Context,
     pub renderer: Renderer<gfx_core::format::Rgba8, gfx_device_gl::Resources>,
     last_frame: Instant,
     mouse_state: MouseState,
 }
 
-impl ImGuiWrapper {
+impl GUIRenderer {
     pub fn new(ctx: &mut Context) -> Self {
         // Create the imgui object
         let mut imgui = imgui::Context::create();
+        imgui.set_ini_filename(None);
+
         let (factory, gfx_device, _, _, _) = graphics::gfx_objects(ctx);
 
         // Shaders
@@ -90,7 +92,7 @@ impl ImGuiWrapper {
         }
     }
 
-    pub fn render(&mut self, ctx: &mut Context, hidpi_factor: f32) {
+    pub fn draw(&mut self, ctx: &mut Context, hidpi_factor: f32) {
         // Update mouse
         self.update_mouse();
 
@@ -112,8 +114,8 @@ impl ImGuiWrapper {
         {
             // Window
             Window::new(im_str!("Hello world"))
-                .size([300.0, 600.0], imgui::Condition::FirstUseEver)
-                .position([50.0, 50.0], imgui::Condition::FirstUseEver)
+                .size([300.0, 600.0], imgui::Condition::Always)
+                .position([50.0, 50.0], imgui::Condition::Always)
                 .build(&ui, || {
                     // Your window stuff here!
                     ui.text(im_str!("Hi from this label!"));

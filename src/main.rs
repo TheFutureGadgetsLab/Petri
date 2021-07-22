@@ -1,6 +1,6 @@
 mod glass;
 
-use glass::renderer::MainState;
+use glass::renderer::Renderer;
 use ggez::{conf, event};
 
 
@@ -15,13 +15,7 @@ pub fn main() -> ggez::GameResult {
             conf::WindowMode::default().resizable(true), /*.dimensions(750.0, 500.0)*/
         );
     let (mut ctx, event_loop) = cb.build()?;
-
-    let hidpi_factor = event_loop
-        .primary_monitor().unwrap()
-        .scale_factor() as f32;
-    println!("main hidpi_factor = {}", hidpi_factor);
-
-    let state = MainState::new(&mut ctx, hidpi_factor)?;
+    let state = Renderer::new(&mut ctx, &event_loop)?;
 
     event::run(ctx, event_loop, state)
 }

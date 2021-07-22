@@ -1,5 +1,6 @@
 //! Rendering system for Petri
 
-pub mod camera;
-pub mod imgui_wrapper;
+mod camera;
+mod gui_renderer;
+mod sim_renderer;
 pub mod renderer;
