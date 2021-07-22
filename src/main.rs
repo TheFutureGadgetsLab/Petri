@@ -5,10 +5,10 @@ use ggez::{conf, event};
 
 
 pub fn main() -> ggez::GameResult {
-    let cb = ggez::ContextBuilder::new("super_simple with imgui", "ggez")
+    let cb = ggez::ContextBuilder::new("Petri", "Haydn Jones, Benjamin Mastripolito")
         .window_setup(
             conf::WindowSetup::default()
-                .title("super_simple with imgui")
+                .title("Petri")
                 .vsync(false),
         )
         .window_mode(
