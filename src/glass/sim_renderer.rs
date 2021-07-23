@@ -1,17 +1,20 @@
 use super::camera::*;
 use ggez::event::{self, KeyCode, KeyMods, MouseButton};
-use ggez::graphics::{self, Color};
+use ggez::graphics::{self, Color, MeshBatch};
 use ggez::{Context, GameResult, timer};
 use glam::Vec2 as Vec2;
+use rayon::prelude::*;
 
 pub struct SimRenderer {
     pub cam: Camera,
     pub click: bool,
     circs: Vec<Circ>,
+    mesh_batch: MeshBatch
 }
 
 struct Circ {
-    pub pos: Vec2
+    pub pos: Vec2,
+    pub idx: f32
 }
 
 impl SimRenderer {
@@ -19,33 +22,11 @@ impl SimRenderer {
         let win_size: Vec2 = ggez::graphics::size(ctx).into();
 
         let mut circs: Vec<Circ> = Vec::new();
-        for _i in 1..10000u32 {
-            circs.push( Circ { pos: Vec2::ZERO });
+        for i in 1..100_000u32 {
+            circs.push( Circ { pos: Vec2::ZERO , idx: i as f32});
         }
 
-        let s = SimRenderer {
-            cam: Camera::new(win_size, win_size),
-            click: false,
-            circs
-        };
-        Ok(s)
-    }
-
-    pub fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
-        let w: f32 = 300.0;
-        let h: f32 = 300.0;
-        let t = timer::time_since_start(ctx).as_secs_f32();
-
-        for (i, circ) in self.circs.iter_mut().enumerate() {
-            let i = i as f32;
-            circ.pos.x = ((i * 0.6 + t).sin() * 0.5 + 0.5) * w;
-            circ.pos.y = ((i + (16. + t * 0.5)).cos() * 0.5 + 0.5) * h;
-        }
-        Ok(())
-    }
-
-    pub fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
-        let mut mesh_batch = graphics::MeshBatch::new(
+        let mesh_batch = graphics::MeshBatch::new(
             graphics::Mesh::new_circle(
                 ctx,
                 graphics::DrawMode::fill(), 
@@ -55,13 +36,42 @@ impl SimRenderer {
                 Color::WHITE,
         )?)?;
 
+
+        let s = SimRenderer {
+            cam: Camera::new(win_size, win_size),
+            click: false,
+            circs,
+            mesh_batch: mesh_batch
+        };
+        Ok(s)
+    }
+
+    pub fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
+        let w: f32 = 300.0;
+        let h: f32 = 300.0;
+        let t = timer::time_since_start(ctx).as_secs_f32();
+
+        self.circs.par_chunks_mut(128).for_each(|circs| {
+            for circ in circs.iter_mut() {
+                circ.pos = Vec2::new(
+                    ((circ.idx * 0.6 + t).sin() * 0.5 + 0.5) * w,
+                    ((circ.idx + (16. + t * 0.5)).cos() * 0.5 + 0.5) * h,
+                );
+            }
+        });
+        Ok(())
+    }
+
+    pub fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
+        self.mesh_batch.clear();
+
         for circ in self.circs.iter() {
             let p = graphics::DrawParam::new()
                     .dest(self.cam.world_to_screen_coords(circ.pos));
-                mesh_batch.add(p);
+                self.mesh_batch.add(p);
         }
 
-        mesh_batch.draw(ctx, graphics::DrawParam::default())
+        self.mesh_batch.draw(ctx, graphics::DrawParam::default())
     }
 
     pub fn mouse_motion_event(&mut self, _ctx: &mut Context, _x: f32,_y: f32, _dx: f32, _dy: f32) {
