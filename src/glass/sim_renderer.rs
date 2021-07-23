@@ -45,20 +45,23 @@ impl SimRenderer {
     }
 
     pub fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
-        let mut mesh = graphics::MeshBuilder::new();
-
-        for circ in self.circs.iter() {
-            mesh.circle(
+        let mut mesh_batch = graphics::MeshBatch::new(
+            graphics::Mesh::new_circle(
+                ctx,
                 graphics::DrawMode::fill(), 
-                circ.pos,
+                Vec2::ZERO,
                 2.0,
                 2.0,
                 Color::WHITE,
-            )?;
-        }
-        let mesh = mesh.build(ctx)?;
+        )?)?;
 
-        mesh.draw_camera(&self.cam, ctx, Vec2::ZERO, 0.)
+        for circ in self.circs.iter() {
+            let p = graphics::DrawParam::new()
+                    .dest(self.cam.world_to_screen_coords(circ.pos));
+                mesh_batch.add(p);
+        }
+
+        mesh_batch.draw(ctx, graphics::DrawParam::default())
     }
 
     pub fn mouse_motion_event(&mut self, _ctx: &mut Context, _x: f32,_y: f32, _dx: f32, _dy: f32) {
