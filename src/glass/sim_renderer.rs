@@ -19,8 +19,6 @@ struct Circ {
 
 impl SimRenderer {
     pub fn new(ctx: &mut Context) -> GameResult<SimRenderer> {
-        let win_size: Vec2 = ggez::graphics::size(ctx).into();
-
         let mut circs: Vec<Circ> = Vec::new();
         for i in 1..100_000u32 {
             circs.push( Circ { pos: Vec2::ZERO , idx: i as f32});
@@ -38,7 +36,7 @@ impl SimRenderer {
 
 
         let s = SimRenderer {
-            cam: Camera::new(win_size, win_size),
+            cam: Camera::new(),
             click: false,
             circs,
             mesh_batch: mesh_batch
@@ -67,16 +65,16 @@ impl SimRenderer {
 
         for circ in self.circs.iter() {
             let p = graphics::DrawParam::new()
-                    .dest(self.cam.world_to_screen_coords(circ.pos));
-                self.mesh_batch.add(p);
+                    .dest(circ.pos);
+            self.mesh_batch.add(p);
         }
 
-        self.mesh_batch.draw(ctx, graphics::DrawParam::default())
+        self.mesh_batch.draw(ctx, self.cam.transform)
     }
 
     pub fn mouse_motion_event(&mut self, _ctx: &mut Context, _x: f32,_y: f32, _dx: f32, _dy: f32) {
         if self.click {
-            self.cam.move_by(glam::vec2(-_dx * self.cam.zoom, _dy * self.cam.zoom));
+            self.cam.move_by([-_dx, _dy].into());
         }
     }
 
@@ -113,13 +111,11 @@ impl SimRenderer {
     pub fn resize_event(&mut self, ctx: &mut Context, width: f32, height: f32) {
         graphics::set_screen_coordinates(ctx, graphics::Rect::new(0.0, 0.0, width, height))
             .unwrap();
-        self.cam.screen_size.x = width;
-        self.cam.screen_size.y = height;
     }
 
     pub fn mouse_wheel_event(&mut self, _ctx: &mut Context, _x: f32, y: f32) {
         if y != 0.0 {
-            self.cam.zoom *= 1.0 - y.signum() * 0.1;
+            self.cam.zoom_by(1.0 - y.signum() * 0.1);
         }
     }
 }

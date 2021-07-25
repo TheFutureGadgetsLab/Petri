@@ -17,101 +17,41 @@
 //! http://www.gamasutra.com/blogs/ItayKeren/20150511/243083/Scroll_Back_The_Theory_and_Practice_of_Cameras_in_SideScrollers.php
 
 // TODO: Debug functions to draw world and camera grid!
-#![allow(dead_code)]
-
 use core::f32;
 use ggez;
-use ggez::graphics;
-use ggez::GameResult;
+use ggez::graphics::{DrawParam, Transform};
 use glam::Vec2;
 
-// Used for mint interoperability.
-struct Vector2(Vec2);
-
-// Hmm.  Could, instead, use a 2d transformation
-// matrix, or create one of such.
 pub struct Camera {
-    pub screen_size: Vec2,
-    pub view_size: Vec2,
-    pub view_center: Vec2,
-    pub zoom: f32
+    pub transform: DrawParam
 }
 
 impl Camera {
-    pub fn new(screen_size: Vec2, view_size: Vec2) -> Self {
+    pub fn new() -> Self {
         Camera {
-            screen_size,
-            view_size,
-            view_center: Vec2::new(0.0, 0.0),
-            zoom: 1.0
+            transform: DrawParam::default()
         }
     }
 
     pub fn move_by(&mut self, by: Vec2) {
-        self.view_center.x += by.x;
-        self.view_center.y += by.y;
+        let mut pos = Vec2::ZERO;
+        if let Transform::Values { ref mut dest, .. } = self.transform.trans {
+            pos.x = dest.x - by.x;
+            pos.y = dest.y + by.x;
+        } else {
+            panic!("Cannot set values for a DrawParam matrix")
+        }
+        self.transform = self.transform.dest(pos);
     }
 
-    pub fn move_to(&mut self, to: Vec2) {
-        self.view_center = to;
-    }
-
-    /// Translates a point in world-space to a point in
-    /// screen-space.
-    ///
-    /// Does not do any clipping or anything, since it does
-    /// not know how large the thing that might be drawn is;
-    /// that's not its job.
-    pub fn world_to_screen_coords(&self, from: Vec2) -> Vec2 {
-        //let pixels_per_unit = self.screen_size.component_div(&self.view_size);
-        let pixels_per_unit = self.screen_size / (self.view_size * self.zoom);
-        let view_offset = from - self.view_center;
-        let view_scale = view_offset * pixels_per_unit;
-
-        let x = view_scale.x + self.screen_size.x / 2.0;
-        let y = self.screen_size.y - (view_scale.y + self.screen_size.y / 2.0);
-        Vec2::new(x, y)
-    }
-
-    // p_screen = max_p - p + max_p/2
-    // p_screen - max_p/2 = max_p - p
-    // p_screen - max_p/2 + max_p = -p
-    // -p_screen - max_p/2 + max_p = p
-    pub fn screen_to_world_coords(&self, from: Vec2) -> Vec2 {
-        let (sx, sy) = from.into();
-        let flipped_x = sx - (self.screen_size.x / 2.0);
-        let flipped_y = -sy + self.screen_size.y / 2.0;
-        let screen_coords = Vec2::new(flipped_x, flipped_y);
-        let units_per_pixel = (self.view_size * self.zoom) / self.screen_size;
-        let view_scale = screen_coords * units_per_pixel;
-        let view_offset = self.view_center + view_scale;
-
-        view_offset
-    }
-
-    pub fn location(&self) -> Vec2 {
-        self.view_center
+    pub fn zoom_by(&mut self, by: f32) {
+        let mut new_scale = Vec2::ZERO;
+        if let Transform::Values { ref mut scale, .. } = self.transform.trans {
+            new_scale.x = scale.x * (1.0 - by.signum() * 0.1);
+            new_scale.y = scale.y * (1.0 - by.signum() * 0.1);
+        } else {
+            panic!("Cannot set values for a DrawParam matrix")
+        }
+        self.transform = self.transform.scale(new_scale);
     }
 }
-
-pub trait CameraDraw
-where
-    Self: graphics::Drawable,
-{
-    fn draw_camera(
-        &self,
-        camera: &Camera,
-        ctx: &mut ggez::Context,
-        dest: Vec2,
-        rotation: f32,
-    ) -> GameResult<()> {
-        let dest = camera.world_to_screen_coords(dest);
-        let draw_param = ggez::graphics::DrawParam::default();
-        self.draw(ctx, draw_param
-            .rotation(rotation)
-            .dest(dest)
-            .scale([1./camera.zoom, 1./camera.zoom]))
-    }
-}
-
-impl<T> CameraDraw for T where T: graphics::Drawable {}
