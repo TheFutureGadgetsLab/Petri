@@ -14,7 +14,7 @@ pub struct SimRenderer {
 
 struct Circ {
     pub pos: Vec2,
-    pub idx: f32
+    pub idx: f32,
 }
 
 impl SimRenderer {
@@ -30,7 +30,7 @@ impl SimRenderer {
                 graphics::DrawMode::fill(), 
                 Vec2::ZERO,
                 2.0,
-                2.0,
+                0.01,
                 Color::WHITE,
         )?)?;
 
@@ -74,7 +74,7 @@ impl SimRenderer {
 
     pub fn mouse_motion_event(&mut self, _ctx: &mut Context, _x: f32,_y: f32, _dx: f32, _dy: f32) {
         if self.click {
-            self.cam.move_by([-_dx, _dy].into());
+            self.cam.move_by([_dx, _dy].into());
         }
     }
 
