@@ -6,7 +6,7 @@ use glam::Vec2;
 pub struct Camera {
     pub transform: DrawParam,
     pos: Vec2,
-    scale: Vec2,
+    scale: Vec2
 }
 
 impl Camera {
@@ -23,8 +23,10 @@ impl Camera {
         self.transform = self.transform.dest(self.pos);
     }
 
-    pub fn zoom_by(&mut self, by: f32) {
-        self.scale *= by * (1.0 - by.signum() * 0.1);
-        self.transform = self.transform.scale(self.scale);
+    pub fn zoom_by(&mut self, by: f32, focal_point: Vec2) {
+        self.scale *= by;
+        self.transform = self.transform
+            .scale(self.scale)
+            .dest(focal_point - (focal_point - self.pos) * self.scale);
     }
 }
