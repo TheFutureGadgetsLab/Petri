@@ -17,5 +17,8 @@ bytemuck = { version = "1.7.2", features = [ "derive" ] }
 fps_counter = "2.0.0"
 rayon = "1.5.1"
 
+[build-dependencies]
+glsl-to-spirv = "0.1.7"
+
 [profile.release]
 debug = 1
