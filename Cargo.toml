@@ -16,6 +16,8 @@ pollster = "0.2"
 bytemuck = { version = "1.7.2", features = [ "derive" ] }
 fps_counter = "2.0.0"
 rayon = "1.5.1"
+wgpu-subscriber = "0.1.0"
+
 
 [build-dependencies]
 glsl-to-spirv = "0.1.7"
