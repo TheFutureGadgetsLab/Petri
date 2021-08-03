@@ -104,8 +104,8 @@ impl State {
         };
         let swap_chain = device.create_swap_chain(&surface, &sc_desc);
 
-        let shader_vert = &device.create_shader_module(&wgpu::include_spirv!("particles.vert.spv"));
-        let shader_frag = &device.create_shader_module(&wgpu::include_spirv!("particles.frag.spv"));
+        let shader_vert = &device.create_shader_module(&wgpu::include_spirv!("shaders/particles.vert.spv"));
+        let shader_frag = &device.create_shader_module(&wgpu::include_spirv!("shaders/particles.frag.spv"));
 
         let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             label: Some("Bind group layout"),
