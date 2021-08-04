@@ -1,4 +1,6 @@
-use crate::render_framework;
+use crate::rendering::framework::{
+    PetriEventLoop, Display
+};
 
 use std::time::Duration;
 use bytemuck;
@@ -21,7 +23,7 @@ struct Vertex {
     size: f32
 }
 
-pub struct Renderer {
+pub struct SimRenderer {
     size: winit::dpi::PhysicalSize<u32>,
     globals_ubo: wgpu::Buffer,
     bind_group: wgpu::BindGroup,
@@ -35,8 +37,8 @@ pub struct Renderer {
 
 const N_PARTICLES: usize = 3_000_000;
 
-impl render_framework::PetriEventLoop for Renderer {
-    fn init(display: &render_framework::Display) -> Renderer {
+impl PetriEventLoop for SimRenderer {
+    fn init(display: &Display) -> SimRenderer {
         let size = display.window.inner_size();
 
         let mut vertices = vec![Vertex {position: [0.0; 2], color: [0.0; 4], size: 1.0}; N_PARTICLES];
@@ -91,8 +93,8 @@ impl render_framework::PetriEventLoop for Renderer {
             ],
         });
 
-        let shader_vert = &display.device.create_shader_module(&wgpu::include_spirv!("shaders/particles.vert.spv"));
-        let shader_frag = &display.device.create_shader_module(&wgpu::include_spirv!("shaders/particles.frag.spv"));
+        let shader_vert = &display.device.create_shader_module(&wgpu::include_spirv!("../shaders/particles.vert.spv"));
+        let shader_frag = &display.device.create_shader_module(&wgpu::include_spirv!("../shaders/particles.frag.spv"));
 
         // Create render pipeline
         let render_pipeline_layout =
@@ -142,7 +144,7 @@ impl render_framework::PetriEventLoop for Renderer {
             },
         });
 
-        Renderer {
+        SimRenderer {
             size: size,
             globals_ubo: globals_ubo,
             bind_group: bind_group,
@@ -158,11 +160,14 @@ impl render_framework::PetriEventLoop for Renderer {
     fn process_mouse(&mut self, _dx: f64, _dy: f64) {
     }
 
-    fn resize(&mut self, display: &render_framework::Display) {
+    fn resize(&mut self, display: &Display) {
         self.size = display.window.inner_size();
+        display.queue.write_buffer(&self.globals_ubo, 0, bytemuck::cast_slice(&[Globals {
+            res: [self.size.width as f32, self.size.height as f32]
+        }]));
     }
 
-    fn update(&mut self, display: &render_framework::Display, _dt: Duration) {
+    fn update(&mut self, display: &Display, _dt: Duration) {
         self.time += 0.0005;
         let t = self.time;
         self.vertices.par_chunks_mut(4096).for_each(|vs| {
@@ -176,7 +181,7 @@ impl render_framework::PetriEventLoop for Renderer {
         display.queue.write_buffer(&self.vertex_buffer, 0, bytemuck::cast_slice(&self.vertices));
     }
 
-    fn render(&mut self, display: &mut render_framework::Display) {
+    fn render(&mut self, display: &mut Display) {
         self.i += 1;
         let fps = self.fps_counter.tick();
         if self.i % 100 == 0 {
@@ -190,10 +195,6 @@ impl render_framework::PetriEventLoop for Renderer {
             label: Some("Render Encoder"),
         });
 
-        // Set Globals uniform
-        display.queue.write_buffer(&self.globals_ubo, 0, bytemuck::cast_slice(&[Globals {
-            res: [self.size.width as f32, self.size.height as f32]
-        }]));
 
         { // Set up render pass and associate the render pipeline we made
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {

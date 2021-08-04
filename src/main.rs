@@ -1,8 +1,5 @@
-pub mod render_framework;
-mod renderer;
-
-use renderer::Renderer;
+mod rendering;
 
 fn main() {
-    pollster::block_on(render_framework::run::<Renderer>());
+    pollster::block_on(rendering::run::<rendering::SimRenderer>());
 }
