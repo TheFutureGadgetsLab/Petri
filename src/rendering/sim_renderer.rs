@@ -24,7 +24,6 @@ struct Vertex {
 }
 
 pub struct SimRenderer {
-    size: winit::dpi::PhysicalSize<u32>,
     globals_ubo: wgpu::Buffer,
     bind_group: wgpu::BindGroup,
     vertices: Vec<Vertex>,
@@ -39,8 +38,6 @@ const N_PARTICLES: usize = 3_000_000;
 
 impl PetriEventLoop for SimRenderer {
     fn init(display: &Display) -> SimRenderer {
-        let size = display.window.inner_size();
-
         let mut vertices = vec![Vertex {position: [0.0; 2], color: [0.0; 4], size: 1.0}; N_PARTICLES];
         for (i, v) in vertices.iter_mut().enumerate() {
             let i = i as f32;
@@ -51,13 +48,11 @@ impl PetriEventLoop for SimRenderer {
             v.size = 3.0 + 8.0 * (i.cos() * 0.5 + 0.5);
         }
 
-
         let vertex_buffer = display.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Vertex buffer"),
             contents: bytemuck::cast_slice(&vertices),
             usage: wgpu::BufferUsage::VERTEX | wgpu::BufferUsage::COPY_DST
         });
-
 
         let globals_buffer_byte_size = std::mem::size_of::<Globals>() as wgpu::BufferAddress;
         let globals_ubo = display.device.create_buffer(&wgpu::BufferDescriptor {
@@ -145,7 +140,6 @@ impl PetriEventLoop for SimRenderer {
         });
 
         SimRenderer {
-            size: size,
             globals_ubo: globals_ubo,
             bind_group: bind_group,
             vertices: vertices,
@@ -161,9 +155,9 @@ impl PetriEventLoop for SimRenderer {
     }
 
     fn resize(&mut self, display: &Display) {
-        self.size = display.window.inner_size();
+        let size = display.window.inner_size();
         display.queue.write_buffer(&self.globals_ubo, 0, bytemuck::cast_slice(&[Globals {
-            res: [self.size.width as f32, self.size.height as f32]
+            res: [size.width as f32, size.height as f32]
         }]));
     }
 

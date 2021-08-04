@@ -80,41 +80,23 @@ pub async fn run<D: PetriEventLoop>() {
         .with_title(env!("CARGO_PKG_NAME"))
         .build(&event_loop).unwrap();
     let mut display = Display::new(window).await;
-    let mut demo = D::init(&mut display);
+    let mut app = D::init(&mut display);
     let mut last_update = Instant::now();
-    let mut is_resumed = true;
-    let mut is_focused = true;
-    let mut is_redraw_requested = true;
 
     event_loop.run(move |event, _, control_flow| {
-        *control_flow = if is_resumed && is_focused {
-            ControlFlow::Poll
-        } else {
-            ControlFlow::Wait
-        };
-
         match event {
-            Event::Resumed => is_resumed = true,
-            Event::Suspended => is_resumed = false,
             Event::RedrawRequested(wid) => {
                 if wid == display.window.id() {
                     let now = Instant::now();
                     let dt = now - last_update;
                     last_update = now;
 
-                    demo.update(&mut display, dt);
-                    demo.render(&mut display);
-                    is_redraw_requested = false;
+                    app.update(&mut display, dt);
+                    app.render(&mut display);
                 }
             }
             Event::MainEventsCleared => {
-                if is_focused && is_resumed && !is_redraw_requested {
-                    display.window.request_redraw();
-                    is_redraw_requested = true;
-                } else {
-                    // Freeze time while the demo is not in the foreground
-                    last_update = Instant::now();
-                }
+                display.window.request_redraw();
             }
             Event::WindowEvent {
                 event, window_id, ..
@@ -122,14 +104,13 @@ pub async fn run<D: PetriEventLoop>() {
                 if window_id == display.window.id() {
                     match event {
                         WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
-                        WindowEvent::Focused(f) => is_focused = f,
                         WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
                             display.resize(new_inner_size.width, new_inner_size.height);
-                            demo.resize(&mut display);
+                            app.resize(&mut display);
                         }
                         WindowEvent::Resized(new_inner_size) => {
                             display.resize(new_inner_size.width, new_inner_size.height);
-                            demo.resize(&mut display);
+                            app.resize(&mut display);
                         }
                         _ => {}
                     }
