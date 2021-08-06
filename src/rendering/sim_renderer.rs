@@ -2,8 +2,10 @@ use crate::{rendering::framework::{
         PetriEventLoop, Display
     }, simulation::{RigidCircle, Simulation}};
 
+use wgpu::ShaderModuleDescriptor;
 use bytemuck;
 use rayon::iter::ParallelIterator;
+use shaderc::CompileOptions;
 use wgpu::util::DeviceExt;
 use legion::*;
 
@@ -71,9 +73,39 @@ impl PetriEventLoop for SimRenderer {
                 },
             ],
         });
+        let mut options = CompileOptions::new().unwrap();
+        options.set_optimization_level(shaderc::OptimizationLevel::Performance);
 
-        let shader_vert = &display.device.create_shader_module(&wgpu::include_spirv!("shaders/particles.vert.spv"));
-        let shader_frag = &display.device.create_shader_module(&wgpu::include_spirv!("shaders/particles.frag.spv"));
+        let mut compiler = shaderc::Compiler::new().unwrap();
+        let vert_comp = compiler.compile_into_spirv(
+            &include_str!("shaders/particles.vert"),
+            shaderc::ShaderKind::Vertex,
+            &"shaders/particles.vert",
+            "main",
+            Some(&options),
+        ).unwrap();
+        let frag_comp = compiler.compile_into_spirv(
+            &include_str!("shaders/particles.frag"),
+            shaderc::ShaderKind::Fragment,
+            &"shaders/particles.frag",
+            "main",
+            Some(&options),
+        ).unwrap();
+
+        let shader_frag = &display.device.create_shader_module(
+            &ShaderModuleDescriptor {
+                    label: Some("Fragment shader"),
+                    source: wgpu::util::make_spirv(frag_comp.as_binary_u8()),
+                    flags: wgpu::ShaderFlags::VALIDATION,
+            }
+        );
+        let shader_vert = &display.device.create_shader_module(
+            &ShaderModuleDescriptor {
+                    label: Some("Vertex shader"),
+                    source: wgpu::util::make_spirv(vert_comp.as_binary_u8()),
+                    flags: wgpu::ShaderFlags::VALIDATION,
+            }
+        );
 
         // Create render pipeline
         let render_pipeline_layout =

@@ -1,16 +1,12 @@
 [package]
-name = "wgpu_test"
+name = "petri"
 version = "0.1.0"
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-image = "0.23"
 winit = "0.25"
-cgmath = "0.18"
-env_logger = "0.9.0"
-log = "0.4"
 wgpu = "0.9"
 pollster = "0.2"
 bytemuck = { version = "1.7.2", features = [ "derive" ] }
@@ -20,9 +16,4 @@ wgpu-subscriber = "0.1.0"
 rand = "0.8.4"
 glam = "0.17.3"
 legion = "0.4.0"
-
-[build-dependencies]
 shaderc = "0.7.2"
-
-[profile.release]
-debug = 1
