@@ -8,7 +8,7 @@ use crate::{
     simulation::Simulation
 };
 
-use wgpu::ShaderModuleDescriptor;
+use wgpu::{ShaderModuleDescriptor, util::StagingBelt};
 use bytemuck;
 use shaderc::CompileOptions;
 
@@ -24,6 +24,7 @@ pub struct SimRenderer {
     bind_group: wgpu::BindGroup,
     render_pipeline: wgpu::RenderPipeline,
     vertex_buffer: VertexBuffer,
+    belt: StagingBelt
 }
 
 impl PetriEventLoop for SimRenderer {
@@ -147,7 +148,8 @@ impl PetriEventLoop for SimRenderer {
             globals_ubo: globals_ubo,
             bind_group: bind_group,
             render_pipeline: render_pipeline,
-            vertex_buffer: VertexBuffer::default(display)
+            vertex_buffer: VertexBuffer::default(display),
+            belt: StagingBelt::new(1024)
         }
     }
 
@@ -166,7 +168,6 @@ impl PetriEventLoop for SimRenderer {
     }
 
     fn render(&mut self, display: &mut Display, simulation: &Simulation) {
-        let n_vertices = self.vertex_buffer.fill(display, &simulation);
 
         let frame = display
             .swap_chain
@@ -175,6 +176,8 @@ impl PetriEventLoop for SimRenderer {
         let mut encoder = display.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
             label: Some("Render Encoder"),
         });
+
+        let n_vertices = self.vertex_buffer.fill(&mut encoder, &display, &simulation);
 
 
         { // Set up render pass and associate the render pipeline we made
@@ -206,5 +209,8 @@ impl PetriEventLoop for SimRenderer {
         // Submit will accept anything that implements IntoIter
         // Submits the command buffer
         display.queue.submit(std::iter::once(encoder.finish()));
+
+        // Recall all the used buffers
+        display.spawner.spawn_local(self.belt.recall());
     }
 }

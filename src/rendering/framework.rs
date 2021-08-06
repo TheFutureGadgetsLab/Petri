@@ -1,6 +1,7 @@
 // Heavily borrowed from Learn-WGPU
 // https://github.com/sotrh/learn-wgpu/tree/master/code/showcase/framework
 
+use std::future::Future;
 use std::time::{Duration, Instant};
 
 use winit::event::*;
@@ -10,17 +11,39 @@ use fps_counter;
 
 use crate::simulation::{Config, Simulation};
 
-pub struct Display {
+pub struct Spawner<'a> {
+    executor: async_executor::LocalExecutor<'a>,
+}
+
+impl<'a> Spawner<'a> {
+    fn new() -> Self {
+        Self {
+            executor: async_executor::LocalExecutor::new(),
+        }
+    }
+
+    #[allow(dead_code)]
+    pub fn spawn_local(&self, future: impl Future<Output = ()> + 'a) {
+        self.executor.spawn(future).detach();
+    }
+
+    fn run_until_stalled(&self) {
+        while self.executor.try_tick() {}
+    }
+}
+
+pub struct Display<'a> {
     surface: wgpu::Surface,
     pub window: Window,
     pub sc_desc: wgpu::SwapChainDescriptor,
     pub swap_chain: wgpu::SwapChain,
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
+    pub spawner: Spawner<'a>
 }
 
-impl Display {
-    pub async fn new(window: Window) -> Display {
+impl Display<'_> {
+    pub async fn new(window: Window) -> Display<'static> {
         let size = window.inner_size();
         let instance = wgpu::Instance::new(wgpu::BackendBit::PRIMARY);
         let surface = unsafe { instance.create_surface(&window) };
@@ -58,6 +81,7 @@ impl Display {
             swap_chain,
             device,
             queue,
+            spawner: Spawner::new()
         }
     }
 
@@ -92,7 +116,7 @@ pub async fn run<D: PetriEventLoop>(config: Config) {
     let mut app = D::init(&mut display);
 
     let mut last_render = Instant::now();
-    let render_time = Duration::new(0, 6944000); // 144 fps
+    let render_time = Duration::new(0, 6800000); // 144 fps
 
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Poll;
@@ -112,12 +136,14 @@ pub async fn run<D: PetriEventLoop>(config: Config) {
             }
             // Updating simulation and queuing a redraw
             Event::MainEventsCleared => {
-                simulation.update();                    
+                simulation.update();
 
                 // Queue a redraw if we need
                 if (Instant::now() - last_render) >= render_time {
                     display.window.request_redraw();
                 }
+                
+                display.spawner.run_until_stalled();
             }
             Event::WindowEvent {
                 event, window_id, ..

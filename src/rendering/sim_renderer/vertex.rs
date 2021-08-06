@@ -1,9 +1,11 @@
 use crate::simulation::{RigidCircle, Simulation};
 use crate::rendering::framework::Display;
 use legion::*;
+use wgpu::CommandEncoder;
+use wgpu::util::StagingBelt;
 
 #[repr(C)]
-#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable, Default)]
 pub struct Vertex {
     position: [f32; 2],
     color: [f32; 4],
@@ -22,6 +24,8 @@ impl From<&RigidCircle> for Vertex {
 pub struct VertexBuffer {
     pub buf: wgpu::Buffer,
     pub size: usize,
+    vertices: Vec<Vertex>,
+    belt: StagingBelt,
 }
 
 impl VertexBuffer {
@@ -38,7 +42,9 @@ impl VertexBuffer {
 
         VertexBuffer {
             buf: vertex_buffer,
-            size: size
+            size: size,
+            vertices: vec![Vertex::default(); size],
+            belt: StagingBelt::new(1024),
         }
     }
 
@@ -53,15 +59,24 @@ impl VertexBuffer {
         self.size = size;
     }
 
-    pub fn fill(&mut self, display: &Display, simulation: &Simulation) -> u32 {
-        let vertices: Vec<Vertex> = <&RigidCircle>::query().iter(&simulation.world).map(|circ| circ.into()).collect();
-
-        if self.size < vertices.len() {
-            self.reallocate(display, vertices.len());
+    pub fn fill(&mut self, encoder: &mut CommandEncoder, display: &Display, simulation: &Simulation) -> u32 {
+        for (i, circ) in <&RigidCircle>::query().iter(&simulation.world).enumerate() {
+            self.vertices[i] = circ.into();
         }
 
-        display.queue.write_buffer(&self.buf, 0, bytemuck::cast_slice(&vertices));
 
-        vertices.len() as u32
+        if self.size < self.vertices.len() {
+            self.reallocate(display, self.vertices.len());
+        }
+
+        let bufsize = (std::mem::size_of::<Vertex>() * self.size) as u64;
+
+        self.belt.write_buffer(encoder, &self.buf, 0,
+            wgpu::BufferSize::new(bufsize).unwrap(), &display.device)
+            .copy_from_slice(bytemuck::cast_slice(&self.vertices));
+
+        // display.queue.write_buffer(&self.buf, 0, bytemuck::cast_slice(&self.vertices));
+
+        self.vertices.len() as u32
     }
 }
