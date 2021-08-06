@@ -1,15 +1,9 @@
 use legion::*;
-use super::{
-    components,
-    physics::PhysicsSystem, 
-    time::Time, 
-    config::Config
-};
+use super::{RigidCircle, components, config::Config, time::Time};
 
 pub struct Simulation {
     pub world: World,
     pub resources: Resources,
-    pub physics: PhysicsSystem,
 }
 
 impl Simulation {
@@ -20,23 +14,25 @@ impl Simulation {
         resources.insert(Time::default());
         resources.insert(conf);
 
-        world.push((components::Boundary::new(conf),));
-
         for _i in 1..conf.num_particles {
             world.push( (
-                components::RigidCircle::new_rand(conf, 1.0),
+                components::RigidCircle::new_rand(conf, 10.0),
             ));
         }
 
         Simulation {
             world,
             resources,
-            physics: PhysicsSystem::default()
         }
     }
 
     pub fn update(&mut self) {
         self.resources.get_mut::<Time>().unwrap().tick();
-        self.physics.step(&mut self.world, &mut self.resources);
+
+        let mut query = <&mut RigidCircle>::query();
+
+        query.par_for_each_mut(&mut self.world, |circ| {
+            circ.pos += circ.vel;
+        });
     }
 }

@@ -8,26 +8,26 @@ fn main() {
 
     let mut compiler = shaderc::Compiler::new().unwrap();
 
-    let vs = include_str!("src/shaders/particles.vert");
+    let vs = include_str!("src/rendering/shaders/particles.vert");
     let vs_compiled = compiler.compile_into_spirv(
         vs, shaderc::ShaderKind::Vertex,
-        "src/shaders/particles.vert",
+        "src/rendering/shaders/particles.vert",
         "main",
         None).unwrap();
     fs::write(
-        &Path::new(&manifest_dir).join("src/shaders/particles.vert.spv"),
+        &Path::new(&manifest_dir).join("src/rendering/shaders/particles.vert.spv"),
         vs_compiled.as_binary_u8(),
     )
     .unwrap();
 
-    let fs = include_str!("src/shaders/particles.frag");
+    let fs = include_str!("src/rendering/shaders/particles.frag");
     let fs_compiled = compiler.compile_into_spirv(
         fs, shaderc::ShaderKind::Fragment,
-        "src/shaders/particles.frag",
+        "src/rendering/shaders/particles.frag",
         "main",
         None).unwrap();
     fs::write(
-        &Path::new(&manifest_dir).join("src/shaders/particles.frag.spv"),
+        &Path::new(&manifest_dir).join("src/rendering/shaders/particles.frag.spv"),
         fs_compiled.as_binary_u8(),
     )
     .unwrap();

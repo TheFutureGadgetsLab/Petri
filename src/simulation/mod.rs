@@ -1,6 +1,5 @@
 pub mod simulation;
 mod time;
-mod physics;
 mod config;
 mod components;
 

@@ -1,13 +1,11 @@
-use crate::rendering::framework::{
-    PetriEventLoop, Display
-};
+use crate::{rendering::framework::{
+        PetriEventLoop, Display
+    }, simulation::{RigidCircle, Simulation}};
 
-use std::time::Duration;
 use bytemuck;
-use fps_counter;
+use rayon::iter::ParallelIterator;
 use wgpu::util::DeviceExt;
-use rayon::prelude::*;
-
+use legion::*;
 
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -22,38 +20,24 @@ struct Vertex {
     color: [f32; 4],
     size: f32
 }
+impl From<&RigidCircle> for Vertex {
+    fn from(item: &RigidCircle) -> Vertex {
+        Vertex {
+            position: item.pos.into(),
+            color: item.color,
+            size: item.radius
+        }
+    }
+}
 
 pub struct SimRenderer {
     globals_ubo: wgpu::Buffer,
     bind_group: wgpu::BindGroup,
-    vertices: Vec<Vertex>,
     render_pipeline: wgpu::RenderPipeline,
-    vertex_buffer: wgpu::Buffer,
-    time: f32,
-    i: i32,
-    fps_counter: fps_counter::FPSCounter,
 }
-
-const N_PARTICLES: usize = 3_000_000;
 
 impl PetriEventLoop for SimRenderer {
     fn init(display: &Display) -> SimRenderer {
-        let mut vertices = vec![Vertex {position: [0.0; 2], color: [0.0; 4], size: 1.0}; N_PARTICLES];
-        for (i, v) in vertices.iter_mut().enumerate() {
-            let i = i as f32;
-            v.position = [
-                (i * 0.171982347).cos(),
-                (0.612834028 + i * 0.131234892).sin()];
-            v.color = [(i * 0.1416) % 1.0, (i * 0.336) % 1.0, (i * 0.0714) % 1.0, 1.0];
-            v.size = 3.0 + 8.0 * (i.cos() * 0.5 + 0.5);
-        }
-
-        let vertex_buffer = display.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Vertex buffer"),
-            contents: bytemuck::cast_slice(&vertices),
-            usage: wgpu::BufferUsage::VERTEX | wgpu::BufferUsage::COPY_DST
-        });
-
         let globals_buffer_byte_size = std::mem::size_of::<Globals>() as wgpu::BufferAddress;
         let globals_ubo = display.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Globals ubo"),
@@ -88,8 +72,8 @@ impl PetriEventLoop for SimRenderer {
             ],
         });
 
-        let shader_vert = &display.device.create_shader_module(&wgpu::include_spirv!("../shaders/particles.vert.spv"));
-        let shader_frag = &display.device.create_shader_module(&wgpu::include_spirv!("../shaders/particles.frag.spv"));
+        let shader_vert = &display.device.create_shader_module(&wgpu::include_spirv!("shaders/particles.vert.spv"));
+        let shader_frag = &display.device.create_shader_module(&wgpu::include_spirv!("shaders/particles.frag.spv"));
 
         // Create render pipeline
         let render_pipeline_layout =
@@ -142,12 +126,7 @@ impl PetriEventLoop for SimRenderer {
         SimRenderer {
             globals_ubo: globals_ubo,
             bind_group: bind_group,
-            vertices: vertices,
             render_pipeline: render_pipeline,
-            vertex_buffer: vertex_buffer,
-            time: 0.,
-            i: 0,
-            fps_counter: fps_counter::FPSCounter::default(),
         }
     }
 
@@ -161,26 +140,19 @@ impl PetriEventLoop for SimRenderer {
         }]));
     }
 
-    fn update(&mut self, display: &Display, _dt: Duration) {
-        self.time += 0.0005;
-        let t = self.time;
-        self.vertices.par_chunks_mut(4096).for_each(|vs| {
-            for (i, v) in vs.iter_mut().enumerate() {
-                let i = i as f32;
-                v.position = [
-                    (t * v.color[0] * (v.color[2] - 0.5) * 1.13 + i * 0.171982347).cos(),
-                    (t * v.color[1] * (v.color[3] - 0.5) * 2.31 + 0.612834028 + i * 0.131234892).sin()];
-            }
-        });
-        display.queue.write_buffer(&self.vertex_buffer, 0, bytemuck::cast_slice(&self.vertices));
+    fn update(&mut self, _display: &Display) {
+        //display.queue.write_buffer(&self.vertex_buffer, 0, bytemuck::cast_slice(&self.vertices));
     }
 
-    fn render(&mut self, display: &mut Display) {
-        self.i += 1;
-        let fps = self.fps_counter.tick();
-        if self.i % 100 == 0 {
-            println!("{}", fps);
-        }
+    fn render(&mut self, display: &mut Display, simulation: &Simulation) {
+        let vertices: Vec<Vertex> = <&RigidCircle>::query().par_iter(&simulation.world).map(|circ| circ.into()).collect();
+
+        let vertex_buffer = display.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Vertex buffer"),
+            contents: bytemuck::cast_slice(&vertices),
+            usage: wgpu::BufferUsage::VERTEX | wgpu::BufferUsage::COPY_DST
+        });
+
         let frame = display
             .swap_chain
             .get_current_frame().unwrap()
@@ -211,9 +183,9 @@ impl PetriEventLoop for SimRenderer {
                 depth_stencil_attachment: None,
             });
             render_pass.set_pipeline(&self.render_pipeline);
-            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+            render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
             render_pass.set_bind_group(0, &self.bind_group, &[]);
-            render_pass.draw(0..(N_PARTICLES as u32), 0..1);
+            render_pass.draw(0..(vertices.len() as u32), 0..1);
         }
     
         // Submit will accept anything that implements IntoIter
