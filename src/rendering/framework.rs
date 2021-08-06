@@ -141,9 +141,8 @@ pub async fn run<D: PetriEventLoop>(config: Config) {
                 // Queue a redraw if we need
                 if (Instant::now() - last_render) >= render_time {
                     display.window.request_redraw();
+                    display.spawner.run_until_stalled();
                 }
-                
-                display.spawner.run_until_stalled();
             }
             Event::WindowEvent {
                 event, window_id, ..

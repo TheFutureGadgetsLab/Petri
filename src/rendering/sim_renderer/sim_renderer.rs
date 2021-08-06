@@ -8,7 +8,7 @@ use crate::{
     simulation::Simulation
 };
 
-use wgpu::{ShaderModuleDescriptor, util::StagingBelt};
+use wgpu::{ShaderModuleDescriptor};
 use bytemuck;
 use shaderc::CompileOptions;
 
@@ -24,7 +24,6 @@ pub struct SimRenderer {
     bind_group: wgpu::BindGroup,
     render_pipeline: wgpu::RenderPipeline,
     vertex_buffer: VertexBuffer,
-    belt: StagingBelt
 }
 
 impl PetriEventLoop for SimRenderer {
@@ -149,7 +148,6 @@ impl PetriEventLoop for SimRenderer {
             bind_group: bind_group,
             render_pipeline: render_pipeline,
             vertex_buffer: VertexBuffer::default(display),
-            belt: StagingBelt::new(1024)
         }
     }
 
@@ -211,6 +209,6 @@ impl PetriEventLoop for SimRenderer {
         display.queue.submit(std::iter::once(encoder.finish()));
 
         // Recall all the used buffers
-        display.spawner.spawn_local(self.belt.recall());
+        display.spawner.spawn_local(self.vertex_buffer.belt.recall());
     }
 }

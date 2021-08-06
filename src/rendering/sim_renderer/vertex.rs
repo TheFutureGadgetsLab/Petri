@@ -25,7 +25,7 @@ pub struct VertexBuffer {
     pub buf: wgpu::Buffer,
     pub size: usize,
     vertices: Vec<Vertex>,
-    belt: StagingBelt,
+    pub belt: StagingBelt,
 }
 
 impl VertexBuffer {
@@ -44,7 +44,7 @@ impl VertexBuffer {
             buf: vertex_buffer,
             size: size,
             vertices: vec![Vertex::default(); size],
-            belt: StagingBelt::new(1024),
+            belt: StagingBelt::new(3_000_000),
         }
     }
 
@@ -70,9 +70,15 @@ impl VertexBuffer {
 
         let bufsize = (std::mem::size_of::<Vertex>() * self.size) as u64;
 
-        self.belt.write_buffer(encoder, &self.buf, 0,
-            wgpu::BufferSize::new(bufsize).unwrap(), &display.device)
+        self.belt.write_buffer(
+            encoder, 
+            &self.buf,
+            0,
+            wgpu::BufferSize::new(bufsize).unwrap(), 
+            &display.device
+        )
             .copy_from_slice(bytemuck::cast_slice(&self.vertices));
+
         self.belt.finish();
 
         self.vertices.len() as u32
