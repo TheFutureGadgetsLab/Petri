@@ -4,9 +4,7 @@ use crate::{rendering::framework::{
 
 use wgpu::ShaderModuleDescriptor;
 use bytemuck;
-use rayon::iter::ParallelIterator;
 use shaderc::CompileOptions;
-use wgpu::util::DeviceExt;
 use legion::*;
 
 #[repr(C)]
@@ -32,10 +30,54 @@ impl From<&RigidCircle> for Vertex {
     }
 }
 
+struct VertexBuffer {
+    pub buf: wgpu::Buffer,
+    pub size: usize,
+}
+
+impl VertexBuffer {
+    pub fn default(display: &Display) -> VertexBuffer {
+        let size: usize = 3_000_000;
+        let init_alloc = std::mem::size_of::<Vertex>() * size;
+
+        let vertex_buffer = display.device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("Vertex buffer"),
+            size: init_alloc as wgpu::BufferAddress,
+            usage: wgpu::BufferUsage::VERTEX | wgpu::BufferUsage::COPY_DST,
+            mapped_at_creation: false,
+        });
+
+        VertexBuffer {
+            buf: vertex_buffer,
+            size: size
+        }
+    }
+
+    pub fn reallocate(&mut self, display: &Display, size: usize) {
+        let init_alloc = std::mem::size_of::<Vertex>() * size;
+        self.buf = display.device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("Vertex buffer"),
+            size: init_alloc as wgpu::BufferAddress,
+            usage: wgpu::BufferUsage::VERTEX | wgpu::BufferUsage::COPY_DST,
+            mapped_at_creation: false,
+        });
+        self.size = size;
+    }
+
+    pub fn fill(&mut self, display: &Display, vertices: &Vec<Vertex>) {
+        if self.size < vertices.len() {
+            self.reallocate(display, vertices.len());
+        }
+
+        display.queue.write_buffer(&self.buf, 0, bytemuck::cast_slice(&vertices));
+    }
+}
+
 pub struct SimRenderer {
     globals_ubo: wgpu::Buffer,
     bind_group: wgpu::BindGroup,
     render_pipeline: wgpu::RenderPipeline,
+    vertex_buffer: VertexBuffer,
 }
 
 impl PetriEventLoop for SimRenderer {
@@ -159,6 +201,7 @@ impl PetriEventLoop for SimRenderer {
             globals_ubo: globals_ubo,
             bind_group: bind_group,
             render_pipeline: render_pipeline,
+            vertex_buffer: VertexBuffer::default(display)
         }
     }
 
@@ -177,13 +220,9 @@ impl PetriEventLoop for SimRenderer {
     }
 
     fn render(&mut self, display: &mut Display, simulation: &Simulation) {
-        let vertices: Vec<Vertex> = <&RigidCircle>::query().par_iter(&simulation.world).map(|circ| circ.into()).collect();
+        let vertices: Vec<Vertex> = <&RigidCircle>::query().iter(&simulation.world).map(|circ| circ.into()).collect();
 
-        let vertex_buffer = display.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Vertex buffer"),
-            contents: bytemuck::cast_slice(&vertices),
-            usage: wgpu::BufferUsage::VERTEX | wgpu::BufferUsage::COPY_DST
-        });
+        self.vertex_buffer.fill(display, &vertices);
 
         let frame = display
             .swap_chain
@@ -215,7 +254,7 @@ impl PetriEventLoop for SimRenderer {
                 depth_stencil_attachment: None,
             });
             render_pass.set_pipeline(&self.render_pipeline);
-            render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
+            render_pass.set_vertex_buffer(0, self.vertex_buffer.buf.slice(..));
             render_pass.set_bind_group(0, &self.bind_group, &[]);
             render_pass.draw(0..(vertices.len() as u32), 0..1);
         }
