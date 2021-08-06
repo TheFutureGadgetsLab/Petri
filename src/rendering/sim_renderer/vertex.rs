@@ -59,11 +59,10 @@ impl VertexBuffer {
         self.size = size;
     }
 
-    pub fn fill(&mut self, encoder: &mut CommandEncoder, display: &Display, simulation: &Simulation) -> u32 {
+    pub fn update(&mut self, encoder: &mut CommandEncoder, display: &Display, simulation: &Simulation) -> u32 {
         for (i, circ) in <&RigidCircle>::query().iter(&simulation.world).enumerate() {
             self.vertices[i] = circ.into();
         }
-
 
         if self.size < self.vertices.len() {
             self.reallocate(display, self.vertices.len());
@@ -74,8 +73,7 @@ impl VertexBuffer {
         self.belt.write_buffer(encoder, &self.buf, 0,
             wgpu::BufferSize::new(bufsize).unwrap(), &display.device)
             .copy_from_slice(bytemuck::cast_slice(&self.vertices));
-
-        // display.queue.write_buffer(&self.buf, 0, bytemuck::cast_slice(&self.vertices));
+        self.belt.finish();
 
         self.vertices.len() as u32
     }

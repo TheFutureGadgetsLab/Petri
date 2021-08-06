@@ -177,7 +177,7 @@ impl PetriEventLoop for SimRenderer {
             label: Some("Render Encoder"),
         });
 
-        let n_vertices = self.vertex_buffer.fill(&mut encoder, &display, &simulation);
+        let n_vertices = self.vertex_buffer.update(&mut encoder, &display, &simulation);
 
 
         { // Set up render pass and associate the render pipeline we made
