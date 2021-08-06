@@ -1,11 +1,16 @@
-use crate::{rendering::framework::{
-        PetriEventLoop, Display
-    }, simulation::{RigidCircle, Simulation}};
+use crate::{
+    rendering::{
+        framework::{
+            PetriEventLoop, Display
+        }, 
+        sim_renderer::{VertexBuffer, Vertex},
+    },
+    simulation::Simulation
+};
 
 use wgpu::ShaderModuleDescriptor;
 use bytemuck;
 use shaderc::CompileOptions;
-use legion::*;
 
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -13,65 +18,6 @@ struct Globals {
     res: [f32; 2],
 }
 
-#[repr(C)]
-#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-struct Vertex {
-    position: [f32; 2],
-    color: [f32; 4],
-    size: f32
-}
-impl From<&RigidCircle> for Vertex {
-    fn from(item: &RigidCircle) -> Vertex {
-        Vertex {
-            position: item.pos.into(),
-            color: item.color,
-            size: item.radius
-        }
-    }
-}
-
-struct VertexBuffer {
-    pub buf: wgpu::Buffer,
-    pub size: usize,
-}
-
-impl VertexBuffer {
-    pub fn default(display: &Display) -> VertexBuffer {
-        let size: usize = 3_000_000;
-        let init_alloc = std::mem::size_of::<Vertex>() * size;
-
-        let vertex_buffer = display.device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("Vertex buffer"),
-            size: init_alloc as wgpu::BufferAddress,
-            usage: wgpu::BufferUsage::VERTEX | wgpu::BufferUsage::COPY_DST,
-            mapped_at_creation: false,
-        });
-
-        VertexBuffer {
-            buf: vertex_buffer,
-            size: size
-        }
-    }
-
-    pub fn reallocate(&mut self, display: &Display, size: usize) {
-        let init_alloc = std::mem::size_of::<Vertex>() * size;
-        self.buf = display.device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("Vertex buffer"),
-            size: init_alloc as wgpu::BufferAddress,
-            usage: wgpu::BufferUsage::VERTEX | wgpu::BufferUsage::COPY_DST,
-            mapped_at_creation: false,
-        });
-        self.size = size;
-    }
-
-    pub fn fill(&mut self, display: &Display, vertices: &Vec<Vertex>) {
-        if self.size < vertices.len() {
-            self.reallocate(display, vertices.len());
-        }
-
-        display.queue.write_buffer(&self.buf, 0, bytemuck::cast_slice(&vertices));
-    }
-}
 
 pub struct SimRenderer {
     globals_ubo: wgpu::Buffer,
@@ -220,9 +166,7 @@ impl PetriEventLoop for SimRenderer {
     }
 
     fn render(&mut self, display: &mut Display, simulation: &Simulation) {
-        let vertices: Vec<Vertex> = <&RigidCircle>::query().iter(&simulation.world).map(|circ| circ.into()).collect();
-
-        self.vertex_buffer.fill(display, &vertices);
+        let n_vertices = self.vertex_buffer.fill(display, &simulation);
 
         let frame = display
             .swap_chain
@@ -256,7 +200,7 @@ impl PetriEventLoop for SimRenderer {
             render_pass.set_pipeline(&self.render_pipeline);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.buf.slice(..));
             render_pass.set_bind_group(0, &self.bind_group, &[]);
-            render_pass.draw(0..(vertices.len() as u32), 0..1);
+            render_pass.draw(0..n_vertices, 0..1);
         }
     
         // Submit will accept anything that implements IntoIter
