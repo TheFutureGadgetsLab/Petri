@@ -1,6 +1,8 @@
 // Heavily borrowed from Learn-WGPU
 // https://github.com/sotrh/learn-wgpu/tree/master/code/showcase/framework
 
+use std::time::{Duration, Instant};
+
 use winit::event::*;
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::{Window, WindowBuilder};
@@ -87,28 +89,35 @@ pub async fn run<D: PetriEventLoop>(config: Config) {
         .with_title("Petri")
         .build(&event_loop).unwrap();
     let mut display = Display::new(window).await;
-
     let mut app = D::init(&mut display);
 
+    let mut last_render = Instant::now();
+    let render_time = Duration::new(0, 6944000); // 144 fps
+
     event_loop.run(move |event, _, control_flow| {
-
+        *control_flow = ControlFlow::Poll;
         match event {
-            Event::RedrawRequested(wid) => {
-                if wid == display.window.id() {
-                    tick += 1;
-                    let fps = fps_counter.tick();
-                    if tick % 100 == 0 {
-                        println!("{}", fps);
-                    }
-
-                    simulation.update();
-
-                    app.update(&mut display);
-                    app.render(&mut display, &mut simulation);
+            // Rendering
+            Event::RedrawRequested(_) => {
+                tick += 1;
+                let fps = fps_counter.tick();
+                if tick % 100 == 0 {
+                    println!("{}", fps);
                 }
+
+                app.update(&mut display);
+                app.render(&mut display, &mut simulation);
+
+                last_render = Instant::now();
             }
+            // Updating simulation and queuing a redraw
             Event::MainEventsCleared => {
-                display.window.request_redraw();
+                simulation.update();                    
+
+                // Queue a redraw if we need
+                if (Instant::now() - last_render) >= render_time {
+                    display.window.request_redraw();
+                }
             }
             Event::WindowEvent {
                 event, window_id, ..
