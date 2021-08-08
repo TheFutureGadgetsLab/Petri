@@ -144,6 +144,9 @@ pub async fn run<Sim: PetriEventLoop, GUI: PetriEventLoop>(config: Config) {
                 let mut encoder = display.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
                     label: Some("Render Encoder"),
                 });
+        
+                app.render_setup(&display, &mut encoder, &simulation);
+                gui.render_setup(&display, &mut encoder, &simulation);
 
                 {
                     let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
