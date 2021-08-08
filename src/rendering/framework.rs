@@ -4,6 +4,7 @@
 use std::future::Future;
 use std::time::{Duration, Instant};
 
+use wgpu::{CommandEncoder, RenderPass};
 use winit::event::*;
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::{Window, WindowBuilder};
@@ -67,7 +68,7 @@ impl Display<'_> {
             .unwrap();
         let sc_desc = wgpu::SwapChainDescriptor {
             usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
-            format: adapter.get_swap_chain_preferred_format(&surface).unwrap(),
+            format: wgpu::TextureFormat::Bgra8Unorm,
             width: size.width,
             height: size.height,
             present_mode: wgpu::PresentMode::Immediate,
@@ -97,7 +98,9 @@ pub trait PetriEventLoop: 'static + Sized {
     fn process_mouse(&mut self, dx: f64, dy: f64);
     fn resize(&mut self, display: &Display);
     fn update(&mut self, display: &Display);
-    fn render(&mut self, display: &mut Display, simulation: &Simulation);
+    fn render_setup(&mut self, display: &Display, encoder: &mut CommandEncoder, simulation: &Simulation);
+    fn render<'b>(&'b mut self, display: &Display, render_pass: &mut RenderPass<'b>, simulation: &Simulation);
+    fn render_end(&mut self, display: &Display);
 }
 
 pub async fn run<Sim: PetriEventLoop, GUI: PetriEventLoop>(config: Config) {
@@ -130,10 +133,46 @@ pub async fn run<Sim: PetriEventLoop, GUI: PetriEventLoop>(config: Config) {
                     println!("{}", fps);
                 }
 
-                app.update(&mut display);
-                gui.update(&mut display);
-                app.render(&mut display, &mut simulation);
-                gui.render(&mut display, &mut simulation);
+                let frame = display
+                    .swap_chain
+                    .get_current_frame().unwrap()
+                    .output;
+        
+                app.update(&display);
+                gui.update(&display);
+
+                let mut encoder = display.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                    label: Some("Render Encoder"),
+                });
+
+                {
+                    let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                        label: Some("Render Pass"),
+                        color_attachments: &[
+                            wgpu::RenderPassColorAttachment {
+                                view: &frame.view,
+                                resolve_target: None,
+                                ops: wgpu::Operations {
+                                    load: wgpu::LoadOp::Clear(wgpu::Color {
+                                        r: 0.0,
+                                        g: 0.0,
+                                        b: 0.0,
+                                        a: 1.0,
+                                    }),
+                                    store: true,
+                                }
+                            }
+                        ],
+                        depth_stencil_attachment: None,
+                    });
+                    app.render(&display, &mut render_pass, &simulation);
+                    gui.render(&display, &mut render_pass, &simulation);
+                }
+
+                display.queue.submit(std::iter::once(encoder.finish()));
+
+                app.render_end(&display);
+                gui.render_end(&display);
 
                 last_render = Instant::now();
             }

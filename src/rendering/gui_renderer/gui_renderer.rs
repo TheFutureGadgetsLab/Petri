@@ -1,5 +1,6 @@
 use imgui::*;
 use imgui_wgpu::{Renderer, RendererConfig};
+use wgpu::{CommandEncoder, RenderPass};
 use std::time::Instant;
 use crate::{
     rendering::{
@@ -65,24 +66,20 @@ impl PetriEventLoop for GUIRenderer {
     fn update(&mut self, _display: &Display) {
     }
 
-    fn render(&mut self, display: &mut Display, _simulation: &Simulation) {
+    fn render_setup(&mut self, _display: &Display, _encoder: &mut CommandEncoder, _simulation: &Simulation) {
+        
+    }
+
+    fn render<'b>(&'b mut self, display: &Display, render_pass: &mut RenderPass<'b>, _simulation: &Simulation) {
         let delta_s = self.last_frame.elapsed();
         let now = Instant::now();
         self.imgui.io_mut().update_delta_time(now - self.last_frame);
         self.last_frame = now;
 
-        let frame = match display.swap_chain.get_current_frame() {
-            Ok(frame) => frame,
-            Err(e) => {
-                eprintln!("dropped frame: {:?}", e);
-                return;
-            }
-        };
         self.platform
             .prepare_frame(self.imgui.io_mut(), &display.window)
             .expect("Failed to prepare frame");
         let ui = self.imgui.frame();
-
         {
             let window = imgui::Window::new(im_str!("Hello world"));
             window
@@ -109,35 +106,14 @@ impl PetriEventLoop for GUIRenderer {
 
             ui.show_demo_window(&mut true);
         }
-
-        let mut encoder: wgpu::CommandEncoder =
-            display.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
-
         self.platform.prepare_render(&ui, &display.window);
 
-        let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-            label: None,
-            color_attachments: &[wgpu::RenderPassColorAttachment {
-                view: &frame.output.view,
-                resolve_target: None,
-                ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(wgpu::Color {
-                        r: 0.0,
-                        g: 0.0,
-                        b: 0.0,
-                        a: 0.0,
-                    }),
-                    store: true,
-                }
-            }],
-            depth_stencil_attachment: None,
-        });
-
         self.renderer
-            .render(ui.render(), &display.queue, &display.device, &mut rpass)
+            .render(ui.render(), &display.queue, &display.device, render_pass)
             .expect("Rendering failed");
+    }
 
-        drop(rpass);
-        display.queue.submit(Some(encoder.finish()));
+    fn render_end(&mut self, _display: &Display) {
+        
     }
 }
