@@ -100,7 +100,7 @@ pub trait PetriEventLoop: 'static + Sized {
     fn render(&mut self, display: &mut Display, simulation: &Simulation);
 }
 
-pub async fn run<D: PetriEventLoop>(config: Config) {
+pub async fn run<Sim: PetriEventLoop, GUI: PetriEventLoop>(config: Config) {
     wgpu_subscriber::initialize_default_subscriber(None);
 
     let mut simulation = Simulation::new(config);
@@ -113,7 +113,8 @@ pub async fn run<D: PetriEventLoop>(config: Config) {
         .with_title("Petri")
         .build(&event_loop).unwrap();
     let mut display = Display::new(window).await;
-    let mut app = D::init(&mut display);
+    let mut app = Sim::init(&mut display);
+    let mut gui = GUI::init(&mut display);
 
     let mut last_render = Instant::now();
     let render_time = Duration::new(0, 6800000); // 144 fps
@@ -130,7 +131,9 @@ pub async fn run<D: PetriEventLoop>(config: Config) {
                 }
 
                 app.update(&mut display);
+                gui.update(&mut display);
                 app.render(&mut display, &mut simulation);
+                gui.render(&mut display, &mut simulation);
 
                 last_render = Instant::now();
             }

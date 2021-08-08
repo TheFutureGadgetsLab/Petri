@@ -19,5 +19,13 @@ legion = "0.4.0"
 shaderc = "0.7.2"
 async-executor = "1.4.1"
 
+imgui-wgpu = "0.16.0"
+imgui = "0.7.0"
+
+[dependencies.imgui-winit-support]
+version = "0.7.1"
+features = ["winit-25"]
+default-features = false
+
 [profile.release]
 debug = 1
