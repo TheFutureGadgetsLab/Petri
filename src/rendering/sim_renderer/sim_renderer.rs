@@ -9,7 +9,7 @@ use crate::{
 };
 use winit::event::{Event, WindowEvent};
 
-use wgpu::{CommandEncoder, RenderPass, ShaderModuleDescriptor};
+use wgpu::ShaderModuleDescriptor;
 use bytemuck;
 use shaderc::CompileOptions;
 
@@ -173,19 +173,47 @@ impl PetriEventLoop for SimRenderer {
     fn update(&mut self, _display: &Display) {
     }
 
-    fn render<'b>(&'b mut self, _display: &Display, render_pass: &mut RenderPass<'b>, _simulation: &Simulation) {
-        render_pass.set_pipeline(&self.render_pipeline);
-        render_pass.set_vertex_buffer(0, self.vertex_buffer.buf.slice(..));
-        render_pass.set_bind_group(0, &self.bind_group, &[]);
-        render_pass.draw(0..(self.vertex_buffer.size as u32), 0..1);
-    }
+    fn render(&mut self, display: &Display, simulation: &Simulation) {
+        let frame = display
+            .swap_chain
+            .get_current_frame().unwrap()
+            .output;
+        let mut encoder = display.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("Render Encoder"),
+        });
 
-    fn render_setup(&mut self, display: &Display, encoder: &mut CommandEncoder, simulation: &Simulation) {
-        // Copy positions of particles into vertex buffer
-        self.vertex_buffer.update(encoder, &display, &simulation);
-    }
+        let n_vertices = self.vertex_buffer.update(&display, &mut encoder, &simulation);
 
-    fn render_end(&mut self, display: &Display) {
+        { // Set up render pass and associate the render pipeline we made
+            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("Render Pass"),
+                color_attachments: &[
+                    wgpu::RenderPassColorAttachment {
+                        view: &frame.view,
+                        resolve_target: None,
+                        ops: wgpu::Operations {
+                            load: wgpu::LoadOp::Clear(wgpu::Color {
+                                r: 0.0,
+                                g: 0.0,
+                                b: 0.0,
+                                a: 1.0,
+                            }),
+                            store: true,
+                        }
+                    }
+                ],
+                depth_stencil_attachment: None,
+            });
+            render_pass.set_pipeline(&self.render_pipeline);
+            render_pass.set_vertex_buffer(0, self.vertex_buffer.buf.slice(..));
+            render_pass.set_bind_group(0, &self.bind_group, &[]);
+            render_pass.draw(0..n_vertices, 0..1);
+        }
+    
+        // Submit will accept anything that implements IntoIter
+        // Submits the command buffer
+        display.queue.submit(std::iter::once(encoder.finish()));
+
         // Recall all the used buffers
         display.spawner.spawn_local(self.vertex_buffer.belt.recall());
     }

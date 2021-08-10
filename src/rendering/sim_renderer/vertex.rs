@@ -59,7 +59,7 @@ impl VertexBuffer {
         self.size = size;
     }
 
-    pub fn update(&mut self, encoder: &mut CommandEncoder, display: &Display, simulation: &Simulation) -> u32 {
+    pub fn update(&mut self, display: &Display, encoder: &mut CommandEncoder, simulation: &Simulation) -> u32 {
         for (i, circ) in <&RigidCircle>::query().iter(&simulation.world).enumerate() {
             self.vertices[i] = circ.into();
         }
