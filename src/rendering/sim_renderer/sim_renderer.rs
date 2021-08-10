@@ -1,12 +1,6 @@
-use crate::{
-    rendering::{
-        framework::{
-            PetriEventLoop, Display
-        }, 
-        sim_renderer::{VertexBuffer, Vertex},
-    },
-    simulation::Simulation
-};
+use std::sync::Arc;
+
+use crate::{rendering::{framework::{Display, ExampleRepaintSignal, PetriEventLoop}, sim_renderer::{VertexBuffer, Vertex}}, simulation::Simulation};
 use winit::event::{Event, WindowEvent};
 
 use wgpu::ShaderModuleDescriptor;
@@ -28,7 +22,7 @@ pub struct SimRenderer {
 }
 
 impl PetriEventLoop for SimRenderer {
-    fn init(display: &Display) -> SimRenderer {
+    fn init(display: &Display, _repaint_signal: Arc<ExampleRepaintSignal>) -> SimRenderer {
         let globals_buffer_byte_size = std::mem::size_of::<Globals>() as wgpu::BufferAddress;
         let globals_ubo = display.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Globals ubo"),

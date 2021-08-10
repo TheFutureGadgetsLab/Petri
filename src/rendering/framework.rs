@@ -2,12 +2,16 @@
 // https://github.com/sotrh/learn-wgpu/tree/master/code/showcase/framework
 
 use std::future::Future;
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use winit::event::*;
+use winit::event::Event::*;
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::{Window, WindowBuilder};
 use fps_counter;
+
+const INITIAL_WIDTH: u32 = 1920;
+const INITIAL_HEIGHT: u32 = 1080;
 
 use crate::simulation::{Config, Simulation};
 
@@ -58,7 +62,7 @@ impl Display<'_> {
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: None,
-                    features: wgpu::Features::NON_FILL_POLYGON_MODE,
+                    features: wgpu::Features::default(),
                     limits: wgpu::Limits::default(),
                 },
                 None,
@@ -67,7 +71,7 @@ impl Display<'_> {
             .unwrap();
         let sc_desc = wgpu::SwapChainDescriptor {
             usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
-            format: wgpu::TextureFormat::Bgra8Unorm,
+            format: wgpu::TextureFormat::Bgra8UnormSrgb,
             width: size.width,
             height: size.height,
             present_mode: wgpu::PresentMode::Immediate,
@@ -91,9 +95,18 @@ impl Display<'_> {
         self.swap_chain = self.device.create_swap_chain(&self.surface, &self.sc_desc);
     }
 }
+enum Event {
+    RequestRedraw,
+}
+pub struct ExampleRepaintSignal(std::sync::Mutex<winit::event_loop::EventLoopProxy<Event>>);
+impl epi::RepaintSignal for ExampleRepaintSignal {
+    fn request_repaint(&self) {
+        self.0.lock().unwrap().send_event(Event::RequestRedraw).ok();
+    }
+}
 
 pub trait PetriEventLoop: 'static + Sized {
-    fn init(display: &Display) -> Self;
+    fn init(display: &Display, repaint_signal: Arc<ExampleRepaintSignal>) -> Self;
     fn handle_event<T>(&mut self, display: &Display, event: &winit::event::Event<T>);
     fn update(&mut self, display: &Display);
     fn render(&mut self, display: &Display, simulation: &Simulation);
@@ -107,13 +120,26 @@ pub async fn run<Sim: PetriEventLoop, GUI: PetriEventLoop>(config: Config) {
     let mut fps_counter = fps_counter::FPSCounter::default();
     let mut tick: usize = 0;
 
-    let event_loop = EventLoop::new();
-    let window = WindowBuilder::new()
+    let event_loop = EventLoop::with_user_event();
+    let window = winit::window::WindowBuilder::new()
+        .with_decorations(true)
+        .with_resizable(true)
+        .with_transparent(false)
         .with_title("Petri")
-        .build(&event_loop).unwrap();
+        .with_inner_size(winit::dpi::PhysicalSize {
+            width: INITIAL_WIDTH,
+            height: INITIAL_HEIGHT,
+        })
+        .build(&event_loop)
+        .unwrap();
     let mut display = Display::new(window).await;
-    let mut app = Sim::init(&mut display);
-    let mut gui = GUI::init(&mut display);
+
+    let repaint_signal = std::sync::Arc::new(ExampleRepaintSignal(std::sync::Mutex::new(
+        event_loop.create_proxy(),
+    )));
+
+    let mut app = Sim::init(&mut display, repaint_signal.clone());
+    let mut gui = GUI::init(&mut display, repaint_signal.clone());
 
     let mut last_render = Instant::now();
     let render_time = Duration::new(0, 6800000); // 144 fps
@@ -124,7 +150,7 @@ pub async fn run<Sim: PetriEventLoop, GUI: PetriEventLoop>(config: Config) {
         gui.handle_event(&display, &event);
         match event {
             // Rendering
-            Event::RedrawRequested(_) => {
+            RedrawRequested(..) => {
                 tick += 1;
                 let fps = fps_counter.tick();
                 if tick % 100 == 0 {
@@ -140,7 +166,7 @@ pub async fn run<Sim: PetriEventLoop, GUI: PetriEventLoop>(config: Config) {
                 last_render = Instant::now();
             }
             // Updating simulation and queuing a redraw
-            Event::MainEventsCleared => {
+            MainEventsCleared | UserEvent(Event::RequestRedraw) => {
                 simulation.update();
 
                 // Queue a redraw if we need
@@ -149,20 +175,19 @@ pub async fn run<Sim: PetriEventLoop, GUI: PetriEventLoop>(config: Config) {
                     display.spawner.run_until_stalled();
                 }
             }
-            Event::WindowEvent {
+            WindowEvent {
                 event, ..
             } => {
                 match event {
-                    WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
-                    WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
+                    winit::event::WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
+                    winit::event::WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
                         display.resize(new_inner_size.width, new_inner_size.height);
                     }
-                    WindowEvent::Resized(new_inner_size) => {
+                    winit::event::WindowEvent::Resized(new_inner_size) => {
                         display.resize(new_inner_size.width, new_inner_size.height);
                     }
                     _ => {}
                 }
-
             }
         _ => {}
         }

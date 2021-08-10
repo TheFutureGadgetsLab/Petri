@@ -18,9 +18,13 @@ glam = "0.17.3"
 legion = "0.4.0"
 shaderc = "0.7.2"
 async-executor = "1.4.1"
-
-imgui-wgpu = "0.16.0"
-imgui = "0.7.0"
+futures-lite = "1.12"
+egui = "0.13"
+epi = "0.13"
+egui_wgpu_backend = "0.10"
+egui_winit_platform = "0.9"
+egui_demo_lib = "0.13"
+chrono = "*"
 
 [dependencies.imgui-winit-support]
 version = "0.7.1"

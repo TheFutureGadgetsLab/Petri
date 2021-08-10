@@ -1,136 +1,139 @@
-use imgui::*;
-use imgui_wgpu::{Renderer, RendererConfig};
-use std::time::Instant;
 use crate::{
     rendering::{
         framework::{
-            PetriEventLoop, Display
+            PetriEventLoop, Display, ExampleRepaintSignal
         }, 
     },
     simulation::Simulation
 };
+use std::{iter, sync::Arc};
+use std::time::Instant;
+use chrono::Timelike;
+
+use egui::FontDefinitions;
+use egui_demo_lib::WrapApp;
+use egui_wgpu_backend::{RenderPass, ScreenDescriptor};
+use egui_winit_platform::{Platform, PlatformDescriptor};
+use epi::*;
+
 
 pub struct GUIRenderer {
-    renderer: Renderer,
-    imgui: imgui::Context,
-    platform: imgui_winit_support::WinitPlatform,
-    last_frame: Instant,
+    platform: Platform,
+    rpass: RenderPass,
+    demo_app: WrapApp,
+    start_time: Instant,
+    previous_frame_time: Option<f32>,
+    signal: Arc<ExampleRepaintSignal>
 }
 
 impl PetriEventLoop for GUIRenderer {
-    fn init(display: &Display) -> GUIRenderer {
-        let mut imgui = imgui::Context::create();
-        let mut platform = imgui_winit_support::WinitPlatform::init(&mut imgui);
-        platform.attach_window(
-            imgui.io_mut(),
-            &display.window,
-            imgui_winit_support::HiDpiMode::Default,
-        );
-        imgui.set_ini_filename(None);
+    fn init(display: &Display, repaint_signal: Arc<ExampleRepaintSignal>) -> GUIRenderer {
+        let size = display.window.inner_size();
+        // We use the egui_winit_platform crate as the platform.
+        let platform = Platform::new(PlatformDescriptor {
+            physical_width: size.width as u32,
+            physical_height: size.height as u32,
+            scale_factor: display.window.scale_factor(),
+            font_definitions: FontDefinitions::default(),
+            style: Default::default(),
+        });
 
-        let hidpi_factor = display.window.scale_factor();
-        let font_size = (13.0 * hidpi_factor) as f32;
-        imgui.io_mut().font_global_scale = (1.0 / hidpi_factor) as f32;
+        // We use the egui_wgpu_backend crate as the render backend.
+        let egui_rpass = RenderPass::new(&display.device, display.sc_desc.format, 1);
 
-        imgui.fonts().add_font(&[FontSource::DefaultFontData {
-            config: Some(imgui::FontConfig {
-                oversample_h: 1,
-                pixel_snap_h: true,
-                size_pixels: font_size,
-                ..Default::default()
-            }),
-        }]);
-
-        let renderer_config = RendererConfig {
-            texture_format: display.sc_desc.format,
-            ..Default::default()
-        };
-
-        let renderer = Renderer::new(&mut imgui, &display.device, &display.queue, renderer_config);
+        // Display the demo application that ships with egui.
+        let demo_app = egui_demo_lib::WrapApp::default();
 
         GUIRenderer {
-            renderer: renderer,
-            imgui: imgui,
             platform: platform,
-            last_frame: Instant::now(),
+            rpass: egui_rpass,
+            demo_app: demo_app,
+            start_time: Instant::now(),
+            previous_frame_time: None,
+            signal: repaint_signal,
         }
     }
 
-    fn handle_event<T>(&mut self, display: &Display, event: &winit::event::Event<T>) {
-        self.platform.handle_event(self.imgui.io_mut(), &display.window, &event);
+    fn handle_event<T>(&mut self, _display: &Display, event: &winit::event::Event<T>) {
+        self.platform.handle_event(&event)        
     }
 
     fn update(&mut self, _display: &Display) {
+
+
     }
 
     fn render(&mut self, display: &Display, _simulation: &Simulation) {
-        let delta_s = self.last_frame.elapsed();
-        let now = Instant::now();
-        self.imgui.io_mut().update_delta_time(now - self.last_frame);
-        self.last_frame = now;
+        self.platform.update_time(self.start_time.elapsed().as_secs_f64());
 
-        let frame = match display.swap_chain.get_current_frame() {
+        let output_frame = match display.swap_chain.get_current_frame() {
             Ok(frame) => frame,
             Err(_) => {
                 // Dropped frame?
                 return;
             }
         };
-        self.platform
-            .prepare_frame(self.imgui.io_mut(), &display.window)
-            .expect("Failed to prepare frame");
-        let ui = self.imgui.frame();
 
-        {
-            let window = imgui::Window::new(im_str!("Hello world"));
-            window
-                .size([300.0, 100.0], Condition::FirstUseEver)
-                .build(&ui, || {
-                    ui.text(im_str!("Hello world!"));
-                    ui.text(im_str!("This...is...imgui-rs on WGPU!"));
-                    ui.separator();
-                    let mouse_pos = ui.io().mouse_pos;
-                    ui.text(im_str!(
-                        "Mouse Position: ({:.1},{:.1})",
-                        mouse_pos[0],
-                        mouse_pos[1]
-                    ));
-                });
+        // Begin to draw the UI frame.
+        let egui_start = Instant::now();
+        self.platform.begin_frame();
+        let mut app_output = epi::backend::AppOutput::default();
 
-            let window = imgui::Window::new(im_str!("Hello too"));
-            window
-                .size([400.0, 200.0], Condition::FirstUseEver)
-                .position([400.0, 200.0], Condition::FirstUseEver)
-                .build(&ui, || {
-                    ui.text(im_str!("Frametime: {:?}", delta_s));
-                });
-
-            ui.show_demo_window(&mut true);
+        let mut frame = epi::backend::FrameBuilder {
+            info: epi::IntegrationInfo {
+                web_info: None,
+                cpu_usage: self.previous_frame_time,
+                seconds_since_midnight: Some(seconds_since_midnight()),
+                native_pixels_per_point: Some(display.window.scale_factor() as _),
+                prefer_dark_mode: None,
+            },
+            tex_allocator: &mut self.rpass,
+            output: &mut app_output,
+            repaint_signal: self.signal.clone(),
         }
+        .build();
 
-        let mut encoder: wgpu::CommandEncoder =
-            display.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+        // Draw the demo application.
+        self.demo_app.update(&self.platform.context(), &mut frame);
 
-        self.platform.prepare_render(&ui, &display.window);
+        // End the UI frame. We could now handle the output and draw the UI with the backend.
+        let (_output, paint_commands) = self.platform.end_frame();
+        let paint_jobs = self.platform.context().tessellate(paint_commands);
 
-        let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-            label: None,
-            color_attachments: &[wgpu::RenderPassColorAttachment {
-                view: &frame.output.view,
-                resolve_target: None,
-                ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Load,
-                    store: true,
-                }
-            }],
-            depth_stencil_attachment: None,
+        let frame_time = (Instant::now() - egui_start).as_secs_f64() as f32;
+        self.previous_frame_time = Some(frame_time);
+
+        let mut encoder = display.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("encoder"),
         });
 
-        self.renderer
-            .render(ui.render(), &display.queue, &display.device, &mut rpass)
-            .expect("Rendering failed");
+        // Upload all resources for the GPU.
+        let screen_descriptor = ScreenDescriptor {
+            physical_width: display.sc_desc.width,
+            physical_height: display.sc_desc.height,
+            scale_factor: display.window.scale_factor() as f32,
+        };
+        self.rpass.update_texture(&display.device, &display.queue, &self.platform.context().texture());
+        self.rpass.update_user_textures(&display.device, &display.queue);
+        self.rpass.update_buffers(&display.device, &display.queue, &paint_jobs, &screen_descriptor);
 
-        drop(rpass);
-        display.queue.submit(Some(encoder.finish()));
+        // Record all render passes.
+        self.rpass.execute(
+            &mut encoder,
+            &output_frame.output.view,
+            &paint_jobs,
+            &screen_descriptor,
+            None,
+        );
+
+        // Submit the commands.
+        display.queue.submit(iter::once(encoder.finish()));
     }
+}
+
+
+/// Time of day as seconds since midnight. Used for clock in demo app.
+pub fn seconds_since_midnight() -> f64 {
+    let time = chrono::Local::now().time();
+    time.num_seconds_from_midnight() as f64 + 1e-9 * (time.nanosecond() as f64)
 }
