@@ -95,8 +95,7 @@ impl Display<'_> {
 
 pub trait PetriEventLoop: 'static + Sized {
     fn init(display: &Display) -> Self;
-    fn process_mouse(&mut self, dx: f64, dy: f64);
-    fn resize(&mut self, display: &Display);
+    fn handle_event<T>(&mut self, display: &Display, event: &winit::event::Event<T>);
     fn update(&mut self, display: &Display);
     fn render_setup(&mut self, display: &Display, encoder: &mut CommandEncoder, simulation: &Simulation);
     fn render<'b>(&'b mut self, display: &Display, render_pass: &mut RenderPass<'b>, simulation: &Simulation);
@@ -124,6 +123,8 @@ pub async fn run<Sim: PetriEventLoop, GUI: PetriEventLoop>(config: Config) {
 
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Poll;
+        app.handle_event(&display, &event);
+        gui.handle_event(&display, &event);
         match event {
             // Rendering
             Event::RedrawRequested(_) => {
@@ -190,24 +191,21 @@ pub async fn run<Sim: PetriEventLoop, GUI: PetriEventLoop>(config: Config) {
                 }
             }
             Event::WindowEvent {
-                event, window_id, ..
+                event, ..
             } => {
-                if window_id == display.window.id() {
-                    match event {
-                        WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
-                        WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                            display.resize(new_inner_size.width, new_inner_size.height);
-                            app.resize(&mut display);
-                        }
-                        WindowEvent::Resized(new_inner_size) => {
-                            display.resize(new_inner_size.width, new_inner_size.height);
-                            app.resize(&mut display);
-                        }
-                        _ => {}
+                match event {
+                    WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
+                    WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
+                        display.resize(new_inner_size.width, new_inner_size.height);
                     }
+                    WindowEvent::Resized(new_inner_size) => {
+                        display.resize(new_inner_size.width, new_inner_size.height);
+                    }
+                    _ => {}
                 }
+
             }
-            _ => {}
+        _ => {}
         }
     });
 }

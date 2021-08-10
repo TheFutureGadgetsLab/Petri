@@ -7,6 +7,7 @@ use crate::{
     },
     simulation::Simulation
 };
+use winit::event::{Event, WindowEvent};
 
 use wgpu::{CommandEncoder, RenderPass, ShaderModuleDescriptor};
 use bytemuck;
@@ -151,14 +152,22 @@ impl PetriEventLoop for SimRenderer {
         }
     }
 
-    fn process_mouse(&mut self, _dx: f64, _dy: f64) {
-    }
-
-    fn resize(&mut self, display: &Display) {
-        let size = display.window.inner_size();
-        display.queue.write_buffer(&self.globals_ubo, 0, bytemuck::cast_slice(&[Globals {
-            res: [size.width as f32, size.height as f32]
-        }]));
+    fn handle_event<T>(&mut self, display: &Display, event: &Event<T>) {
+        // Need to handle scale factor change
+        match event {
+            Event::WindowEvent { ref event, ..}  => {
+                match event {
+                    WindowEvent::Resized(_) => {
+                        let size = display.window.inner_size();
+                        display.queue.write_buffer(&self.globals_ubo, 0, bytemuck::cast_slice(&[Globals {
+                            res: [size.width as f32, size.height as f32]
+                        }]));
+                    }
+                    _ => {}
+                }
+            }
+            _ => {}
+        }
     }
 
     fn update(&mut self, _display: &Display) {

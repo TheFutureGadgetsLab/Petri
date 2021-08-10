@@ -57,10 +57,8 @@ impl PetriEventLoop for GUIRenderer {
         }
     }
 
-    fn process_mouse(&mut self, _dx: f64, _dy: f64) {
-    }
-
-    fn resize(&mut self, _display: &Display) {
+    fn handle_event<T>(&mut self, display: &Display, event: &winit::event::Event<T>) {
+        self.platform.handle_event(self.imgui.io_mut(), &display.window, &event);
     }
 
     fn update(&mut self, _display: &Display) {

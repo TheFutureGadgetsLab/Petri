@@ -26,6 +26,3 @@ imgui = "0.7.0"
 version = "0.7.1"
 features = ["winit-25"]
 default-features = false
-
-[profile.release]
-debug = 1
