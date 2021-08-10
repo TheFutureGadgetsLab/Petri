@@ -62,7 +62,7 @@ impl Display<'_> {
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: None,
-                    features: wgpu::Features::default(),
+                    features: wgpu::Features::NON_FILL_POLYGON_MODE,
                     limits: wgpu::Limits::default(),
                 },
                 None,
