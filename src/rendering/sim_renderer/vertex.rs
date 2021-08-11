@@ -1,5 +1,5 @@
 use crate::simulation::{RigidCircle, Simulation};
-use crate::rendering::framework::Display;
+use crate::rendering::{camera::Camera, framework::Display};
 use legion::*;
 use wgpu::CommandEncoder;
 use wgpu::util::StagingBelt;
@@ -59,9 +59,12 @@ impl VertexBuffer {
         self.size = size;
     }
 
-    pub fn update(&mut self, display: &Display, encoder: &mut CommandEncoder, simulation: &Simulation) -> u32 {
+    pub fn update(&mut self, display: &Display, encoder: &mut CommandEncoder, simulation: &Simulation, cam: &Camera) -> u32 {
         for (i, circ) in <&RigidCircle>::query().iter(&simulation.world).enumerate() {
-            self.vertices[i] = circ.into();
+            let (pos, scale) = cam.transform(circ.pos, [circ.radius; 2].into());
+            self.vertices[i].position = pos.into();
+            self.vertices[i].size = scale.x;
+            self.vertices[i].color = circ.color;
         }
 
         if self.size < self.vertices.len() {

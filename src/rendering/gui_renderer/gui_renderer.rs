@@ -59,8 +59,7 @@ impl PetriEventLoop for GUIRenderer {
     }
 
     fn update(&mut self, _display: &Display) {
-
-
+        
     }
 
     fn render(&mut self, display: &Display, _simulation: &Simulation) {

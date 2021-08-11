@@ -1,7 +1,14 @@
 use std::sync::Arc;
 
-use crate::{rendering::{framework::{Display, ExampleRepaintSignal, PetriEventLoop}, sim_renderer::{VertexBuffer, Vertex}}, simulation::Simulation};
-use winit::event::{Event, WindowEvent};
+use crate::{
+    rendering::{camera::Camera,
+        framework::{Display, ExampleRepaintSignal, PetriEventLoop},
+        sim_renderer::{VertexBuffer, Vertex}
+    },
+    simulation::Simulation
+};
+use glam::Vec2;
+use winit::{dpi::PhysicalPosition, event::{VirtualKeyCode, ElementState, Event, KeyboardInput, MouseButton, WindowEvent}};
 
 use wgpu::ShaderModuleDescriptor;
 use bytemuck;
@@ -19,6 +26,12 @@ pub struct SimRenderer {
     bind_group: wgpu::BindGroup,
     render_pipeline: wgpu::RenderPipeline,
     vertex_buffer: VertexBuffer,
+    cam: Camera,
+    prev_mouse_pos: Vec2,
+    mouse_pos: Vec2,
+    mouse_drag_start: Vec2,
+    cam_drag_start: Vec2,
+    mouse_click: bool
 }
 
 impl PetriEventLoop for SimRenderer {
@@ -139,10 +152,16 @@ impl PetriEventLoop for SimRenderer {
         });
 
         SimRenderer {
-            globals_ubo: globals_ubo,
-            bind_group: bind_group,
-            render_pipeline: render_pipeline,
+            globals_ubo,
+            bind_group,
+            render_pipeline,
             vertex_buffer: VertexBuffer::default(display),
+            cam: Camera::new(display),
+            prev_mouse_pos: Vec2::ZERO,
+            mouse_pos: Vec2::ZERO,
+            mouse_drag_start: Vec2::ZERO,
+            cam_drag_start: Vec2::ZERO,
+            mouse_click: false,
         }
     }
 
@@ -153,9 +172,45 @@ impl PetriEventLoop for SimRenderer {
                 match event {
                     WindowEvent::Resized(_) => {
                         let size = display.window.inner_size();
+                        self.cam.size = [size.width as f32, size.height as f32].into();
                         display.queue.write_buffer(&self.globals_ubo, 0, bytemuck::cast_slice(&[Globals {
-                            res: [size.width as f32, size.height as f32]
+                            res: self.cam.size.into()
                         }]));
+                    }
+                    WindowEvent::MouseInput {button, state, ..} => {
+                        match button {
+                            MouseButton::Left => {
+                                match state {
+                                    ElementState::Pressed => {
+                                        self.mouse_click = true;
+                                        self.mouse_drag_start = self.cam.screen2world(self.mouse_pos);
+                                        self.cam_drag_start = self.cam.pos;
+                                    }
+                                    ElementState::Released => { self.mouse_click = false; }
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                    WindowEvent::CursorMoved {position, ..} => {
+                        self.prev_mouse_pos = self.mouse_pos;
+                        self.mouse_pos.x = position.x as f32;
+                        self.mouse_pos.y = position.y as f32;
+                        if self.mouse_click {
+                            self.cam.pos = self.cam_drag_start + 
+                                self.mouse_drag_start - self.cam.screen2world(self.mouse_pos);
+                        }
+                    }
+                    WindowEvent::KeyboardInput { input , ..} => {
+                        if input.virtual_keycode.is_some() {
+                            match input.virtual_keycode.unwrap() {
+                                VirtualKeyCode::Left =>     { self.cam.pos.x -= 1.0; }
+                                VirtualKeyCode::Right =>    { self.cam.pos.x += 1.0; }
+                                VirtualKeyCode::Up =>       { self.cam.pos.y -= 1.0; }
+                                VirtualKeyCode::Down =>     { self.cam.pos.y += 1.0; }
+                                _ => {}
+                            }
+                        }
                     }
                     _ => {}
                 }
@@ -176,7 +231,7 @@ impl PetriEventLoop for SimRenderer {
             label: Some("Render Encoder"),
         });
 
-        let n_vertices = self.vertex_buffer.update(&display, &mut encoder, &simulation);
+        let n_vertices = self.vertex_buffer.update(&display, &mut encoder, &simulation, &self.cam);
 
         { // Set up render pass and associate the render pipeline we made
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {

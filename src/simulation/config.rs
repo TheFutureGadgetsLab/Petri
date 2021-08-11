@@ -6,7 +6,7 @@ pub struct Config {
 impl Config {
     pub fn default() -> Config {
         Config {
-            num_particles: 3_000_000,
+            num_particles: 10_000,
         }
     }
 }

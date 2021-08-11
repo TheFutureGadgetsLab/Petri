@@ -1,4 +1,5 @@
 use legion::*;
+
 use super::{RigidCircle, components, config::Config, time::Time};
 
 pub struct Simulation {
@@ -22,7 +23,7 @@ impl Simulation {
 
         Simulation {
             world,
-            resources,
+            resources
         }
     }
 
