@@ -7,7 +7,7 @@ use std::time::{Duration, Instant};
 
 use winit::event::Event::*;
 use winit::event_loop::{ControlFlow, EventLoop};
-use winit::window::{Window, WindowBuilder};
+use winit::window::{Window};
 use fps_counter;
 
 const INITIAL_WIDTH: u32 = 1920;

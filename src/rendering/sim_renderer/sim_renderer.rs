@@ -8,7 +8,7 @@ use crate::{
     simulation::Simulation
 };
 use glam::Vec2;
-use winit::{dpi::PhysicalPosition, event::{VirtualKeyCode, ElementState, Event, KeyboardInput, MouseButton, WindowEvent}};
+use winit::{event::{VirtualKeyCode, ElementState, Event, MouseButton, WindowEvent}};
 
 use wgpu::ShaderModuleDescriptor;
 use bytemuck;
@@ -30,7 +30,6 @@ pub struct SimRenderer {
     prev_mouse_pos: Vec2,
     mouse_pos: Vec2,
     mouse_drag_start: Vec2,
-    cam_drag_start: Vec2,
     mouse_click: bool
 }
 
@@ -160,7 +159,6 @@ impl PetriEventLoop for SimRenderer {
             prev_mouse_pos: Vec2::ZERO,
             mouse_pos: Vec2::ZERO,
             mouse_drag_start: Vec2::ZERO,
-            cam_drag_start: Vec2::ZERO,
             mouse_click: false,
         }
     }

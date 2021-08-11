@@ -1,26 +1,20 @@
-use crate::{
-    rendering::{
+use crate::{rendering::{
         framework::{
             PetriEventLoop, Display, ExampleRepaintSignal
         }, 
-    },
-    simulation::Simulation
-};
+    }, simulation::{Simulation}};
 use std::{iter, sync::Arc};
 use std::time::Instant;
 use chrono::Timelike;
 
-use egui::FontDefinitions;
-use egui_demo_lib::WrapApp;
+use egui::{Align2, FontDefinitions};
 use egui_wgpu_backend::{RenderPass, ScreenDescriptor};
 use egui_winit_platform::{Platform, PlatformDescriptor};
 use epi::*;
 
-
 pub struct GUIRenderer {
     platform: Platform,
     rpass: RenderPass,
-    demo_app: WrapApp,
     start_time: Instant,
     previous_frame_time: Option<f32>,
     signal: Arc<ExampleRepaintSignal>
@@ -40,14 +34,9 @@ impl PetriEventLoop for GUIRenderer {
 
         // We use the egui_wgpu_backend crate as the render backend.
         let egui_rpass = RenderPass::new(&display.device, display.sc_desc.format, 1);
-
-        // Display the demo application that ships with egui.
-        let demo_app = egui_demo_lib::WrapApp::default();
-
         GUIRenderer {
             platform: platform,
             rpass: egui_rpass,
-            demo_app: demo_app,
             start_time: Instant::now(),
             previous_frame_time: None,
             signal: repaint_signal,
@@ -78,7 +67,7 @@ impl PetriEventLoop for GUIRenderer {
         self.platform.begin_frame();
         let mut app_output = epi::backend::AppOutput::default();
 
-        let mut frame = epi::backend::FrameBuilder {
+        epi::backend::FrameBuilder {
             info: epi::IntegrationInfo {
                 web_info: None,
                 cpu_usage: self.previous_frame_time,
@@ -92,8 +81,13 @@ impl PetriEventLoop for GUIRenderer {
         }
         .build();
 
-        // Draw the demo application.
-        self.demo_app.update(&self.platform.context(), &mut frame);
+        // Draw stuff
+        egui::Window::new("Debug Info")
+            .resizable(false)
+            .anchor(Align2::LEFT_TOP, [0., 0.])
+            .show(&self.platform.context(), |ui| {
+                ui.label(format!("time elapsed: {:.2}", self.start_time.elapsed().as_secs_f64()));
+            });
 
         // End the UI frame. We could now handle the output and draw the UI with the backend.
         let (_output, paint_commands) = self.platform.end_frame();
