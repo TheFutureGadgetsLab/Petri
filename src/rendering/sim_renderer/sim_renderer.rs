@@ -183,8 +183,7 @@ impl PetriEventLoop for SimRenderer {
                                 match state {
                                     ElementState::Pressed => {
                                         self.mouse_click = true;
-                                        self.mouse_drag_start = self.cam.screen2world(self.mouse_pos);
-                                        self.cam_drag_start = self.cam.pos;
+                                        self.mouse_drag_start = self.cam.screen2world(self.mouse_pos) + self.cam.pos;
                                     }
                                     ElementState::Released => { self.mouse_click = false; }
                                 }
@@ -197,17 +196,16 @@ impl PetriEventLoop for SimRenderer {
                         self.mouse_pos.x = position.x as f32;
                         self.mouse_pos.y = position.y as f32;
                         if self.mouse_click {
-                            self.cam.pos = self.cam_drag_start + 
-                                self.mouse_drag_start - self.cam.screen2world(self.mouse_pos);
+                            self.cam.pos = self.mouse_drag_start - self.cam.screen2world(self.mouse_pos);
                         }
                     }
                     WindowEvent::KeyboardInput { input , ..} => {
                         if input.virtual_keycode.is_some() {
                             match input.virtual_keycode.unwrap() {
-                                VirtualKeyCode::Left =>     { self.cam.pos.x -= 1.0; }
-                                VirtualKeyCode::Right =>    { self.cam.pos.x += 1.0; }
-                                VirtualKeyCode::Up =>       { self.cam.pos.y -= 1.0; }
-                                VirtualKeyCode::Down =>     { self.cam.pos.y += 1.0; }
+                                VirtualKeyCode::Left =>     { self.cam.pos.x -= 20.0; }
+                                VirtualKeyCode::Right =>    { self.cam.pos.x += 20.0; }
+                                VirtualKeyCode::Up =>       { self.cam.pos.y -= 20.0; }
+                                VirtualKeyCode::Down =>     { self.cam.pos.y += 20.0; }
                                 _ => {}
                             }
                         }
