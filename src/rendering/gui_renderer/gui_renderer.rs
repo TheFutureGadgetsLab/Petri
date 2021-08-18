@@ -5,7 +5,6 @@ use crate::{rendering::{
     }, simulation::{Simulation}};
 use std::{iter, sync::Arc};
 use std::time::Instant;
-use chrono::Timelike;
 
 use egui::{Align2, FontDefinitions};
 use egui_wgpu_backend::{RenderPass, ScreenDescriptor};
@@ -71,7 +70,7 @@ impl PetriEventLoop for GUIRenderer {
             info: epi::IntegrationInfo {
                 web_info: None,
                 cpu_usage: self.previous_frame_time,
-                seconds_since_midnight: Some(seconds_since_midnight()),
+                seconds_since_midnight: None,
                 native_pixels_per_point: Some(display.window.scale_factor() as _),
                 prefer_dark_mode: None,
             },
@@ -122,11 +121,4 @@ impl PetriEventLoop for GUIRenderer {
         // Submit the commands.
         display.queue.submit(iter::once(encoder.finish()));
     }
-}
-
-
-/// Time of day as seconds since midnight. Used for clock in demo app.
-pub fn seconds_since_midnight() -> f64 {
-    let time = chrono::Local::now().time();
-    time.num_seconds_from_midnight() as f64 + 1e-9 * (time.nanosecond() as f64)
 }

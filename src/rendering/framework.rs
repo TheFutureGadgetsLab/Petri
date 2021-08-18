@@ -17,6 +17,7 @@ use crate::simulation::{Config, Simulation};
 
 pub struct Spawner<'a> {
     executor: async_executor::LocalExecutor<'a>,
+    //executor: async_executor::LocalExecutor<'a>,
 }
 
 impl<'a> Spawner<'a> {

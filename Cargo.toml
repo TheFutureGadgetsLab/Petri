@@ -8,7 +8,6 @@ edition = "2018"
 [dependencies]
 winit = "0.25"
 wgpu = "0.9"
-pollster = "0.2"
 bytemuck = { version = "1.7.2", features = [ "derive" ] }
 fps_counter = "2.0.0"
 rayon = "1.5.1"
@@ -17,16 +16,10 @@ rand = "0.8.4"
 glam = "0.17.3"
 legion = "0.4.0"
 shaderc = "0.7.2"
-async-executor = "1.4.1"
-futures-lite = "1.12"
+futures = "0.3.16"
 egui = "0.13"
 epi = "0.13"
 egui_wgpu_backend = "0.10"
 egui_winit_platform = "0.9"
 egui_demo_lib = "0.13"
-chrono = "*"
-
-[dependencies.imgui-winit-support]
-version = "0.7.1"
-features = ["winit-25"]
-default-features = false
+async-executor = "1.4.1"
