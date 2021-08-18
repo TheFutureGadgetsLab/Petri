@@ -1,6 +1,6 @@
 use crate::{rendering::{
         framework::{
-            PetriEventLoop, Display, ExampleRepaintSignal
+            PetriEventLoop, Display,
         }, 
     }, simulation::{Simulation}};
 use std::{iter, sync::Arc};
@@ -11,16 +11,24 @@ use egui_wgpu_backend::{RenderPass, ScreenDescriptor};
 use egui_winit_platform::{Platform, PlatformDescriptor};
 use epi::*;
 
+
+#[derive(Default)]
+pub struct DummyRepaintSignal(bool);
+impl epi::RepaintSignal for DummyRepaintSignal {
+    fn request_repaint(&self) {
+    }
+}
+
 pub struct GUIRenderer {
     platform: Platform,
     rpass: RenderPass,
     start_time: Instant,
     previous_frame_time: Option<f32>,
-    signal: Arc<ExampleRepaintSignal>
+    signal: Arc<DummyRepaintSignal>
 }
 
 impl PetriEventLoop for GUIRenderer {
-    fn init(display: &Display, repaint_signal: Arc<ExampleRepaintSignal>) -> GUIRenderer {
+    fn init(display: &Display) -> GUIRenderer {
         let size = display.window.inner_size();
         // We use the egui_winit_platform crate as the platform.
         let platform = Platform::new(PlatformDescriptor {
@@ -30,6 +38,9 @@ impl PetriEventLoop for GUIRenderer {
             font_definitions: FontDefinitions::default(),
             style: Default::default(),
         });
+
+        
+        let repaint_signal = std::sync::Arc::new(DummyRepaintSignal::default());
 
         // We use the egui_wgpu_backend crate as the render backend.
         let egui_rpass = RenderPass::new(&display.device, display.sc_desc.format, 1);

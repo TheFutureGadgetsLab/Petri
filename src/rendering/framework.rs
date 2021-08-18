@@ -2,7 +2,6 @@
 // https://github.com/sotrh/learn-wgpu/tree/master/code/showcase/framework
 
 use std::future::Future;
-use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use winit::event::Event::*;
@@ -17,7 +16,6 @@ use crate::simulation::{Config, Simulation};
 
 pub struct Spawner<'a> {
     executor: async_executor::LocalExecutor<'a>,
-    //executor: async_executor::LocalExecutor<'a>,
 }
 
 impl<'a> Spawner<'a> {
@@ -96,18 +94,9 @@ impl Display<'_> {
         self.swap_chain = self.device.create_swap_chain(&self.surface, &self.sc_desc);
     }
 }
-enum Event {
-    RequestRedraw,
-}
-pub struct ExampleRepaintSignal(std::sync::Mutex<winit::event_loop::EventLoopProxy<Event>>);
-impl epi::RepaintSignal for ExampleRepaintSignal {
-    fn request_repaint(&self) {
-        self.0.lock().unwrap().send_event(Event::RequestRedraw).ok();
-    }
-}
 
 pub trait PetriEventLoop: 'static + Sized {
-    fn init(display: &Display, repaint_signal: Arc<ExampleRepaintSignal>) -> Self;
+    fn init(display: &Display) -> Self;
     fn handle_event<T>(&mut self, display: &Display, event: &winit::event::Event<T>);
     fn update(&mut self, display: &Display);
     fn render(&mut self, display: &Display, simulation: &Simulation);
@@ -121,7 +110,7 @@ pub async fn run<Sim: PetriEventLoop, GUI: PetriEventLoop>(config: Config) {
     let mut fps_counter = fps_counter::FPSCounter::default();
     let mut tick: usize = 0;
 
-    let event_loop = EventLoop::with_user_event();
+    let event_loop = EventLoop::new();
     let window = winit::window::WindowBuilder::new()
         .with_decorations(true)
         .with_resizable(true)
@@ -135,12 +124,9 @@ pub async fn run<Sim: PetriEventLoop, GUI: PetriEventLoop>(config: Config) {
         .unwrap();
     let mut display = Display::new(window).await;
 
-    let repaint_signal = std::sync::Arc::new(ExampleRepaintSignal(std::sync::Mutex::new(
-        event_loop.create_proxy(),
-    )));
 
-    let mut app = Sim::init(&mut display, repaint_signal.clone());
-    let mut gui = GUI::init(&mut display, repaint_signal.clone());
+    let mut app = Sim::init(&mut display);
+    let mut gui = GUI::init(&mut display);
 
     let mut last_render = Instant::now();
     let render_time = Duration::new(0, 6800000); // 144 fps
@@ -167,7 +153,7 @@ pub async fn run<Sim: PetriEventLoop, GUI: PetriEventLoop>(config: Config) {
                 last_render = Instant::now();
             }
             // Updating simulation and queuing a redraw
-            MainEventsCleared | UserEvent(Event::RequestRedraw) => {
+            MainEventsCleared => {
                 simulation.update();
 
                 // Queue a redraw if we need

@@ -1,8 +1,6 @@
-use std::sync::Arc;
-
 use crate::{
     rendering::{camera::Camera,
-        framework::{Display, ExampleRepaintSignal, PetriEventLoop},
+        framework::{Display, PetriEventLoop},
         sim_renderer::{VertexBuffer, Vertex}
     },
     simulation::Simulation
@@ -34,7 +32,7 @@ pub struct SimRenderer {
 }
 
 impl PetriEventLoop for SimRenderer {
-    fn init(display: &Display, _repaint_signal: Arc<ExampleRepaintSignal>) -> SimRenderer {
+    fn init(display: &Display) -> SimRenderer {
         let globals_buffer_byte_size = std::mem::size_of::<Globals>() as wgpu::BufferAddress;
         let globals_ubo = display.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Globals ubo"),
