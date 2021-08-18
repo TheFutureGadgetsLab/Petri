@@ -18,7 +18,6 @@ struct Globals {
     res: [f32; 2],
 }
 
-
 pub struct SimRenderer {
     globals_ubo: wgpu::Buffer,
     bind_group: wgpu::BindGroup,

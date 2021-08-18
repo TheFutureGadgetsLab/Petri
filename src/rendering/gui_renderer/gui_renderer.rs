@@ -1,16 +1,21 @@
-use crate::{rendering::{
+use crate::{
+    rendering::{
         framework::{
             PetriEventLoop, Display,
         }, 
-    }, simulation::{Simulation}};
+        gui_renderer::DebugApp,
+    },
+    simulation::{
+        Simulation
+    }
+};
 use std::{iter, sync::Arc};
 use std::time::Instant;
 
-use egui::{Align2, FontDefinitions};
+use egui::{FontDefinitions};
 use egui_wgpu_backend::{RenderPass, ScreenDescriptor};
 use egui_winit_platform::{Platform, PlatformDescriptor};
 use epi::*;
-
 
 #[derive(Default)]
 pub struct DummyRepaintSignal(bool);
@@ -24,7 +29,8 @@ pub struct GUIRenderer {
     rpass: RenderPass,
     start_time: Instant,
     previous_frame_time: Option<f32>,
-    signal: Arc<DummyRepaintSignal>
+    signal: Arc<DummyRepaintSignal>,
+    debug: DebugApp
 }
 
 impl PetriEventLoop for GUIRenderer {
@@ -50,6 +56,7 @@ impl PetriEventLoop for GUIRenderer {
             start_time: Instant::now(),
             previous_frame_time: None,
             signal: repaint_signal,
+            debug: DebugApp::default(),
         }
     }
 
@@ -77,7 +84,7 @@ impl PetriEventLoop for GUIRenderer {
         self.platform.begin_frame();
         let mut app_output = epi::backend::AppOutput::default();
 
-        epi::backend::FrameBuilder {
+        let mut frame = epi::backend::FrameBuilder {
             info: epi::IntegrationInfo {
                 web_info: None,
                 cpu_usage: self.previous_frame_time,
@@ -91,13 +98,7 @@ impl PetriEventLoop for GUIRenderer {
         }
         .build();
 
-        // Draw stuff
-        egui::Window::new("Debug Info")
-            .resizable(false)
-            .anchor(Align2::LEFT_TOP, [0., 0.])
-            .show(&self.platform.context(), |ui| {
-                ui.label(format!("time elapsed: {:.2}", self.start_time.elapsed().as_secs_f64()));
-            });
+        self.debug.update(&self.platform.context(), &mut frame);
 
         // End the UI frame. We could now handle the output and draw the UI with the backend.
         let (_output, paint_commands) = self.platform.end_frame();
