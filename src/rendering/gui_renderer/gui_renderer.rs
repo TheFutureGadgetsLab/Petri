@@ -16,6 +16,7 @@ use egui::{FontDefinitions};
 use egui_wgpu_backend::{RenderPass, ScreenDescriptor};
 use egui_winit_platform::{Platform, PlatformDescriptor};
 use epi::*;
+use wgpu::TextureView;
 
 #[derive(Default)]
 pub struct DummyRepaintSignal(bool);
@@ -49,7 +50,7 @@ impl PetriEventLoop for GUIRenderer {
         let repaint_signal = std::sync::Arc::new(DummyRepaintSignal::default());
 
         // We use the egui_wgpu_backend crate as the render backend.
-        let egui_rpass = RenderPass::new(&display.device, display.sc_desc.format, 1);
+        let egui_rpass = RenderPass::new(&display.device, display.surface_config.format, 1);
         GUIRenderer {
             platform: platform,
             rpass: egui_rpass,
@@ -68,16 +69,8 @@ impl PetriEventLoop for GUIRenderer {
         
     }
 
-    fn render(&mut self, display: &Display, _simulation: &Simulation) {
+    fn render(&mut self, display: &Display, _simulation: &Simulation, view: &TextureView) {
         self.platform.update_time(self.start_time.elapsed().as_secs_f64());
-
-        let output_frame = match display.swap_chain.get_current_frame() {
-            Ok(frame) => frame,
-            Err(_) => {
-                // Dropped frame?
-                return;
-            }
-        };
 
         // Begin to draw the UI frame.
         let egui_start = Instant::now();
@@ -113,8 +106,8 @@ impl PetriEventLoop for GUIRenderer {
 
         // Upload all resources for the GPU.
         let screen_descriptor = ScreenDescriptor {
-            physical_width: display.sc_desc.width,
-            physical_height: display.sc_desc.height,
+            physical_width: display.surface_config.width,
+            physical_height: display.surface_config.height,
             scale_factor: display.window.scale_factor() as f32,
         };
         self.rpass.update_texture(&display.device, &display.queue, &self.platform.context().texture());
@@ -124,11 +117,11 @@ impl PetriEventLoop for GUIRenderer {
         // Record all render passes.
         self.rpass.execute(
             &mut encoder,
-            &output_frame.output.view,
+            &view,
             &paint_jobs,
             &screen_descriptor,
             None,
-        );
+        ).unwrap();
 
         // Submit the commands.
         display.queue.submit(iter::once(encoder.finish()));

@@ -2,8 +2,7 @@
 // https://github.com/sotrh/learn-wgpu/tree/master/code/showcase/framework
 
 use std::future::Future;
-use std::time::{Duration, Instant};
-
+use wgpu::{SurfaceError, SurfaceFrame, TextureView};
 use winit::event::Event::*;
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::{Window};
@@ -36,10 +35,9 @@ impl<'a> Spawner<'a> {
 }
 
 pub struct Display<'a> {
-    surface: wgpu::Surface,
+    pub surface: wgpu::Surface,
+    pub surface_config: wgpu::SurfaceConfiguration,
     pub window: Window,
-    pub sc_desc: wgpu::SwapChainDescriptor,
-    pub swap_chain: wgpu::SwapChain,
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
     pub spawner: Spawner<'a>
@@ -48,7 +46,7 @@ pub struct Display<'a> {
 impl Display<'_> {
     pub async fn new(window: Window) -> Display<'static> {
         let size = window.inner_size();
-        let instance = wgpu::Instance::new(wgpu::BackendBit::PRIMARY);
+        let instance = wgpu::Instance::new(wgpu::Backends::PRIMARY);
         let surface = unsafe { instance.create_surface(&window) };
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
@@ -68,20 +66,19 @@ impl Display<'_> {
             )
             .await
             .unwrap();
-        let sc_desc = wgpu::SwapChainDescriptor {
-            usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
-            format: wgpu::TextureFormat::Bgra8UnormSrgb,
+
+        let surface_config = wgpu::SurfaceConfiguration {
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+            format: surface.get_preferred_format(&adapter).unwrap(),
             width: size.width,
             height: size.height,
             present_mode: wgpu::PresentMode::Immediate,
         };
-        let swap_chain = device.create_swap_chain(&surface, &sc_desc);
 
         Display {
+            surface_config,
             surface,
             window,
-            sc_desc,
-            swap_chain,
             device,
             queue,
             spawner: Spawner::new()
@@ -89,9 +86,24 @@ impl Display<'_> {
     }
 
     pub fn resize(&mut self, width: u32, height: u32) {
-        self.sc_desc.width = width;
-        self.sc_desc.height = height;
-        self.swap_chain = self.device.create_swap_chain(&self.surface, &self.sc_desc);
+        self.surface_config.width  = width;
+        self.surface_config.height = height;
+        self.surface.configure(&self.device, &self.surface_config);
+    }
+
+    pub fn get_frame(&self) -> Result<(SurfaceFrame, TextureView), SurfaceError> {
+        let output_frame = match self.surface.get_current_frame() {
+            Ok(frame) => frame,
+            Err(e) => {
+                return Err(e);
+            }
+        };
+        let output_view = output_frame
+            .output
+            .texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
+
+        Ok((output_frame, output_view))
     }
 }
 
@@ -99,7 +111,7 @@ pub trait PetriEventLoop: 'static + Sized {
     fn init(display: &Display) -> Self;
     fn handle_event<T>(&mut self, display: &Display, event: &winit::event::Event<T>);
     fn update(&mut self, display: &Display);
-    fn render(&mut self, display: &Display, simulation: &Simulation);
+    fn render(&mut self, display: &Display, simulation: &Simulation, view: &TextureView);
 }
 
 pub async fn run<Sim: PetriEventLoop, GUI: PetriEventLoop>(config: Config) {
@@ -128,9 +140,6 @@ pub async fn run<Sim: PetriEventLoop, GUI: PetriEventLoop>(config: Config) {
     let mut app = Sim::init(&mut display);
     let mut gui = GUI::init(&mut display);
 
-    let mut last_render = Instant::now();
-    let render_time = Duration::new(0, 6800000); // 144 fps
-
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Poll;
         app.handle_event(&display, &event);
@@ -147,20 +156,16 @@ pub async fn run<Sim: PetriEventLoop, GUI: PetriEventLoop>(config: Config) {
                 app.update(&display);
                 gui.update(&display);
 
-                app.render(&display, &simulation);
-                gui.render(&display, &simulation);
+                let (_output_frame, output_view) = display.get_frame().unwrap();
 
-                last_render = Instant::now();
+                app.render(&display, &simulation, &output_view);
+                gui.render(&display, &simulation, &output_view);
             }
             // Updating simulation and queuing a redraw
             MainEventsCleared => {
                 simulation.update();
-
-                // Queue a redraw if we need
-                if (Instant::now() - last_render) >= render_time {
-                    display.window.request_redraw();
-                    display.spawner.run_until_stalled();
-                }
+                display.window.request_redraw();
+                display.spawner.run_until_stalled();
             }
             WindowEvent {
                 event, ..

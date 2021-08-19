@@ -36,7 +36,7 @@ impl VertexBuffer {
         let vertex_buffer = display.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Vertex buffer"),
             size: init_alloc as wgpu::BufferAddress,
-            usage: wgpu::BufferUsage::VERTEX | wgpu::BufferUsage::COPY_DST,
+            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
 
@@ -53,7 +53,7 @@ impl VertexBuffer {
         self.buf = display.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Vertex buffer"),
             size: init_alloc as wgpu::BufferAddress,
-            usage: wgpu::BufferUsage::VERTEX | wgpu::BufferUsage::COPY_DST,
+            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
         self.size = size;

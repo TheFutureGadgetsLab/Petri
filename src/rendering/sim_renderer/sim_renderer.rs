@@ -8,7 +8,7 @@ use crate::{
 use glam::Vec2;
 use winit::{event::{VirtualKeyCode, ElementState, Event, MouseButton, WindowEvent}};
 
-use wgpu::ShaderModuleDescriptor;
+use wgpu::{ShaderModuleDescriptor, TextureView};
 use bytemuck;
 use shaderc::CompileOptions;
 
@@ -36,7 +36,7 @@ impl PetriEventLoop for SimRenderer {
         let globals_ubo = display.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Globals ubo"),
             size: globals_buffer_byte_size,
-            usage: wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
 
@@ -45,7 +45,7 @@ impl PetriEventLoop for SimRenderer {
             entries: &[
                 wgpu::BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStage::FRAGMENT,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
@@ -88,14 +88,12 @@ impl PetriEventLoop for SimRenderer {
             &ShaderModuleDescriptor {
                     label: Some("Fragment shader"),
                     source: wgpu::util::make_spirv(frag_comp.as_binary_u8()),
-                    flags: wgpu::ShaderFlags::VALIDATION,
             }
         );
         let shader_vert = &display.device.create_shader_module(
             &ShaderModuleDescriptor {
                     label: Some("Vertex shader"),
                     source: wgpu::util::make_spirv(vert_comp.as_binary_u8()),
-                    flags: wgpu::ShaderFlags::VALIDATION,
             }
         );
 
@@ -114,7 +112,7 @@ impl PetriEventLoop for SimRenderer {
                 entry_point: "main",
                 buffers: &[wgpu::VertexBufferLayout {
                     array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
-                    step_mode: wgpu::InputStepMode::Vertex,
+                    step_mode: wgpu::VertexStepMode::Vertex,
                     attributes: &wgpu::vertex_attr_array![0 => Float32x2, 1 => Float32x4, 2 => Float32]
                 }],
             },
@@ -122,9 +120,9 @@ impl PetriEventLoop for SimRenderer {
                 module: &shader_frag,
                 entry_point: "main",
                 targets: &[wgpu::ColorTargetState {
-                    format: display.sc_desc.format,
+                    format: display.surface_config.format,
                     blend: Some(wgpu::BlendState::ALPHA_BLENDING),
-                    write_mask: wgpu::ColorWrite::ALL,
+                    write_mask: wgpu::ColorWrites::ALL,
                 }],
             }),
             primitive: wgpu::PrimitiveState {
@@ -215,11 +213,7 @@ impl PetriEventLoop for SimRenderer {
     fn update(&mut self, _display: &Display) {
     }
 
-    fn render(&mut self, display: &Display, simulation: &Simulation) {
-        let frame = display
-            .swap_chain
-            .get_current_frame().unwrap()
-            .output;
+    fn render(&mut self, display: &Display, simulation: &Simulation, view: &TextureView) {
         let mut encoder = display.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
             label: Some("Render Encoder"),
         });
@@ -231,7 +225,7 @@ impl PetriEventLoop for SimRenderer {
                 label: Some("Render Pass"),
                 color_attachments: &[
                     wgpu::RenderPassColorAttachment {
-                        view: &frame.view,
+                        view: &view,
                         resolve_target: None,
                         ops: wgpu::Operations {
                             load: wgpu::LoadOp::Clear(wgpu::Color {
