@@ -21,11 +21,12 @@ impl epi::App for DebugApp {
     }
 
     fn update(&mut self, ctx: &egui::CtxRef, _frame: &mut epi::Frame<'_>) {
-        egui::Window::new("Debug Info")
+        let elapsed_str = format!("Time: {:.2}", self.start_time.elapsed().as_secs_f64());
+
+        egui::SidePanel::left("Debug Info")
             .resizable(true)
-            .anchor(Align2::LEFT_TOP, [0., 0.])
             .show(ctx, |ui| {
-                ui.label(format!("time elapsed: {:.2}", self.start_time.elapsed().as_secs_f64()));
+                ui.add(Label::new(elapsed_str).text_style(TextStyle::Heading))
             }
         );
     }
