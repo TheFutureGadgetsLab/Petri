@@ -218,7 +218,7 @@ impl PetriEventLoop for SimRenderer {
             label: Some("Render Encoder"),
         });
 
-        let n_vertices = self.vertex_buffer.update(&display, &mut encoder, &simulation, &self.cam);
+        let n_vertices = self.vertex_buffer.update(&display, &simulation, &self.cam);
 
         { // Set up render pass and associate the render pipeline we made
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -249,8 +249,5 @@ impl PetriEventLoop for SimRenderer {
         // Submit will accept anything that implements IntoIter
         // Submits the command buffer
         display.queue.submit(std::iter::once(encoder.finish()));
-
-        // Recall all the used buffers
-        display.spawner.spawn_local(self.vertex_buffer.belt.recall());
     }
 }

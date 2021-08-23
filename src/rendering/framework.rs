@@ -1,7 +1,6 @@
 // Heavily borrowed from Learn-WGPU
 // https://github.com/sotrh/learn-wgpu/tree/master/code/showcase/framework
 
-use std::future::Future;
 use wgpu::{SurfaceError, SurfaceFrame, TextureView};
 use winit::event::Event::*;
 use winit::event_loop::{ControlFlow, EventLoop};
@@ -13,38 +12,16 @@ const INITIAL_HEIGHT: u32 = 1080;
 
 use crate::simulation::{Config, Simulation};
 
-pub struct Spawner<'a> {
-    executor: async_executor::LocalExecutor<'a>,
-}
-
-impl<'a> Spawner<'a> {
-    fn new() -> Self {
-        Self {
-            executor: async_executor::LocalExecutor::new(),
-        }
-    }
-
-    #[allow(dead_code)]
-    pub fn spawn_local(&self, future: impl Future<Output = ()> + 'a) {
-        self.executor.spawn(future).detach();
-    }
-
-    fn run_until_stalled(&self) {
-        while self.executor.try_tick() {}
-    }
-}
-
-pub struct Display<'a> {
+pub struct Display {
     pub surface: wgpu::Surface,
     pub surface_config: wgpu::SurfaceConfiguration,
     pub window: Window,
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
-    pub spawner: Spawner<'a>
 }
 
-impl Display<'_> {
-    pub async fn new(window: Window) -> Display<'static> {
+impl Display {
+    pub async fn new(window: Window) -> Display {
         let size = window.inner_size();
         let instance = wgpu::Instance::new(wgpu::Backends::PRIMARY);
         let surface = unsafe { instance.create_surface(&window) };
@@ -81,7 +58,6 @@ impl Display<'_> {
             window,
             device,
             queue,
-            spawner: Spawner::new()
         }
     }
 
@@ -165,7 +141,6 @@ pub async fn run<Sim: PetriEventLoop, GUI: PetriEventLoop>(config: Config) {
             MainEventsCleared => {
                 simulation.update();
                 display.window.request_redraw();
-                display.spawner.run_until_stalled();
             }
             WindowEvent {
                 event, ..
