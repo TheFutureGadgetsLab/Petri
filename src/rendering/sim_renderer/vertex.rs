@@ -1,5 +1,7 @@
-use crate::simulation::{RigidCircle, Simulation};
-use crate::rendering::{camera::Camera, framework::Display};
+use crate::{
+    rendering::{Camera, Display},
+    simulation::{RigidCircle, Simulation}
+};
 use legion::*;
 
 #[repr(C)]

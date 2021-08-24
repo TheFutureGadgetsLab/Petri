@@ -1,13 +1,9 @@
 use crate::{
     rendering::{
-        framework::{
-            PetriEventLoop, Display,
-        }, 
+        driver::{PetriEventLoop, Display}, 
         gui_renderer::DebugApp,
     },
-    simulation::{
-        Simulation
-    }
+    simulation::Simulation
 };
 use std::{iter, sync::Arc};
 use std::time::Instant;

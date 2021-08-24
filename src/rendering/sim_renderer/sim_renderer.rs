@@ -1,6 +1,6 @@
 use crate::{
-    rendering::{camera::Camera,
-        framework::{Display, PetriEventLoop},
+    rendering::{
+        driver::{Display, PetriEventLoop, Camera},
         sim_renderer::{VertexBuffer, Vertex}
     },
     simulation::Simulation
