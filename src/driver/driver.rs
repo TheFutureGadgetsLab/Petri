@@ -3,13 +3,11 @@ use winit::event::{Event, Event::*};
 use winit::event_loop::{ControlFlow, EventLoop};
 use crate::{rendering::{Display, GUIRenderer, SimRenderer}, simulation::{Config, Simulation}};
 
-use super::Stats;
-
 pub trait PetriEventLoop: 'static + Sized {
-    fn init(display: &Display) -> Self;
+    fn init(display: &Display, simulation: &Simulation) -> Self;
     fn handle_event<T>(&mut self, display: &Display, event: &winit::event::Event<T>);
     fn update(&mut self, display: &Display);
-    fn render(&mut self, display: &Display, simulation: &Simulation, view: &TextureView, stats: &Stats);
+    fn render(&mut self, display: &Display, simulation: &Simulation, view: &TextureView);
 }
 
 struct Package
@@ -18,7 +16,6 @@ struct Package
     display:      Display,
     sim_renderer: SimRenderer,
     gui_renderer: GUIRenderer,
-    stats:        Stats,
 }
 
 impl Package {
@@ -26,15 +23,14 @@ impl Package {
         let simulation = Simulation::new(config);
         let display = Display::new(&event_loop).await;
 
-        let sim_renderer = SimRenderer::init(&display);
-        let gui_renderer = GUIRenderer::init(&display);
+        let sim_renderer = SimRenderer::init(&display, &simulation);
+        let gui_renderer = GUIRenderer::init(&display, &simulation);
 
         Package {
             simulation,
             display,
             sim_renderer,
             gui_renderer,
-            stats: Stats::default(),
         }
     }
 
@@ -44,15 +40,13 @@ impl Package {
     }
 
     pub fn render(&mut self) {
-        self.stats.tick();
-
         self.sim_renderer.update(&self.display);
         self.gui_renderer.update(&self.display);
 
         let (_output_frame, output_view) = self.display.get_frame().unwrap();
 
-        self.sim_renderer.render(&self.display, &self.simulation, &output_view, &self.stats);
-        self.gui_renderer.render(&self.display, &self.simulation, &output_view, &self.stats);
+        self.sim_renderer.render(&self.display, &self.simulation, &output_view);
+        self.gui_renderer.render(&self.display, &self.simulation, &output_view);
     }
 
     pub fn request_render(&mut self) {

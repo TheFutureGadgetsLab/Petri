@@ -1,33 +1,46 @@
-use std::time;
+use std::time::{Instant, Duration};
+use fps_counter::FPSCounter;
 
 pub struct Time {
-    start: time::Instant,
-    last_tick: time::Instant,
+    pub tick: u128,
+    pub start_time: Instant,
+    pub last_tick_time: Instant,
+
+    pub tick_rate: usize,
+    tick_counter: FPSCounter,
+}
+
+impl Default for Time {
+    fn default() -> Self {
+        let now = Instant::now();
+
+        Self {
+            tick: 0,
+            start_time: now,
+            last_tick_time: now,
+            tick_rate: 0,
+            tick_counter: FPSCounter::default()
+        }
+    }
 }
 
 #[allow(dead_code)]
 impl Time {
-    pub fn default() -> Time {
-        let now = time::Instant::now();
-        Time {
-            start: now,
-            last_tick: now,
-        }
-    } 
-
     pub fn tick(&mut self) {
-        self.last_tick = time::Instant::now();
+        self.tick += 1;
+        self.tick_rate = self.tick_counter.tick();
+        self.last_tick_time = Instant::now();
     }
 
-    pub fn time_since_start(&self) -> time::Duration {
-        return time::Instant::now() - self.start;
+    pub fn time_since_start(&self) -> Duration {
+        return Instant::now() - self.start_time;
     }
     
-    pub fn delta_time(&self) -> time::Duration {
-        return time::Instant::now() - self.last_tick;
+    pub fn delta_time(&self) -> Duration {
+        return Instant::now() - self.last_tick_time;
     }
 
-    pub fn now() -> time::Instant {
-        return time::Instant::now();
+    pub fn now() -> Instant {
+        return Instant::now();
     }
 }

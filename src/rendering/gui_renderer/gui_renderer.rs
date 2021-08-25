@@ -1,7 +1,7 @@
 use crate::{
-    driver::{PetriEventLoop, Stats},
+    driver::PetriEventLoop,
     rendering::Display,
-    simulation::Simulation
+    simulation::Simulation,
 };
 use super::DebugApp;
 
@@ -30,7 +30,7 @@ pub struct GUIRenderer {
 }
 
 impl PetriEventLoop for GUIRenderer {
-    fn init(display: &Display) -> GUIRenderer {
+    fn init(display: &Display, _simulation: &Simulation) -> GUIRenderer {
         let size = display.window.inner_size();
         // We use the egui_winit_platform crate as the platform.
         let platform = Platform::new(PlatformDescriptor {
@@ -61,14 +61,14 @@ impl PetriEventLoop for GUIRenderer {
         
     }
 
-    fn render(&mut self, display: &Display, _simulation: &Simulation, view: &TextureView, stats: &Stats) {
+    fn render(&mut self, display: &Display, simulation: &Simulation, view: &TextureView) {
         self.platform.update_time(self.start_time.elapsed().as_secs_f64());
 
         // Begin to draw the UI frame.
         let egui_start = Instant::now();
         self.platform.begin_frame();
 
-        self.debug.update(&self.platform.context(), stats);
+        self.debug.update(&self.platform.context(), &simulation);
 
         // End the UI frame. We could now handle the output and draw the UI with the backend.
         let (_output, paint_commands) = self.platform.end_frame();

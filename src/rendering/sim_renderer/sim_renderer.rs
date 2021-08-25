@@ -1,4 +1,4 @@
-use crate::{driver::{PetriEventLoop, Stats}, rendering::Display, simulation::Simulation};
+use crate::{driver::PetriEventLoop, rendering::Display, simulation::Simulation};
 
 use super::{VertexBuffer, Vertex, camera::Camera};
 use glam::Vec2;
@@ -27,7 +27,7 @@ pub struct SimRenderer {
 }
 
 impl PetriEventLoop for SimRenderer {
-    fn init(display: &Display) -> SimRenderer {
+    fn init(display: &Display, _simulation: &Simulation) -> SimRenderer {
         let globals_buffer_byte_size = std::mem::size_of::<Globals>() as wgpu::BufferAddress;
         let globals_ubo = display.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Globals ubo"),
@@ -205,7 +205,7 @@ impl PetriEventLoop for SimRenderer {
     fn update(&mut self, _display: &Display) {
     }
 
-    fn render(&mut self, display: &Display, simulation: &Simulation, view: &TextureView, _stats: &Stats) {
+    fn render(&mut self, display: &Display, simulation: &Simulation, view: &TextureView) {
         let mut encoder = display.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
             label: Some("Render Encoder"),
         });
