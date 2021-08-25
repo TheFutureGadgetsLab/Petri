@@ -1,10 +1,10 @@
 use crate::{
-    rendering::{
-        driver::{PetriEventLoop, Display}, 
-        gui_renderer::DebugApp,
-    },
+    driver::PetriEventLoop,
+    rendering::Display,
     simulation::Simulation
 };
+use super::DebugApp;
+
 use std::{iter, sync::Arc};
 use std::time::Instant;
 

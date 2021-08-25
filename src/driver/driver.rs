@@ -1,16 +1,30 @@
-// Heavily borrowed from Learn-WGPU
-// https://github.com/sotrh/learn-wgpu/tree/master/code/showcase/framework
-
 use wgpu::TextureView;
 use winit::event::Event::*;
 use winit::event_loop::{ControlFlow, EventLoop};
 use fps_counter;
 
-use crate::rendering::Display;
-use crate::simulation::{Simulation, Config};
+use crate::{rendering::{Display, GUIRenderer, SimRenderer}, simulation::{Config, Simulation}};
 
-const INITIAL_WIDTH: u32 = 1920;
-const INITIAL_HEIGHT: u32 = 1080;
+pub struct Driver
+{
+    pub display: Display,
+    
+    pub sim_renderer: SimRenderer,
+    pub gui_renderer: GUIRenderer,
+    
+    pub config: Config,
+    pub simulation: Simulation,
+
+    pub event_loop: EventLoop<()>
+}
+
+impl Driver {
+    pub fn new() {
+
+    }
+}
+
+
 
 pub trait PetriEventLoop: 'static + Sized {
     fn init(display: &Display) -> Self;
@@ -28,22 +42,11 @@ pub async fn run<Sim: PetriEventLoop, GUI: PetriEventLoop>(config: Config) {
     let mut tick: usize = 0;
 
     let event_loop = EventLoop::new();
-    let window = winit::window::WindowBuilder::new()
-        .with_decorations(true)
-        .with_resizable(true)
-        .with_transparent(false)
-        .with_title("Petri")
-        .with_inner_size(winit::dpi::PhysicalSize {
-            width: INITIAL_WIDTH,
-            height: INITIAL_HEIGHT,
-        })
-        .build(&event_loop)
-        .unwrap();
-    let mut display = Display::new(window).await;
+    let mut display = Display::new(&event_loop).await;
 
 
-    let mut app = Sim::init(&mut display);
-    let mut gui = GUI::init(&mut display);
+    let mut app = Sim::init(&display);
+    let mut gui = GUI::init(&display);
 
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Poll;

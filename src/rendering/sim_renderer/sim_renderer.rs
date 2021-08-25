@@ -1,10 +1,10 @@
 use crate::{
-    rendering::{
-        driver::{Display, PetriEventLoop, Camera},
-        sim_renderer::{VertexBuffer, Vertex}
-    },
+    driver::PetriEventLoop,
+    rendering::Display,
     simulation::Simulation
 };
+
+use super::{VertexBuffer, Vertex, camera::Camera};
 use glam::Vec2;
 use winit::{event::{VirtualKeyCode, ElementState, Event, MouseButton, WindowEvent}};
 

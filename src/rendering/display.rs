@@ -2,18 +2,34 @@
 // https://github.com/sotrh/learn-wgpu/tree/master/code/showcase/framework
 
 use wgpu::{SurfaceError, SurfaceFrame, TextureView};
-use winit::window::Window;
+use winit::{window::Window, event_loop::EventLoop};
 
 pub struct Display {
     pub surface: wgpu::Surface,
     pub surface_config: wgpu::SurfaceConfiguration,
-    pub window: Window,
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
+    pub window: Window,
 }
 
+const INITIAL_WIDTH: u32 = 1920;
+const INITIAL_HEIGHT: u32 = 1080;
+
 impl Display {
-    pub async fn new(window: Window) -> Display {
+    pub async fn new(event_loop: &EventLoop<()>) -> Display {
+        let window = winit::window::WindowBuilder::new()
+            .with_decorations(true)
+            .with_resizable(true)
+            .with_transparent(false)
+            .with_title("Petri")
+            .with_inner_size(winit::dpi::PhysicalSize {
+                width: INITIAL_WIDTH,
+                height: INITIAL_HEIGHT,
+            })
+            .build(&event_loop)
+            .unwrap();
+
+        
         let size = window.inner_size();
         let instance = wgpu::Instance::new(wgpu::Backends::PRIMARY);
         let surface = unsafe { instance.create_surface(&window) };

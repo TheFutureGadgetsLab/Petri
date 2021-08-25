@@ -1,5 +1,5 @@
 use glam::{Vec2, vec2};
-use super::Display;
+use crate::rendering::Display;
 
 pub struct Camera {
     pub pos: Vec2,
