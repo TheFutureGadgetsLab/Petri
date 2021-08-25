@@ -1,3 +1,3 @@
 pub mod driver;
 
-pub use driver::{Driver, PetriEventLoop, run};
+pub use driver::{run, PetriEventLoop};

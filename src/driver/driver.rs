@@ -1,30 +1,9 @@
 use wgpu::TextureView;
-use winit::event::Event::*;
+use winit::event::{Event, Event::*};
 use winit::event_loop::{ControlFlow, EventLoop};
-use fps_counter;
+use fps_counter::{self, FPSCounter};
 
 use crate::{rendering::{Display, GUIRenderer, SimRenderer}, simulation::{Config, Simulation}};
-
-pub struct Driver
-{
-    pub display: Display,
-    
-    pub sim_renderer: SimRenderer,
-    pub gui_renderer: GUIRenderer,
-    
-    pub config: Config,
-    pub simulation: Simulation,
-
-    pub event_loop: EventLoop<()>
-}
-
-impl Driver {
-    pub fn new() {
-
-    }
-}
-
-
 
 pub trait PetriEventLoop: 'static + Sized {
     fn init(display: &Display) -> Self;
@@ -33,61 +12,96 @@ pub trait PetriEventLoop: 'static + Sized {
     fn render(&mut self, display: &Display, simulation: &Simulation, view: &TextureView);
 }
 
-pub async fn run<Sim: PetriEventLoop, GUI: PetriEventLoop>(config: Config) {
+struct Package
+{
+    simulation:   Simulation,
+    display:      Display,
+    sim_renderer: SimRenderer,
+    gui_renderer: GUIRenderer,
+
+    tick: usize,
+    fps_counter: FPSCounter,
+}
+
+impl Package {
+    pub async fn new(config: Config, event_loop: &EventLoop<()>) -> Package {
+        let simulation = Simulation::new(config);
+        let display = Display::new(&event_loop).await;
+
+        let sim_renderer = SimRenderer::init(&display);
+        let gui_renderer = GUIRenderer::init(&display);
+
+        let fps_counter = fps_counter::FPSCounter::default();
+        let tick: usize = 0;
+
+        Package {
+            simulation,
+            display,
+            sim_renderer,
+            gui_renderer,
+            tick,
+            fps_counter,
+        }
+    }
+
+    pub fn handle_event(&mut self, event: &Event<()>) {
+        self.sim_renderer.handle_event(&self.display, &event);
+        self.gui_renderer.handle_event(&self.display, &event);
+    }
+
+    pub fn render(&mut self) {
+        self.tick += 1;
+        let fps = self.fps_counter.tick();
+        if self.tick % 100 == 0 {
+            println!("{}", fps);
+        }
+                
+        self.sim_renderer.update(&self.display);
+        self.gui_renderer.update(&self.display);
+
+        let (_output_frame, output_view) = self.display.get_frame().unwrap();
+
+        self.sim_renderer.render(&self.display, &self.simulation, &output_view);
+        self.gui_renderer.render(&self.display, &self.simulation, &output_view);
+    }
+
+    pub fn request_render(&mut self) {
+        self.simulation.update();
+        self.display.window.request_redraw();
+    }
+
+    pub fn handle_window_event(&mut self, event: &winit::event::WindowEvent, control_flow: &mut ControlFlow) {
+        match event {
+            winit::event::WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
+            winit::event::WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
+                self.display.resize(new_inner_size.width, new_inner_size.height);
+            }
+            winit::event::WindowEvent::Resized(new_inner_size) => {
+                self.display.resize(new_inner_size.width, new_inner_size.height);
+            }
+            _ => {}
+        }
+    }
+}
+
+pub async fn run(config: Config) {
     wgpu_subscriber::initialize_default_subscriber(None);
 
-    let mut simulation = Simulation::new(config);
-
-    let mut fps_counter = fps_counter::FPSCounter::default();
-    let mut tick: usize = 0;
-
     let event_loop = EventLoop::new();
-    let mut display = Display::new(&event_loop).await;
-
-
-    let mut app = Sim::init(&display);
-    let mut gui = GUI::init(&display);
+    let mut package = Package::new(config, &event_loop).await;
 
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Poll;
-        app.handle_event(&display, &event);
-        gui.handle_event(&display, &event);
+
+        // Forward event to renderers
+        package.handle_event(&event);
         match event {
             // Rendering
-            RedrawRequested(..) => {
-                tick += 1;
-                let fps = fps_counter.tick();
-                if tick % 100 == 0 {
-                    println!("{}", fps);
-                }
-
-                app.update(&display);
-                gui.update(&display);
-
-                let (_output_frame, output_view) = display.get_frame().unwrap();
-
-                app.render(&display, &simulation, &output_view);
-                gui.render(&display, &simulation, &output_view);
-            }
+            RedrawRequested(..) => package.render(),
             // Updating simulation and queuing a redraw
-            MainEventsCleared => {
-                simulation.update();
-                display.window.request_redraw();
-            }
-            WindowEvent {
-                event, ..
-            } => {
-                match event {
-                    winit::event::WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
-                    winit::event::WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                        display.resize(new_inner_size.width, new_inner_size.height);
-                    }
-                    winit::event::WindowEvent::Resized(new_inner_size) => {
-                        display.resize(new_inner_size.width, new_inner_size.height);
-                    }
-                    _ => {}
-                }
-            }
+            MainEventsCleared => package.request_render(),
+            // Handle changes to wndow
+            WindowEvent { event, ..} => package.handle_window_event(&event, control_flow),
         _ => {}
         }
     });

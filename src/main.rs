@@ -7,5 +7,5 @@ use simulation::Config;
 
 fn main() {
     let config = Config::default();
-    block_on(driver::run::<rendering::SimRenderer, rendering::GUIRenderer>(config));
+    block_on(driver::run(config));
 }
