@@ -1,15 +1,15 @@
 use wgpu::TextureView;
 use winit::event::{Event, Event::*};
 use winit::event_loop::{ControlFlow, EventLoop};
-use fps_counter::{self, FPSCounter};
-
 use crate::{rendering::{Display, GUIRenderer, SimRenderer}, simulation::{Config, Simulation}};
+
+use super::Stats;
 
 pub trait PetriEventLoop: 'static + Sized {
     fn init(display: &Display) -> Self;
     fn handle_event<T>(&mut self, display: &Display, event: &winit::event::Event<T>);
     fn update(&mut self, display: &Display);
-    fn render(&mut self, display: &Display, simulation: &Simulation, view: &TextureView);
+    fn render(&mut self, display: &Display, simulation: &Simulation, view: &TextureView, stats: &Stats);
 }
 
 struct Package
@@ -18,9 +18,7 @@ struct Package
     display:      Display,
     sim_renderer: SimRenderer,
     gui_renderer: GUIRenderer,
-
-    tick: usize,
-    fps_counter: FPSCounter,
+    stats:        Stats,
 }
 
 impl Package {
@@ -31,16 +29,12 @@ impl Package {
         let sim_renderer = SimRenderer::init(&display);
         let gui_renderer = GUIRenderer::init(&display);
 
-        let fps_counter = fps_counter::FPSCounter::default();
-        let tick: usize = 0;
-
         Package {
             simulation,
             display,
             sim_renderer,
             gui_renderer,
-            tick,
-            fps_counter,
+            stats: Stats::default(),
         }
     }
 
@@ -50,19 +44,15 @@ impl Package {
     }
 
     pub fn render(&mut self) {
-        self.tick += 1;
-        let fps = self.fps_counter.tick();
-        if self.tick % 100 == 0 {
-            println!("{}", fps);
-        }
-                
+        self.stats.tick();
+
         self.sim_renderer.update(&self.display);
         self.gui_renderer.update(&self.display);
 
         let (_output_frame, output_view) = self.display.get_frame().unwrap();
 
-        self.sim_renderer.render(&self.display, &self.simulation, &output_view);
-        self.gui_renderer.render(&self.display, &self.simulation, &output_view);
+        self.sim_renderer.render(&self.display, &self.simulation, &output_view, &self.stats);
+        self.gui_renderer.render(&self.display, &self.simulation, &output_view, &self.stats);
     }
 
     pub fn request_render(&mut self) {

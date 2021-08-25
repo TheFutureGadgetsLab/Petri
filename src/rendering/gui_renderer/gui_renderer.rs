@@ -1,11 +1,11 @@
 use crate::{
-    driver::PetriEventLoop,
+    driver::{PetriEventLoop, Stats},
     rendering::Display,
     simulation::Simulation
 };
 use super::DebugApp;
 
-use std::{iter, sync::Arc};
+use std::iter;
 use std::time::Instant;
 
 use egui::{FontDefinitions};
@@ -26,7 +26,6 @@ pub struct GUIRenderer {
     rpass: RenderPass,
     start_time: Instant,
     previous_frame_time: Option<f32>,
-    signal: Arc<DummyRepaintSignal>,
     debug: DebugApp
 }
 
@@ -43,8 +42,6 @@ impl PetriEventLoop for GUIRenderer {
         });
 
         
-        let repaint_signal = std::sync::Arc::new(DummyRepaintSignal::default());
-
         // We use the egui_wgpu_backend crate as the render backend.
         let egui_rpass = RenderPass::new(&display.device, display.surface_config.format, 1);
         GUIRenderer {
@@ -52,8 +49,7 @@ impl PetriEventLoop for GUIRenderer {
             rpass: egui_rpass,
             start_time: Instant::now(),
             previous_frame_time: None,
-            signal: repaint_signal,
-            debug: DebugApp::default(),
+            debug: DebugApp,
         }
     }
 
@@ -65,29 +61,14 @@ impl PetriEventLoop for GUIRenderer {
         
     }
 
-    fn render(&mut self, display: &Display, _simulation: &Simulation, view: &TextureView) {
+    fn render(&mut self, display: &Display, _simulation: &Simulation, view: &TextureView, stats: &Stats) {
         self.platform.update_time(self.start_time.elapsed().as_secs_f64());
 
         // Begin to draw the UI frame.
         let egui_start = Instant::now();
         self.platform.begin_frame();
-        let mut app_output = epi::backend::AppOutput::default();
 
-        let mut frame = epi::backend::FrameBuilder {
-            info: epi::IntegrationInfo {
-                web_info: None,
-                cpu_usage: self.previous_frame_time,
-                seconds_since_midnight: None,
-                native_pixels_per_point: Some(display.window.scale_factor() as _),
-                prefer_dark_mode: None,
-            },
-            tex_allocator: &mut self.rpass,
-            output: &mut app_output,
-            repaint_signal: self.signal.clone(),
-        }
-        .build();
-
-        self.debug.update(&self.platform.context(), &mut frame);
+        self.debug.update(&self.platform.context(), stats);
 
         // End the UI frame. We could now handle the output and draw the UI with the backend.
         let (_output, paint_commands) = self.platform.end_frame();

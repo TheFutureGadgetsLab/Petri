@@ -1,8 +1,4 @@
-use crate::{
-    driver::PetriEventLoop,
-    rendering::Display,
-    simulation::Simulation
-};
+use crate::{driver::{PetriEventLoop, Stats}, rendering::Display, simulation::Simulation};
 
 use super::{VertexBuffer, Vertex, camera::Camera};
 use glam::Vec2;
@@ -209,7 +205,7 @@ impl PetriEventLoop for SimRenderer {
     fn update(&mut self, _display: &Display) {
     }
 
-    fn render(&mut self, display: &Display, simulation: &Simulation, view: &TextureView) {
+    fn render(&mut self, display: &Display, simulation: &Simulation, view: &TextureView, _stats: &Stats) {
         let mut encoder = display.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
             label: Some("Render Encoder"),
         });
