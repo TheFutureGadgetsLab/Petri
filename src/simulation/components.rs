@@ -1,5 +1,4 @@
 use rand::prelude::*;
-use crate::simulation::Config;
 use glam::Vec2;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -11,7 +10,7 @@ pub struct RigidCircle {
 }
 
 impl RigidCircle {
-    pub fn new_rand(_conf: Config, radius: f32) -> RigidCircle {
+    pub fn new_rand(radius: f32) -> RigidCircle {
         RigidCircle {
             pos: Vec2::ZERO,
             vel: Vec2::new(

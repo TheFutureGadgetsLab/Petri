@@ -1,4 +1,7 @@
-use crate::{driver::PetriEventLoop, rendering::Display, simulation::Simulation};
+use crate::{
+    rendering::{Display, PetriEventLoop},
+    simulation::Simulation
+};
 
 use super::{VertexBuffer, Vertex, camera::Camera};
 use glam::Vec2;

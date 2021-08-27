@@ -1,6 +1,5 @@
 use crate::{
-    driver::PetriEventLoop,
-    rendering::Display,
+    rendering::{Display, PetriEventLoop},
     simulation::Simulation,
 };
 use super::DebugApp;

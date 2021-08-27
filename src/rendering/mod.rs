@@ -1,7 +1,10 @@
-pub mod sim_renderer;
-pub mod gui_renderer;
-pub mod display;
+pub mod render_driver;
+mod sim_renderer;
+mod gui_renderer;
+mod display;
 
-pub use sim_renderer::SimRenderer;
-pub use gui_renderer::GUIRenderer;
-pub use display::Display;
+use display::Display;
+use sim_renderer::*;
+use gui_renderer::*;
+
+pub use render_driver::{RenderDriver, PetriEventLoop};

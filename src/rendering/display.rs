@@ -3,6 +3,7 @@
 
 use wgpu::{SurfaceError, SurfaceFrame, TextureView};
 use winit::{window::Window, event_loop::EventLoop};
+use futures::executor::block_on;
 
 pub struct Display {
     pub surface: wgpu::Surface,
@@ -16,7 +17,7 @@ const INITIAL_WIDTH: u32 = 1920;
 const INITIAL_HEIGHT: u32 = 1080;
 
 impl Display {
-    pub async fn new(event_loop: &EventLoop<()>) -> Display {
+    pub fn new(event_loop: &EventLoop<()>) -> Display {
         let window = winit::window::WindowBuilder::new()
             .with_decorations(true)
             .with_resizable(true)
@@ -33,14 +34,13 @@ impl Display {
         let size = window.inner_size();
         let instance = wgpu::Instance::new(wgpu::Backends::PRIMARY);
         let surface = unsafe { instance.create_surface(&window) };
-        let adapter = instance
+        let adapter = block_on(instance
             .request_adapter(&wgpu::RequestAdapterOptions {
                 power_preference: wgpu::PowerPreference::HighPerformance,
                 compatible_surface: Some(&surface),
-            })
-            .await
+            }))
             .unwrap();
-        let (device, queue) = adapter
+        let (device, queue) = block_on(adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: None,
@@ -48,8 +48,7 @@ impl Display {
                     limits: wgpu::Limits::default(),
                 },
                 None,
-            )
-            .await
+            ))
             .unwrap();
 
         let surface_config = wgpu::SurfaceConfiguration {

@@ -8,16 +8,16 @@ pub struct Simulation {
 }
 
 impl Simulation {
-    pub fn new(conf: Config) -> Simulation {
+    pub fn new(config: Config) -> Simulation {
         let mut world = World::default();
         let mut resources = Resources::default();
 
         resources.insert(Time::default());
-        resources.insert(conf);
+        resources.insert(config);
 
-        for _i in 1..conf.num_particles {
+        for _i in 1..config.num_particles {
             world.push( (
-                components::RigidCircle::new_rand(conf, 10.0),
+                components::RigidCircle::new_rand(10.0),
             ));
         }
 
