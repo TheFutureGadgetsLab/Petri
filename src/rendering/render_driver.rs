@@ -1,5 +1,4 @@
-use crate::{
-    rendering::{
+use crate::{rendering::{
         Display,
         GUIRenderer,
         SimRenderer
@@ -15,8 +14,8 @@ use winit::event_loop::{ControlFlow, EventLoop};
 use wgpu::TextureView;
 
 pub trait PetriEventLoop: 'static + Sized {
-    fn init(display: &Display, simulation: &Simulation) -> Self;
-    fn handle_event<T>(&mut self, display: &Display, event: &winit::event::Event<T>);
+    fn init(display: &Display, simulation: &mut Simulation) -> Self;
+    fn handle_event<T>(&mut self, display: &Display, simulation: &mut Simulation, event: &winit::event::Event<T>);
     fn update(&mut self, display: &Display);
     fn render(&mut self, display: &Display, simulation: &Simulation, view: &TextureView);
 }
@@ -29,11 +28,11 @@ pub struct RenderDriver
 }
 
 impl RenderDriver {
-    pub fn new(simulation: &Simulation, event_loop: &EventLoop<()>) -> Self {
+    pub fn new(simulation: &mut Simulation, event_loop: &EventLoop<()>) -> Self {
         let display = Display::new(&event_loop);
 
-        let sim_renderer = SimRenderer::init(&display, &simulation);
-        let gui_renderer = GUIRenderer::init(&display, &simulation);
+        let sim_renderer = SimRenderer::init(&display, simulation);
+        let gui_renderer = GUIRenderer::init(&display, simulation);
 
         Self {
             display,
@@ -42,9 +41,9 @@ impl RenderDriver {
         }
     }
 
-    pub fn handle_event(&mut self, event: &Event<()>) {
-        self.sim_renderer.handle_event(&self.display, &event);
-        self.gui_renderer.handle_event(&self.display, &event);
+    pub fn handle_event(&mut self, simulation: &mut Simulation, event: &Event<()>) {
+        self.sim_renderer.handle_event(&self.display, simulation, &event);
+        self.gui_renderer.handle_event(&self.display, simulation, &event);
     }
 
     pub fn render(&mut self, simulation: &Simulation) {

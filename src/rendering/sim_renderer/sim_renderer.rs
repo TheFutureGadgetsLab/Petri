@@ -22,7 +22,6 @@ pub struct SimRenderer {
     bind_group: wgpu::BindGroup,
     render_pipeline: wgpu::RenderPipeline,
     vertex_buffer: VertexBuffer,
-    cam: Camera,
     prev_mouse_pos: Vec2,
     mouse_pos: Vec2,
     mouse_drag_start: Vec2,
@@ -30,7 +29,7 @@ pub struct SimRenderer {
 }
 
 impl PetriEventLoop for SimRenderer {
-    fn init(display: &Display, _simulation: &Simulation) -> SimRenderer {
+    fn init(display: &Display, simulation: &mut Simulation) -> SimRenderer {
         let globals_buffer_byte_size = std::mem::size_of::<Globals>() as wgpu::BufferAddress;
         let globals_ubo = display.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Globals ubo"),
@@ -140,12 +139,14 @@ impl PetriEventLoop for SimRenderer {
             multisample: wgpu::MultisampleState::default()
         });
 
+        println!("Inserting camera");
+        simulation.resources.insert(Camera::new(display));
+
         SimRenderer {
             globals_ubo,
             bind_group,
             render_pipeline,
             vertex_buffer: VertexBuffer::default(display),
-            cam: Camera::new(display),
             prev_mouse_pos: Vec2::ZERO,
             mouse_pos: Vec2::ZERO,
             mouse_drag_start: Vec2::ZERO,
@@ -153,16 +154,18 @@ impl PetriEventLoop for SimRenderer {
         }
     }
 
-    fn handle_event<T>(&mut self, display: &Display, event: &Event<T>) {
+    fn handle_event<T>(&mut self, display: &Display, simulation: &mut Simulation, event: &Event<T>) {
         // Need to handle scale factor change
+        let mut cam = simulation.resources.get_mut::<Camera>().unwrap();
+
         match event {
             Event::WindowEvent { ref event, ..}  => {
                 match event {
                     WindowEvent::Resized(_) => {
                         let size = display.window.inner_size();
-                        self.cam.size = [size.width as f32, size.height as f32].into();
+                        cam.size = [size.width as f32, size.height as f32].into();
                         display.queue.write_buffer(&self.globals_ubo, 0, bytemuck::cast_slice(&[Globals {
-                            res: self.cam.size.into()
+                            res: cam.size.into()
                         }]));
                     }
                     WindowEvent::MouseInput {button, state, ..} => {
@@ -171,7 +174,7 @@ impl PetriEventLoop for SimRenderer {
                                 match state {
                                     ElementState::Pressed => {
                                         self.mouse_click = true;
-                                        self.mouse_drag_start = self.cam.screen2world(self.mouse_pos) + self.cam.pos;
+                                        self.mouse_drag_start = cam.screen2world(self.mouse_pos) + cam.pos;
                                     }
                                     ElementState::Released => { self.mouse_click = false; }
                                 }
@@ -184,16 +187,16 @@ impl PetriEventLoop for SimRenderer {
                         self.mouse_pos.x = position.x as f32;
                         self.mouse_pos.y = position.y as f32;
                         if self.mouse_click {
-                            self.cam.pos = self.mouse_drag_start - self.cam.screen2world(self.mouse_pos);
+                            cam.pos = self.mouse_drag_start - cam.screen2world(self.mouse_pos);
                         }
                     }
                     WindowEvent::KeyboardInput { input , ..} => {
                         if input.virtual_keycode.is_some() {
                             match input.virtual_keycode.unwrap() {
-                                VirtualKeyCode::Left =>     { self.cam.pos.x -= 20.0; }
-                                VirtualKeyCode::Right =>    { self.cam.pos.x += 20.0; }
-                                VirtualKeyCode::Up =>       { self.cam.pos.y -= 20.0; }
-                                VirtualKeyCode::Down =>     { self.cam.pos.y += 20.0; }
+                                VirtualKeyCode::Left =>     { cam.pos.x -= 20.0; }
+                                VirtualKeyCode::Right =>    { cam.pos.x += 20.0; }
+                                VirtualKeyCode::Up =>       { cam.pos.y -= 20.0; }
+                                VirtualKeyCode::Down =>     { cam.pos.y += 20.0; }
                                 _ => {}
                             }
                         }
@@ -213,7 +216,7 @@ impl PetriEventLoop for SimRenderer {
             label: Some("Render Encoder"),
         });
 
-        let n_vertices = self.vertex_buffer.update(&display, &simulation, &self.cam);
+        let n_vertices = self.vertex_buffer.update(&display, &simulation);
 
         { // Set up render pass and associate the render pipeline we made
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {

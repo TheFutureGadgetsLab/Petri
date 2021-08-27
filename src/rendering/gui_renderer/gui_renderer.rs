@@ -29,7 +29,7 @@ pub struct GUIRenderer {
 }
 
 impl PetriEventLoop for GUIRenderer {
-    fn init(display: &Display, _simulation: &Simulation) -> GUIRenderer {
+    fn init(display: &Display, _simulation: &mut Simulation) -> GUIRenderer {
         let size = display.window.inner_size();
         // We use the egui_winit_platform crate as the platform.
         let platform = Platform::new(PlatformDescriptor {
@@ -52,7 +52,7 @@ impl PetriEventLoop for GUIRenderer {
         }
     }
 
-    fn handle_event<T>(&mut self, _display: &Display, event: &winit::event::Event<T>) {
+    fn handle_event<T>(&mut self, _display: &Display, _simulation: &mut Simulation, event: &winit::event::Event<T>) {
         self.platform.handle_event(&event)        
     }
 

@@ -13,13 +13,13 @@ fn main() {
     let mut simulation = Simulation::new(config);
 
     let event_loop = EventLoop::new();
-    let mut renderer = RenderDriver::new(&simulation, &event_loop);
+    let mut renderer = RenderDriver::new(&mut simulation, &event_loop);
 
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Poll;
 
         // Forward event to renderers
-        renderer.handle_event(&event);
+        renderer.handle_event(&mut simulation, &event);
 
         match event {
             // Rendering
