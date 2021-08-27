@@ -1,4 +1,4 @@
 pub mod gui_renderer;
-mod debug_app;
+mod stat_app;
 pub use gui_renderer::GUIRenderer;
-pub use debug_app::DebugApp;
+pub use stat_app::DebugApp;

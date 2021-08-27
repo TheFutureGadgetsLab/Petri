@@ -9,15 +9,22 @@ impl DebugApp {
     pub fn update(&mut self, ctx: &egui::CtxRef, simulation: &Simulation) {
         let time = simulation.resources.get_mut::<Time>().unwrap();
 
-        let draw_str = format!(
-            "Time: {:.2} | FPS: {}", 
+        let time_str = format!(
+            "Time: {:.2}", 
             time.time_since_start().as_secs_f64(),
+        );
+        let tick_str = format!(
+            "Ticks / s: {}", 
             time.tick_rate
         );
+
         egui::TopBottomPanel::top("Debug Info")
             .show(ctx, |ui| {
-                ui.add(Label::new(draw_str).text_style(TextStyle::Heading));
-            }
-        );
+                ui.horizontal(|ui| {
+                    ui.add(Label::new(time_str).text_style(TextStyle::Heading));
+                    ui.separator();
+                    ui.add(Label::new(tick_str).text_style(TextStyle::Heading));
+                });
+            });
     }
 }
