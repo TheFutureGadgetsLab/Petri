@@ -7,19 +7,19 @@ resolver = "2"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-winit = "0.25"
+winit = "0.25.0"
 wgpu = { version = "0.10.1", features = [ "spirv" ] }
 bytemuck = { version = "1.7.2", features = [ "derive" ] }
 fps_counter = "2.0.0"
 rayon = "1.5.1"
 wgpu-subscriber = "0.1.0"
 rand = "0.8.4"
-glam = "0.17.3"
+glam = "0.18.0"
 legion = "0.4.0"
 shaderc = "0.7.3"
 futures = "0.3.16"
-egui = "0.13.1"
-epi = "0.13.0"
-egui_wgpu_backend = "0.11.0"
-egui_winit_platform = "0.9"
+egui = "0.14.0"
+epi = "0.14.0"
+egui_wgpu_backend = "0.12.0"
+egui_winit_platform = "0.10.0"
 async-executor = "1.4.1"
