@@ -9,7 +9,7 @@ pub struct DebugApp;
 impl DebugApp {
     pub fn update(&mut self, ctx: &egui::CtxRef, simulation: &Simulation) {
         let time = simulation.resources.get_mut::<Time>().unwrap();
-        let mut cam = simulation.resources.get_mut::<Camera>().unwrap();
+        let cam = simulation.resources.get_mut::<Camera>().unwrap();
 
         let time_str = format!(
             "Time: {:.2}", 
