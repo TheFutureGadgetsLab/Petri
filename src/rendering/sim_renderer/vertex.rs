@@ -3,7 +3,6 @@ use crate::{
     simulation::{RigidCircle, Simulation}
 };
 use super::camera::Camera;
-
 use legion::*;
 
 #[repr(C)]
@@ -50,10 +49,9 @@ impl VertexBuffer {
         let cam = simulation.resources.get::<Camera>().unwrap();
 
         let vertices: Vec<Vertex> = <&RigidCircle>::query().iter(&simulation.world).map(|circ| {
-            let pos = cam.transform(circ.pos);
-            Vertex {position: pos.into(), size: circ.radius, color: circ.color}
+            Vertex {position: cam.transform.transform_point2(circ.pos).into(), size: circ.radius, color: circ.color}
         }).collect();
-
+        
         display.queue.write_buffer(&self.buf, 0, bytemuck::cast_slice(&vertices));
 
         vertices.len() as u32

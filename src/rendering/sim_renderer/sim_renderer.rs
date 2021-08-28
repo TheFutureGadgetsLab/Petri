@@ -2,10 +2,9 @@ use crate::{
     rendering::{Display, PetriEventLoop},
     simulation::Simulation
 };
-
+use winit::event::MouseScrollDelta;
 use super::{VertexBuffer, Vertex, camera::Camera};
-use glam::Vec2;
-use winit::{event::{VirtualKeyCode, ElementState, Event, MouseButton, WindowEvent}};
+use winit::{event::{VirtualKeyCode, Event, WindowEvent}};
 
 use wgpu::{ShaderModuleDescriptor, TextureView};
 use bytemuck;
@@ -22,10 +21,6 @@ pub struct SimRenderer {
     bind_group: wgpu::BindGroup,
     render_pipeline: wgpu::RenderPipeline,
     vertex_buffer: VertexBuffer,
-    prev_mouse_pos: Vec2,
-    mouse_pos: Vec2,
-    mouse_drag_start: Vec2,
-    mouse_click: bool
 }
 
 impl PetriEventLoop for SimRenderer {
@@ -139,7 +134,6 @@ impl PetriEventLoop for SimRenderer {
             multisample: wgpu::MultisampleState::default()
         });
 
-        println!("Inserting camera");
         simulation.resources.insert(Camera::new(display));
 
         SimRenderer {
@@ -147,10 +141,6 @@ impl PetriEventLoop for SimRenderer {
             bind_group,
             render_pipeline,
             vertex_buffer: VertexBuffer::default(display),
-            prev_mouse_pos: Vec2::ZERO,
-            mouse_pos: Vec2::ZERO,
-            mouse_drag_start: Vec2::ZERO,
-            mouse_click: false,
         }
     }
 
@@ -163,33 +153,13 @@ impl PetriEventLoop for SimRenderer {
                 match event {
                     WindowEvent::Resized(_) => {
                         let size = display.window.inner_size();
-                        cam.scale([size.width as f32, size.height as f32].into());
+                        cam.rescale_window([size.width as f32, size.height as f32].into());
                         display.queue.write_buffer(&self.globals_ubo, 0, bytemuck::cast_slice(&[Globals {
-                            res: cam.size.into()
+                            res: cam.window_size.into()
                         }]));
                     }
-                    WindowEvent::MouseInput {button, state, ..} => {
-                        match button {
-                            MouseButton::Left => {
-                                match state {
-                                    ElementState::Pressed => {
-                                        self.mouse_click = true;
-                                        self.mouse_drag_start = cam.screen2world(self.mouse_pos) + cam.pos;
-                                    }
-                                    ElementState::Released => { self.mouse_click = false; }
-                                }
-                            }
-                            _ => {}
-                        }
-                    }
-                    WindowEvent::CursorMoved {position, ..} => {
-                        self.prev_mouse_pos = self.mouse_pos;
-                        self.mouse_pos.x = position.x as f32;
-                        self.mouse_pos.y = position.y as f32;
-                        if self.mouse_click {
-                            let tmp = cam.screen2world(self.mouse_pos);
-                            cam.translate_to(self.mouse_drag_start - tmp);
-                        }
+                    WindowEvent::MouseWheel { delta: MouseScrollDelta::LineDelta(_, _y), .. } => {
+                        // Zoom camera here. y is -1.0 or 1.0
                     }
                     WindowEvent::KeyboardInput { input , ..} => {
                         if input.virtual_keycode.is_some() {

@@ -14,9 +14,9 @@ impl RigidCircle {
         RigidCircle {
             pos: Vec2::ZERO,
             vel: Vec2::new(
-                thread_rng().gen_range(-0.001..0.001),
-                thread_rng().gen_range(-0.001..0.001)
-            ),
+                thread_rng().gen_range(-0.0001..0.0001),
+                thread_rng().gen_range(-0.0001..0.0001)
+            ).normalize(),
             radius,
             color: [thread_rng().gen_range(0.0..1.0), thread_rng().gen_range(0.0..1.0), thread_rng().gen_range(0.0..1.0), 1.0]
         }

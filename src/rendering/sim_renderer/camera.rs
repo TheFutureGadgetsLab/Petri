@@ -1,41 +1,44 @@
-use glam::{Vec2, Affine2};
+use glam::{Affine2, Vec2};
 use crate::rendering::Display;
 
+static W2S_FAC: f32 = 1.0 / 10000.0;
+
 pub struct Camera {
-    pub pos: Vec2,
     pub scale: Vec2,
-    pub size: Vec2
+    pub window_size: Vec2,
+
+    pub transform: Affine2
 }
 
+#[allow(dead_code)]
 impl Camera {
     pub fn new(display: &Display) -> Self {
-        let win_size = display.window.inner_size();
+        let size = Vec2::new(
+         display.window.inner_size().width as _,
+         display.window.inner_size().height as _
+        );
+
+        let scale =  Vec2::new(
+            size.y * W2S_FAC,
+            size.x * W2S_FAC,
+        ) / size.min_element();
+
         Camera {
-            pos: Vec2::ZERO,
-            scale: Vec2::ONE,
-            size: Vec2::new(win_size.width as f32, win_size.height as f32),
+            scale: scale,
+            window_size: size,
+            transform: Affine2::from_scale_angle_translation(scale, 0.0, Vec2::ZERO)
         }
     }
 
     pub fn translate_by(&mut self, delta: Vec2) {
-        self.pos += delta;
+        self.transform.translation += delta * 50.0 * W2S_FAC;
     }
     
-    pub fn translate_to(&mut self, delta: Vec2) {
-        self.pos = delta;
+    pub fn rescale_window(&mut self, _scale: Vec2) {
+        //self.scale = scale;
     }
 
-    pub fn scale(&mut self, scale: Vec2) {
-        self.scale = scale;
-    }
-
-    pub fn transform(&self, pos: Vec2) -> Vec2 {
-        let tmp = Affine2::from_angle_translation(0.0, self.pos);
-        tmp.transform_point2(pos)
-    }
-
-    /// Transform screen coordinate to world coordinate
-    pub fn screen2world(&self, in_pos: Vec2) -> Vec2 {
-        self.pos + in_pos - self.size / 2.0
+    pub fn screen_to_world(&self, pos: Vec2) -> Vec2 {
+        self.transform.inverse().transform_point2(pos)
     }
 }
