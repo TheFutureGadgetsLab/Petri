@@ -46,10 +46,8 @@ impl VertexBuffer {
     }
 
     pub fn update(&mut self, display: &Display, simulation: &Simulation) -> u32 {
-        let cam = simulation.resources.get::<Camera>().unwrap();
-
         let vertices: Vec<Vertex> = <&RigidCircle>::query().iter(&simulation.world).map(|circ| {
-            Vertex {position: cam.transform(circ.pos).into(), size: circ.radius, color: circ.color}
+            Vertex {position: circ.pos.into(), size: circ.radius, color: circ.color}
         }).collect();
         
         display.queue.write_buffer(&self.buf, 0, bytemuck::cast_slice(&vertices));

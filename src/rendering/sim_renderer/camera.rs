@@ -1,7 +1,7 @@
 use glam::{Vec2};
 use crate::rendering::Display;
 
-static W2S_FAC: f32 = 1.0 / 10000.0;
+static W2S_FAC: f32 = 1.0 / 1.0;
 
 pub struct Camera {
     pub scale: Vec2,
