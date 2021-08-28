@@ -50,8 +50,8 @@ impl VertexBuffer {
         let cam = simulation.resources.get::<Camera>().unwrap();
 
         let vertices: Vec<Vertex> = <&RigidCircle>::query().iter(&simulation.world).map(|circ| {
-            let (pos, scale) = cam.transform(circ.pos, [circ.radius; 2].into());
-            Vertex {position: pos.into(), size: scale.x, color: circ.color}
+            let pos = cam.transform(circ.pos);
+            Vertex {position: pos.into(), size: circ.radius, color: circ.color}
         }).collect();
 
         display.queue.write_buffer(&self.buf, 0, bytemuck::cast_slice(&vertices));

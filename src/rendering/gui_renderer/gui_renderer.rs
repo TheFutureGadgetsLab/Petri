@@ -2,7 +2,7 @@ use crate::{
     rendering::{Display, PetriEventLoop},
     simulation::Simulation,
 };
-use super::DebugApp;
+use super::StatApp;
 
 use std::iter;
 use std::time::Instant;
@@ -25,7 +25,7 @@ pub struct GUIRenderer {
     rpass: RenderPass,
     start_time: Instant,
     previous_frame_time: Option<f32>,
-    debug: DebugApp
+    debug: StatApp
 }
 
 impl PetriEventLoop for GUIRenderer {
@@ -48,7 +48,7 @@ impl PetriEventLoop for GUIRenderer {
             rpass: egui_rpass,
             start_time: Instant::now(),
             previous_frame_time: None,
-            debug: DebugApp,
+            debug: StatApp,
         }
     }
 

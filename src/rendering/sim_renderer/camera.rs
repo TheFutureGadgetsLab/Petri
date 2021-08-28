@@ -1,4 +1,4 @@
-use glam::{Vec2, vec2};
+use glam::{Vec2, Affine2};
 use crate::rendering::Display;
 
 pub struct Camera {
@@ -13,14 +13,25 @@ impl Camera {
         Camera {
             pos: Vec2::ZERO,
             scale: Vec2::ONE,
-            size: vec2(win_size.width as f32, win_size.height as f32),
+            size: Vec2::new(win_size.width as f32, win_size.height as f32),
         }
     }
 
-    /// Transform world position and scale to render position and scale
-    pub fn transform(&self, in_pos: Vec2, in_scale: Vec2) -> (Vec2, Vec2) {
-        let p = (self.pos + in_pos) / self.size;
-        (vec2(-p.x, p.y), self.scale * in_scale)
+    pub fn translate_by(&mut self, delta: Vec2) {
+        self.pos += delta;
+    }
+    
+    pub fn translate_to(&mut self, delta: Vec2) {
+        self.pos = delta;
+    }
+
+    pub fn scale(&mut self, scale: Vec2) {
+        self.scale = scale;
+    }
+
+    pub fn transform(&self, pos: Vec2) -> Vec2 {
+        let tmp = Affine2::from_angle_translation(0.0, self.pos);
+        tmp.transform_point2(pos)
     }
 
     /// Transform screen coordinate to world coordinate

@@ -163,7 +163,7 @@ impl PetriEventLoop for SimRenderer {
                 match event {
                     WindowEvent::Resized(_) => {
                         let size = display.window.inner_size();
-                        cam.size = [size.width as f32, size.height as f32].into();
+                        cam.scale([size.width as f32, size.height as f32].into());
                         display.queue.write_buffer(&self.globals_ubo, 0, bytemuck::cast_slice(&[Globals {
                             res: cam.size.into()
                         }]));
@@ -187,16 +187,17 @@ impl PetriEventLoop for SimRenderer {
                         self.mouse_pos.x = position.x as f32;
                         self.mouse_pos.y = position.y as f32;
                         if self.mouse_click {
-                            cam.pos = self.mouse_drag_start - cam.screen2world(self.mouse_pos);
+                            let tmp = cam.screen2world(self.mouse_pos);
+                            cam.translate_to(self.mouse_drag_start - tmp);
                         }
                     }
                     WindowEvent::KeyboardInput { input , ..} => {
                         if input.virtual_keycode.is_some() {
                             match input.virtual_keycode.unwrap() {
-                                VirtualKeyCode::Left =>     { cam.pos.x -= 20.0; }
-                                VirtualKeyCode::Right =>    { cam.pos.x += 20.0; }
-                                VirtualKeyCode::Up =>       { cam.pos.y -= 20.0; }
-                                VirtualKeyCode::Down =>     { cam.pos.y += 20.0; }
+                                VirtualKeyCode::Left =>   cam.translate_by([1.0, 0.0].into()),
+                                VirtualKeyCode::Right =>  cam.translate_by([-1.0, 0.0].into()),
+                                VirtualKeyCode::Up =>     cam.translate_by([0.0, -1.0].into()),
+                                VirtualKeyCode::Down =>   cam.translate_by([0.0,  1.0].into()),
                                 _ => {}
                             }
                         }
