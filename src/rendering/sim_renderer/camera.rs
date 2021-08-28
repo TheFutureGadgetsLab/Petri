@@ -1,4 +1,4 @@
-use glam::{Affine2, Vec2};
+use glam::{Vec2};
 use crate::rendering::Display;
 
 static W2S_FAC: f32 = 1.0 / 10000.0;
@@ -6,8 +6,7 @@ static W2S_FAC: f32 = 1.0 / 10000.0;
 pub struct Camera {
     pub scale: Vec2,
     pub window_size: Vec2,
-
-    pub transform: Affine2
+    pub translation: Vec2,
 }
 
 #[allow(dead_code)]
@@ -24,18 +23,18 @@ impl Camera {
         ) / size.min_element();
 
         Camera {
-            scale: scale,
+            scale,
             window_size: size,
-            transform: Affine2::from_scale_angle_translation(scale, 0.0, Vec2::ZERO)
+            translation: Vec2::ZERO,
         }
     }
 
     pub fn translate_by(&mut self, delta: Vec2) {
-        self.transform.translation += delta * 50.0 * W2S_FAC;
+        self.translation += delta * 50.0 * W2S_FAC;
     }
     
     pub fn transform(&self, pos: Vec2) -> Vec2 {
-        self.transform.transform_point2(pos)
+        self.translation + self.scale * pos
     }
     
     pub fn rescale_window(&mut self, _scale: Vec2) {
@@ -43,6 +42,6 @@ impl Camera {
     }
 
     pub fn screen_to_world(&self, pos: Vec2) -> Vec2 {
-        self.transform.inverse().transform_point2(pos)
+        pos / self.scale - self.translation
     }
 }

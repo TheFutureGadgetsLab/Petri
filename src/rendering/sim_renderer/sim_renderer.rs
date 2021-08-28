@@ -2,6 +2,7 @@ use crate::{
     rendering::{Display, PetriEventLoop},
     simulation::Simulation
 };
+
 use winit::event::MouseScrollDelta;
 use super::{VertexBuffer, Vertex, camera::Camera};
 use winit::{event::{VirtualKeyCode, Event, WindowEvent}};
@@ -16,8 +17,25 @@ struct Globals {
     res: [f32; 2],
 }
 
+#[repr(C)]
+#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+struct CameraUniform {
+    u_scale: [f32; 2],
+    u_translation: [f32; 2],
+}
+
+impl From<&Camera> for CameraUniform {
+    fn from(cam: &Camera) -> Self {
+        CameraUniform {
+            u_scale: cam.scale.into(),
+            u_translation: cam.translation.into()
+        }
+    }
+}
+
 pub struct SimRenderer {
     globals_ubo: wgpu::Buffer,
+    uniforms_ubo: wgpu::Buffer,
     bind_group: wgpu::BindGroup,
     render_pipeline: wgpu::RenderPipeline,
     vertex_buffer: VertexBuffer,
@@ -29,6 +47,14 @@ impl PetriEventLoop for SimRenderer {
         let globals_ubo = display.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Globals ubo"),
             size: globals_buffer_byte_size,
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
+
+        let uniforms_buffer_byte_size = std::mem::size_of::<CameraUniform>() as wgpu::BufferAddress;
+        let uniforms_ubo = display.device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("Uniforms ubo"),
+            size: uniforms_buffer_byte_size,
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
@@ -46,6 +72,16 @@ impl PetriEventLoop for SimRenderer {
                     },
                     count: None,
                 },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: wgpu::ShaderStages::VERTEX,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: wgpu::BufferSize::new(uniforms_buffer_byte_size),
+                    },
+                    count: None,
+                },
             ],
         });
         let bind_group = display.device.create_bind_group(&wgpu::BindGroupDescriptor {
@@ -55,6 +91,10 @@ impl PetriEventLoop for SimRenderer {
                 wgpu::BindGroupEntry {
                     binding: 0,
                     resource: wgpu::BindingResource::Buffer(globals_ubo.as_entire_buffer_binding()),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: wgpu::BindingResource::Buffer(uniforms_ubo.as_entire_buffer_binding()),
                 },
             ],
         });
@@ -138,6 +178,7 @@ impl PetriEventLoop for SimRenderer {
 
         SimRenderer {
             globals_ubo,
+            uniforms_ubo,
             bind_group,
             render_pipeline,
             vertex_buffer: VertexBuffer::default(display),
@@ -183,6 +224,11 @@ impl PetriEventLoop for SimRenderer {
     }
 
     fn render(&mut self, display: &Display, simulation: &Simulation, view: &TextureView) {
+        let cam_ref = simulation.resources.get::<Camera>().unwrap();
+        let cam: &Camera = &cam_ref;
+        let cam_uniform = CameraUniform::from(cam);
+        display.queue.write_buffer(&self.uniforms_ubo, 0, bytemuck::cast_slice(&[cam_uniform]));
+
         let mut encoder = display.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
             label: Some("Render Encoder"),
         });
