@@ -15,10 +15,9 @@ uniform Camera {
 };
 
 void main() {
-    vec2 size = a_size * u_scale;
-    v_pos = u_translation + a_pos * u_scale;
-    gl_Position = vec4(v_pos, 0, 0);
-    gl_PointSize = size.x;
     v_color = a_color;
-    v_size = size.x;
+    v_pos = u_translation + a_pos * u_scale;
+    v_size = a_size;
+    gl_Position = vec4(v_pos, 0, 1);
+    gl_PointSize = a_size;
 }
