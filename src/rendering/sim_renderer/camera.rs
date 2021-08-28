@@ -34,6 +34,10 @@ impl Camera {
         self.transform.translation += delta * 50.0 * W2S_FAC;
     }
     
+    pub fn transform(&self, pos: Vec2) -> Vec2 {
+        self.transform.transform_point2(pos)
+    }
+    
     pub fn rescale_window(&mut self, _scale: Vec2) {
         //self.scale = scale;
     }
