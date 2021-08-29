@@ -5,6 +5,7 @@ static W2S_FAC: f32 = 50.0;
 
 pub struct Camera {
     pub window_size: Vec2,
+    /// Center position of camera
     pub translation: Vec2,
     pub zoom: f32,
 }

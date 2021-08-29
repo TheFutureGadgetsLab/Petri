@@ -16,11 +16,11 @@ uniform Camera {
 };
 
 void main() {
-    vec2 pos   = (a_pos * 2.0) / u_window_size - 1;
+    vec2 pos   = (a_pos * 2.0) / u_window_size;
     vec2 trans = u_translation / u_window_size;
 
     v_color = a_color;
-    v_pos   = trans + pos;
+    v_pos   = u_zoom * (trans + pos);
     v_size  = a_size;
     
     gl_Position = vec4(v_pos, 0, 1);
