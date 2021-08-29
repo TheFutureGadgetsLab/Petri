@@ -168,8 +168,12 @@ impl PetriEventLoop for SimRenderer {
                         let size = display.window.inner_size();
                         cam.resize(size.width as _, size.height as _);
                     }
-                    WindowEvent::MouseWheel { delta: MouseScrollDelta::LineDelta(_, _y), .. } => {
-                        // Zoom camera here. y is -1.0 or 1.0
+                    WindowEvent::MouseWheel { delta: MouseScrollDelta::LineDelta(_, y), .. } => {
+                        if *y > 0.0 {
+                            cam.zoom *= 1.1;
+                        } else if *y < 0.0 {
+                            cam.zoom *= 0.9;
+                        }
                     }
                     WindowEvent::KeyboardInput { input , ..} => {
                         if input.virtual_keycode.is_some() {
