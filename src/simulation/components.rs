@@ -14,11 +14,13 @@ impl RigidCircle {
         let dir = Vec2::new(
             thread_rng().gen_range(-1.0..1.0),
             thread_rng().gen_range(-1.0..1.0)
-        ).normalize() * 100.0;
+        ).normalize() * 300.0;
 
         RigidCircle {
-            pos: Vec2::new(300.0, 300.0) + dir,
-            vel: Vec2::ZERO,
+            pos: Vec2::new(0.0, 0.0) + dir,
+            vel: Vec2::new(
+                thread_rng().gen_range(-1.0..1.0),
+                thread_rng().gen_range(-1.0..1.0)) * 0.05,
             radius,
             color: [thread_rng().gen_range(0.0..1.0), thread_rng().gen_range(0.0..1.0), thread_rng().gen_range(0.0..1.0), 1.0]
         }

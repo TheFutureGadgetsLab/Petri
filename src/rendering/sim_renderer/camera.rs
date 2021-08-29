@@ -1,4 +1,4 @@
-use glam::{Vec2};
+use glam::{Vec2, vec2};
 use crate::rendering::Display;
 
 static W2S_FAC: f32 = 50.0;
@@ -11,14 +11,15 @@ pub struct Camera {
 #[allow(dead_code)]
 impl Camera {
     pub fn new(display: &Display) -> Self {
+        let winsize = display.window.inner_size();
         let size = Vec2::new(
-         display.window.inner_size().width as _,
-         display.window.inner_size().height as _,
+         winsize.width as _,
+         winsize.height as _,
         );
 
         Camera {
             window_size: size,
-            translation: Vec2::ZERO,
+            translation: size / 2.0,
         }
     }
 

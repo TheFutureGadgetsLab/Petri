@@ -192,8 +192,7 @@ impl PetriEventLoop for SimRenderer {
 
     fn render(&mut self, display: &Display, simulation: &Simulation, view: &TextureView) {
         let cam_ref = simulation.resources.get::<Camera>().unwrap();
-        let cam: &Camera = &cam_ref;
-        let cam_uniform = CameraUniform::from(cam);
+        let cam_uniform = CameraUniform::from(&cam_ref as &Camera);
         display.queue.write_buffer(&self.uniforms_ubo, 0, bytemuck::cast_slice(&[cam_uniform]));
 
         let mut encoder = display.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
