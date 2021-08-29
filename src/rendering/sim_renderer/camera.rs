@@ -1,7 +1,5 @@
-use glam::{Vec2, vec2};
+use glam::{Vec2};
 use crate::rendering::Display;
-
-static W2S_FAC: f32 = 50.0;
 
 pub struct Camera {
     pub window_size: Vec2,
@@ -34,6 +32,6 @@ impl Camera {
     }
 
     pub fn translate_by(&mut self, delta: Vec2) {
-        self.translation += delta * W2S_FAC;
+        self.translation += delta;
     }
 }
