@@ -12,6 +12,7 @@ layout (std140, binding=0)
 uniform Camera {
     vec2 u_translation;
     vec2 u_window_size;
+    vec2 u_zoom;
 };
 
 void main() {

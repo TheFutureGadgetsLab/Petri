@@ -16,13 +16,15 @@ use shaderc::CompileOptions;
 struct CameraUniform {
     u_translation: [f32; 2],
     u_window_size: [f32; 2],
+    u_zoom: [f32; 2],
 }
 
 impl From<&Camera> for CameraUniform {
     fn from(cam: &Camera) -> Self {
         CameraUniform {
             u_translation: cam.translation.into(),
-            u_window_size: cam.window_size.into()
+            u_window_size: cam.window_size.into(),
+            u_zoom: [cam.zoom; 2]
         }
     }
 }

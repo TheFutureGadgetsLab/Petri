@@ -6,6 +6,7 @@ static W2S_FAC: f32 = 50.0;
 pub struct Camera {
     pub window_size: Vec2,
     pub translation: Vec2,
+    pub zoom: f32,
 }
 
 #[allow(dead_code)]
@@ -19,7 +20,8 @@ impl Camera {
 
         Camera {
             window_size: size,
-            translation: size / 2.0,
+            translation: Vec2::ZERO,
+            zoom: 1.0,
         }
     }
 
