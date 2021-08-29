@@ -11,6 +11,7 @@ impl StatApp {
 
         egui::SidePanel::left("Debug Info")
             .show(ctx, |ui| {
+                ui.style_mut().wrap = Some(false);
                 ui.heading("Stats");
                 ui.label(format!("Time: {:.2}", time.time_since_start().as_secs_f32()));
                 ui.label(format!("Ticks / s: {:}", time.tick_rate));
@@ -18,9 +19,8 @@ impl StatApp {
                 ui.separator();
 
                 ui.heading("Camera");
-                ui.label(format!("Pos:   ({:.5}, {:.5})", cam.translation.x, cam.translation.y));
-                ui.label(format!("Scale: ({:.5}, {:.5})", cam.scale.x, cam.scale.y));
-                ui.label(format!("Size:  ({:.5}, {:.5})", cam.window_size.x, cam.window_size.y));
+                ui.label(format!("Translation: ({:.5}, {:.5})", cam.translation.x, cam.translation.y));
+                ui.label(format!("Window Size: ({:.5}, {:.5})", cam.window_size.x, cam.window_size.y));
             });
     }
 }

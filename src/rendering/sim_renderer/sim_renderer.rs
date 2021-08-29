@@ -13,28 +13,21 @@ use shaderc::CompileOptions;
 
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-struct Globals {
-    res: [f32; 2],
-}
-
-#[repr(C)]
-#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 struct CameraUniform {
-    u_scale: [f32; 2],
     u_translation: [f32; 2],
+    u_window_size: [f32; 2],
 }
 
 impl From<&Camera> for CameraUniform {
     fn from(cam: &Camera) -> Self {
         CameraUniform {
-            u_scale: cam.scale.into(),
-            u_translation: cam.translation.into()
+            u_translation: cam.translation.into(),
+            u_window_size: cam.window_size.into()
         }
     }
 }
 
 pub struct SimRenderer {
-    globals_ubo: wgpu::Buffer,
     uniforms_ubo: wgpu::Buffer,
     bind_group: wgpu::BindGroup,
     render_pipeline: wgpu::RenderPipeline,
@@ -43,14 +36,6 @@ pub struct SimRenderer {
 
 impl PetriEventLoop for SimRenderer {
     fn init(display: &Display, simulation: &mut Simulation) -> SimRenderer {
-        let globals_buffer_byte_size = std::mem::size_of::<Globals>() as wgpu::BufferAddress;
-        let globals_ubo = display.device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("Globals ubo"),
-            size: globals_buffer_byte_size,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        });
-
         let uniforms_buffer_byte_size = std::mem::size_of::<CameraUniform>() as wgpu::BufferAddress;
         let uniforms_ubo = display.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Uniforms ubo"),
@@ -64,17 +49,7 @@ impl PetriEventLoop for SimRenderer {
             entries: &[
                 wgpu::BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: wgpu::BufferSize::new(globals_buffer_byte_size),
-                    },
-                    count: None,
-                },
-                wgpu::BindGroupLayoutEntry {
-                    binding: 1,
-                    visibility: wgpu::ShaderStages::VERTEX,
+                    visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
@@ -90,10 +65,6 @@ impl PetriEventLoop for SimRenderer {
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::Buffer(globals_ubo.as_entire_buffer_binding()),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
                     resource: wgpu::BindingResource::Buffer(uniforms_ubo.as_entire_buffer_binding()),
                 },
             ],
@@ -177,7 +148,6 @@ impl PetriEventLoop for SimRenderer {
         simulation.resources.insert(Camera::new(display));
 
         SimRenderer {
-            globals_ubo,
             uniforms_ubo,
             bind_group,
             render_pipeline,
@@ -194,10 +164,7 @@ impl PetriEventLoop for SimRenderer {
                 match event {
                     WindowEvent::Resized(_) => {
                         let size = display.window.inner_size();
-                        cam.rescale_window([size.width as f32, size.height as f32].into());
-                        display.queue.write_buffer(&self.globals_ubo, 0, bytemuck::cast_slice(&[Globals {
-                            res: cam.window_size.into()
-                        }]));
+                        cam.resize(size.width as _, size.height as _);
                     }
                     WindowEvent::MouseWheel { delta: MouseScrollDelta::LineDelta(_, _y), .. } => {
                         // Zoom camera here. y is -1.0 or 1.0

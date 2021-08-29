@@ -11,12 +11,14 @@ pub struct RigidCircle {
 
 impl RigidCircle {
     pub fn new_rand(radius: f32) -> RigidCircle {
+        let dir = Vec2::new(
+            thread_rng().gen_range(-1.0..1.0),
+            thread_rng().gen_range(-1.0..1.0)
+        ).normalize() * 100.0;
+
         RigidCircle {
-            pos: Vec2::ZERO,
-            vel: Vec2::new(
-                thread_rng().gen_range(-1.0..1.0),
-                thread_rng().gen_range(-1.0..1.0)
-            ).normalize() * 0.001,
+            pos: Vec2::new(300.0, 300.0) + dir,
+            vel: Vec2::ZERO,
             radius,
             color: [thread_rng().gen_range(0.0..1.0), thread_rng().gen_range(0.0..1.0), thread_rng().gen_range(0.0..1.0), 1.0]
         }
