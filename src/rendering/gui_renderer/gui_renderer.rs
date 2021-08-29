@@ -10,15 +10,7 @@ use std::time::Instant;
 use egui::{FontDefinitions};
 use egui_wgpu_backend::{RenderPass, ScreenDescriptor};
 use egui_winit_platform::{Platform, PlatformDescriptor};
-use epi::*;
 use wgpu::TextureView;
-
-#[derive(Default)]
-pub struct DummyRepaintSignal(bool);
-impl epi::RepaintSignal for DummyRepaintSignal {
-    fn request_repaint(&self) {
-    }
-}
 
 pub struct GUIRenderer {
     platform: Platform,
