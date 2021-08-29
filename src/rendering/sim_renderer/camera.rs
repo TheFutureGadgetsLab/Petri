@@ -32,6 +32,6 @@ impl Camera {
     }
 
     pub fn translate_by(&mut self, delta: Vec2) {
-        self.translation += delta;
+        self.translation += (delta * 2.0) / self.zoom;
     }
 }
