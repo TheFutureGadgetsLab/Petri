@@ -1,9 +1,26 @@
 // Heavily borrowed from Learn-WGPU
 // https://github.com/sotrh/learn-wgpu/tree/master/code/showcase/framework
 
+use glam::{Vec2, vec2};
 use wgpu::{SurfaceError, SurfaceFrame, TextureView};
-use winit::{window::Window, event_loop::EventLoop};
+use winit::{
+    event::MouseButton, event::ElementState, event_loop::EventLoop,
+    window::Window, event::Event, event::WindowEvent};
 use futures::executor::block_on;
+
+#[derive(PartialEq, Eq, Clone, Copy, Default)]
+pub struct InputState {
+    pub pressed: bool,
+    pub released: bool,
+    pub held: bool,
+}
+
+pub struct Mouse {
+    pub pos: Vec2,
+    pub delta: Vec2,
+    /// Left, middle, right
+    pub buttons: [InputState; 3],
+}
 
 pub struct Display {
     pub surface: wgpu::Surface,
@@ -11,6 +28,7 @@ pub struct Display {
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
     pub window: Window,
+    pub mouse: Mouse,
 }
 
 const INITIAL_WIDTH: u32 = 1920;
@@ -65,6 +83,51 @@ impl Display {
             window,
             device,
             queue,
+            mouse: Mouse { pos: Vec2::ZERO, delta: Vec2::ZERO, buttons: [InputState::default(); 3] }
+        }
+    }
+
+    pub fn handle_event(&mut self, event: &Event<()>) {
+        match event {
+            Event::WindowEvent { ref event, ..}  => {
+                match event {
+                    WindowEvent::MouseInput { button, state, .. } => {
+                        let mut butt_idx = 0usize;
+                        match button {
+                            MouseButton::Left => butt_idx = 0,
+                            MouseButton::Right => butt_idx = 1,
+                            MouseButton::Middle => butt_idx = 2,
+                            _ => {},
+                        }
+                        let mut bstate = self.mouse.buttons[butt_idx];
+                        match state {
+                            ElementState::Pressed => {
+                                if bstate.held {
+                                    bstate.pressed = false;
+                                } else {
+                                    bstate.pressed = true;
+                                    bstate.held = true;
+                                }
+                            }
+                            ElementState::Released => {
+                                bstate.pressed = false;
+                                bstate.held = false;
+                                if bstate.released {
+                                    bstate.released = false;
+                                }
+                            }
+                        }
+                        self.mouse.buttons[butt_idx] = bstate;
+                    }
+                    WindowEvent::CursorMoved { position, .. } => {
+                        let pos = vec2(position.x as f32, position.y as f32);
+                        self.mouse.delta = pos - self.mouse.pos;
+                        self.mouse.pos = pos;
+                    }
+                    _ => {}
+                }
+            }
+            _ => {}
         }
     }
 

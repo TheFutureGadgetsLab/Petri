@@ -3,7 +3,7 @@ mod sim_renderer;
 mod gui_renderer;
 mod display;
 
-use display::Display;
+use display::*;
 use sim_renderer::*;
 use gui_renderer::*;
 

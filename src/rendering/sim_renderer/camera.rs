@@ -34,4 +34,8 @@ impl Camera {
     pub fn translate_by(&mut self, delta: Vec2) {
         self.translation += (delta * 2.0) / self.zoom;
     }
+
+    pub fn screen2world(&self, p: Vec2) -> Vec2 {
+        p - (self.translation + self.window_size / 2.0)
+    }
 }

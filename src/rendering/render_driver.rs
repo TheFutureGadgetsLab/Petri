@@ -44,6 +44,7 @@ impl RenderDriver {
     pub fn handle_event(&mut self, simulation: &mut Simulation, event: &Event<()>) {
         self.sim_renderer.handle_event(&self.display, simulation, &event);
         self.gui_renderer.handle_event(&self.display, simulation, &event);
+        self.display.handle_event(&event);
     }
 
     pub fn render(&mut self, simulation: &Simulation) {

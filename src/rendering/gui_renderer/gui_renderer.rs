@@ -59,7 +59,7 @@ impl PetriEventLoop for GUIRenderer {
         let egui_start = Instant::now();
         self.platform.begin_frame();
 
-        self.debug.update(&self.platform.context(), &simulation);
+        self.debug.update(&self.platform.context(), &display, &simulation);
 
         // End the UI frame. We could now handle the output and draw the UI with the backend.
         let (_output, paint_commands) = self.platform.end_frame(Some(&display.window));

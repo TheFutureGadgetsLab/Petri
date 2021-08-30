@@ -1,16 +1,16 @@
 use crate::{
     rendering::{Display, PetriEventLoop},
-    simulation::Simulation
+    simulation::Simulation,
 };
 
-use winit::event::{ElementState, MouseScrollDelta};
+use winit::event::{MouseScrollDelta};
 use super::{VertexBuffer, Vertex, camera::Camera};
-use winit::{event::{VirtualKeyCode, Event, WindowEvent, MouseButton}};
+use winit::{event::{VirtualKeyCode, Event, WindowEvent}};
 
 use wgpu::{ShaderModuleDescriptor, TextureView};
 use bytemuck;
 use shaderc::CompileOptions;
-use glam::{Vec2, vec2};
+use glam::vec2;
 
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -34,9 +34,7 @@ pub struct SimRenderer {
     uniforms_ubo: wgpu::Buffer,
     bind_group: wgpu::BindGroup,
     render_pipeline: wgpu::RenderPipeline,
-    vertex_buffer: VertexBuffer,
-    mouse_pos: Vec2,
-    mouse_buttons: [bool; 3]
+    vertex_buffer: VertexBuffer
 }
 
 impl PetriEventLoop for SimRenderer {
@@ -157,8 +155,6 @@ impl PetriEventLoop for SimRenderer {
             bind_group,
             render_pipeline,
             vertex_buffer: VertexBuffer::default(display),
-            mouse_pos: Vec2::ZERO,
-            mouse_buttons: [false; 3],
         }
     }
 
@@ -174,28 +170,12 @@ impl PetriEventLoop for SimRenderer {
                         cam.resize(size.width as _, size.height as _);
                     }
                     WindowEvent::MouseWheel { delta: MouseScrollDelta::LineDelta(_, y), .. } => {
-                        if *y > 0.0 {
-                            cam.zoom *= 1.1;
-                        } else if *y < 0.0 {
-                            cam.zoom *= 0.9;
-                        }
+                        cam.zoom *= 1.0 + y.signum() * 0.1;
                     }
-                    WindowEvent::MouseInput { button, state, .. } => {
-                        let active = state.eq(&ElementState::Pressed);
-                        match button {
-                            MouseButton::Left => self.mouse_buttons[0] = active,
-                            MouseButton::Right => self.mouse_buttons[1] = active,
-                            MouseButton::Middle => self.mouse_buttons[2] = active,
-                            _ => {},
+                    WindowEvent::CursorMoved {..} => {
+                        if display.mouse.buttons[0].held {
+                            cam.translate_by(display.mouse.delta * vec2(1.0, -1.0));
                         }
-                    }
-                    WindowEvent::CursorMoved { position, .. } => {
-                        let new_mouse_pos = vec2(position.x as f32, position.y as f32);
-                        if self.mouse_buttons[0] {
-                            let delta = new_mouse_pos - self.mouse_pos;
-                            cam.translate_by(delta * vec2(1.0, -1.0));
-                        }
-                        self.mouse_pos = new_mouse_pos;
                     }
                     WindowEvent::KeyboardInput { input , ..} => {
                         if input.virtual_keycode.is_some() {
