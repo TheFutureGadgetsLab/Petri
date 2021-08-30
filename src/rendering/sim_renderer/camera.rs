@@ -31,6 +31,6 @@ impl Camera {
     }
 
     pub fn screen2world(&self, p: Vec2) -> Vec2 {
-        self.pos() + (p - (self.window_size / 2.0)) * vec2(1.0, -1.0)
+        self.pos() + ((p - (self.window_size / 2.0)) * vec2(1.0, -1.0)) / self.zoom
     }
 }
