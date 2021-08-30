@@ -22,7 +22,7 @@ impl StatApp {
                 ui.add(
                  egui::plot::Plot::new("test")
                     .show_background(false)
-                    .allow_zoom(true)
+                    .allow_zoom(false)
                     .allow_drag(false)
                     .data_aspect(1.0)
                     .include_x(minx)
