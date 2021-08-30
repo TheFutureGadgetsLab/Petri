@@ -1,4 +1,4 @@
-use glam::Vec2;
+use glam::{Vec2, vec2};
 
 pub struct Camera {
     pub window_size: Vec2,
@@ -12,6 +12,7 @@ impl Camera {
     pub fn new(window_size: Vec2) -> Self {
         Camera {
             window_size: window_size,
+            /// Translation which is used to transform objects in space
             translation: Vec2::ZERO,
             zoom: 1.0,
         }
@@ -25,7 +26,12 @@ impl Camera {
         self.translation += (delta * 2.0) / self.zoom;
     }
 
+    /// Position of camera in world space
+    pub fn pos(&self) -> Vec2 {
+        -self.translation / 2.0
+    }
+
     pub fn screen2world(&self, p: Vec2) -> Vec2 {
-        p - (self.translation + self.window_size / 2.0)
+        self.pos() + (p - (self.window_size / 2.0)) * vec2(1.0, -1.0)
     }
 }

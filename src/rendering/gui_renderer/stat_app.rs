@@ -22,8 +22,8 @@ impl StatApp {
 
             ui.heading("Camera");
             ui.label(format!(
-                "Translation: ({:.2}, {:.2})",
-                cam.translation.x, cam.translation.y
+                "Position: ({:.2}, {:.2})",
+                cam.pos().x, cam.pos().y
             ));
             ui.label(format!(
                 "Window Size: ({:.2}, {:.2})",

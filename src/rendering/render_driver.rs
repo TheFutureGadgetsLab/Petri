@@ -62,6 +62,7 @@ impl RenderDriver {
 
 pub trait PetriEventHandler {
     fn handle_event<T>(&mut self, display: &mut Display, simulation: &mut Simulation, event: &Event<T>) {
+        self.forward_event(display, simulation, event);
         match event {
             Event::WindowEvent { ref event, .. } => match event {
                 Resized(size) => {

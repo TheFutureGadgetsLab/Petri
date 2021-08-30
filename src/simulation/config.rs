@@ -9,7 +9,7 @@ pub struct Config {
 impl Config {
     pub fn default() -> Config {
         Config {
-            num_particles: 1_000_000,
+            num_particles: 100_000,
             bounds: (vec2(-1000.0, -1000.0), vec2(1000.0, 1000.0)),
         }
     }
