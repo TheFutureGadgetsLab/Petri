@@ -16,7 +16,7 @@ uniform Camera {
 };
 
 void main() {
-    vec2 pos   = a_pos / u_window_size;
+    vec2 pos   = (a_pos * 2.0) / u_window_size;
     vec2 trans = u_translation / u_window_size;
 
     v_color = a_color;
