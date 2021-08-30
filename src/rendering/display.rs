@@ -10,6 +10,8 @@ use winit::{
     window::Window,
 };
 
+use super::sim_renderer::camera::Camera;
+
 #[derive(PartialEq, Eq, Clone, Copy, Default)]
 pub struct InputState {
     pub pressed: bool,
@@ -30,23 +32,22 @@ pub struct Display {
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
     pub window: Window,
+
+    pub cam: Camera,
+
     pub mouse: Mouse,
 }
 
-const INITIAL_WIDTH: u32 = 1920;
-const INITIAL_HEIGHT: u32 = 1080;
+const INITIAL_SIZE: [f32; 2] = [1920.0, 1080.0];
 
 impl Display {
-    pub fn new(event_loop: &EventLoop<()>) -> Display {
+    pub fn new(event_loop: &EventLoop<()>) -> Self {
         let window = winit::window::WindowBuilder::new()
             .with_decorations(true)
             .with_resizable(true)
             .with_transparent(false)
             .with_title("Petri")
-            .with_inner_size(winit::dpi::PhysicalSize {
-                width: INITIAL_WIDTH,
-                height: INITIAL_HEIGHT,
-            })
+            .with_inner_size(winit::dpi::PhysicalSize::new(INITIAL_SIZE[0], INITIAL_SIZE[1]))
             .build(&event_loop)
             .unwrap();
 
@@ -76,12 +77,13 @@ impl Display {
             present_mode: wgpu::PresentMode::Immediate,
         };
 
-        Display {
+        Self {
             surface_config,
             surface,
             window,
             device,
             queue,
+            cam: Camera::new(INITIAL_SIZE.into()),
             mouse: Mouse {
                 pos: Vec2::ZERO,
                 delta: Vec2::ZERO,

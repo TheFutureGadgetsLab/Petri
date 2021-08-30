@@ -1,7 +1,5 @@
 use glam::Vec2;
 
-use crate::rendering::Display;
-
 pub struct Camera {
     pub window_size: Vec2,
     /// Center position of camera
@@ -11,12 +9,9 @@ pub struct Camera {
 
 #[allow(dead_code)]
 impl Camera {
-    pub fn new(display: &Display) -> Self {
-        let winsize = display.window.inner_size();
-        let size = Vec2::new(winsize.width as _, winsize.height as _);
-
+    pub fn new(window_size: Vec2) -> Self {
         Camera {
-            window_size: size,
+            window_size: window_size,
             translation: Vec2::ZERO,
             zoom: 1.0,
         }

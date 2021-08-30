@@ -7,7 +7,7 @@ use wgpu::TextureView;
 
 use super::StatApp;
 use crate::{
-    rendering::{Display, PetriEventLoop},
+    rendering::{Display, PetriEventHandler},
     simulation::Simulation,
 };
 
@@ -19,8 +19,8 @@ pub struct GUIRenderer {
     debug: StatApp,
 }
 
-impl PetriEventLoop for GUIRenderer {
-    fn init(display: &Display, _simulation: &mut Simulation) -> GUIRenderer {
+impl GUIRenderer {
+    pub fn new(display: &Display, _simulation: &mut Simulation) -> Self {
         let size = display.window.inner_size();
         // We use the egui_winit_platform crate as the platform.
         let platform = Platform::new(PlatformDescriptor {
@@ -33,7 +33,7 @@ impl PetriEventLoop for GUIRenderer {
 
         // We use the egui_wgpu_backend crate as the render backend.
         let egui_rpass = RenderPass::new(&display.device, display.surface_config.format, 1);
-        GUIRenderer {
+        Self {
             platform: platform,
             rpass: egui_rpass,
             start_time: Instant::now(),
@@ -42,13 +42,7 @@ impl PetriEventLoop for GUIRenderer {
         }
     }
 
-    fn handle_event<T>(&mut self, _display: &Display, _simulation: &mut Simulation, event: &winit::event::Event<T>) {
-        self.platform.handle_event(&event)
-    }
-
-    fn update(&mut self, _display: &Display) {}
-
-    fn render(&mut self, display: &Display, simulation: &Simulation, view: &TextureView) {
+    pub fn render(&mut self, display: &Display, simulation: &Simulation, view: &TextureView) {
         self.platform.update_time(self.start_time.elapsed().as_secs_f64());
 
         // Begin to draw the UI frame.
@@ -87,5 +81,16 @@ impl PetriEventLoop for GUIRenderer {
 
         // Submit the commands.
         display.queue.submit(iter::once(encoder.finish()));
+    }
+}
+
+impl PetriEventHandler for GUIRenderer {
+    fn forward_event<T>(
+        &mut self,
+        _display: &mut Display,
+        _simulation: &mut Simulation,
+        event: &winit::event::Event<T>,
+    ) {
+        self.platform.handle_event(&event)
     }
 }

@@ -2,11 +2,11 @@ use bytemuck;
 use glam::vec2;
 use shaderc::CompileOptions;
 use wgpu::{ShaderModuleDescriptor, TextureView};
-use winit::event::{Event, MouseScrollDelta, VirtualKeyCode, WindowEvent};
+use winit::event::VirtualKeyCode;
 
 use super::{camera::Camera, Vertex, VertexBuffer};
 use crate::{
-    rendering::{Display, PetriEventLoop},
+    rendering::{Display, PetriEventHandler},
     simulation::Simulation,
 };
 
@@ -35,8 +35,8 @@ pub struct SimRenderer {
     vertex_buffer: VertexBuffer,
 }
 
-impl PetriEventLoop for SimRenderer {
-    fn init(display: &Display, simulation: &mut Simulation) -> SimRenderer {
+impl SimRenderer {
+    pub fn new(display: &Display, _simulation: &mut Simulation) -> Self {
         let uniforms_buffer_byte_size = std::mem::size_of::<CameraUniform>() as wgpu::BufferAddress;
         let uniforms_ubo = display.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Uniforms ubo"),
@@ -143,9 +143,7 @@ impl PetriEventLoop for SimRenderer {
             multisample: wgpu::MultisampleState::default(),
         });
 
-        simulation.resources.insert(Camera::new(display));
-
-        SimRenderer {
+        Self {
             uniforms_ubo,
             bind_group,
             render_pipeline,
@@ -153,49 +151,8 @@ impl PetriEventLoop for SimRenderer {
         }
     }
 
-    fn handle_event<T>(&mut self, display: &Display, simulation: &mut Simulation, event: &Event<T>) {
-        // Need to handle scale factor change
-        let mut cam = simulation.resources.get_mut::<Camera>().unwrap();
-
-        match event {
-            Event::WindowEvent { ref event, .. } => match event {
-                WindowEvent::Resized(_) => {
-                    let size = display.window.inner_size();
-                    cam.resize(size.width as _, size.height as _);
-                }
-                WindowEvent::MouseWheel {
-                    delta: MouseScrollDelta::LineDelta(_, y),
-                    ..
-                } => {
-                    cam.zoom *= 1.0 + y.signum() * 0.1;
-                }
-                WindowEvent::CursorMoved { .. } => {
-                    if display.mouse.buttons[0].held {
-                        cam.translate_by(display.mouse.delta * vec2(1.0, -1.0));
-                    }
-                }
-                WindowEvent::KeyboardInput { input, .. } => {
-                    if input.virtual_keycode.is_some() {
-                        match input.virtual_keycode.unwrap() {
-                            VirtualKeyCode::Left => cam.translate_by([1.0, 0.0].into()),
-                            VirtualKeyCode::Right => cam.translate_by([-1.0, 0.0].into()),
-                            VirtualKeyCode::Up => cam.translate_by([0.0, -1.0].into()),
-                            VirtualKeyCode::Down => cam.translate_by([0.0, 1.0].into()),
-                            _ => {}
-                        }
-                    }
-                }
-                _ => {}
-            },
-            _ => {}
-        }
-    }
-
-    fn update(&mut self, _display: &Display) {}
-
-    fn render(&mut self, display: &Display, simulation: &Simulation, view: &TextureView) {
-        let cam_ref = simulation.resources.get::<Camera>().unwrap();
-        let cam_uniform = CameraUniform::from(&cam_ref as &Camera);
+    pub fn render(&mut self, display: &Display, simulation: &Simulation, view: &TextureView) {
+        let cam_uniform = CameraUniform::from(&display.cam);
         display
             .queue
             .write_buffer(&self.uniforms_ubo, 0, bytemuck::cast_slice(&[cam_uniform]));
@@ -234,5 +191,48 @@ impl PetriEventLoop for SimRenderer {
         // Submit will accept anything that implements IntoIter
         // Submits the command buffer
         display.queue.submit(std::iter::once(encoder.finish()));
+    }
+}
+
+impl PetriEventHandler for SimRenderer {
+    fn handle_resize(
+        &mut self,
+        display: &mut Display,
+        _simulation: &mut Simulation,
+        size: &winit::dpi::PhysicalSize<u32>,
+    ) {
+        display.cam.resize(size.width as _, size.height as _);
+    }
+
+    fn handle_scroll(&mut self, display: &mut Display, _simulation: &mut Simulation, delta: &f32) {
+        display.cam.zoom *= 1.0 + delta.signum() * 0.1;
+    }
+
+    fn handle_mouse_move(
+        &mut self,
+        display: &mut Display,
+        _simulation: &mut Simulation,
+        _pos: &winit::dpi::PhysicalPosition<f64>,
+    ) {
+        if display.mouse.buttons[0].held {
+            display.cam.translate_by(display.mouse.delta * vec2(1.0, -1.0));
+        }
+    }
+
+    fn handle_keyboard_input(
+        &mut self,
+        display: &mut Display,
+        _simulation: &mut Simulation,
+        input: &winit::event::KeyboardInput,
+    ) {
+        if input.virtual_keycode.is_some() {
+            match input.virtual_keycode.unwrap() {
+                VirtualKeyCode::Left => display.cam.translate_by([1.0, 0.0].into()),
+                VirtualKeyCode::Right => display.cam.translate_by([-1.0, 0.0].into()),
+                VirtualKeyCode::Up => display.cam.translate_by([0.0, -1.0].into()),
+                VirtualKeyCode::Down => display.cam.translate_by([0.0, 1.0].into()),
+                _ => {}
+            }
+        }
     }
 }

@@ -1,5 +1,5 @@
 use crate::{
-    rendering::{Camera, Display},
+    rendering::Display,
     simulation::{Simulation, Time},
 };
 
@@ -9,7 +9,7 @@ pub struct StatApp;
 impl StatApp {
     pub fn update(&mut self, ctx: &egui::CtxRef, display: &Display, simulation: &Simulation) {
         let time = simulation.resources.get::<Time>().unwrap();
-        let cam = simulation.resources.get::<Camera>().unwrap();
+        let cam = &display.cam;
 
         egui::SidePanel::left("Debug Info").show(ctx, |ui| {
             ui.style_mut().wrap = Some(false);

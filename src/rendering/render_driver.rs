@@ -1,6 +1,6 @@
-use wgpu::TextureView;
 use winit::{
-    event::{Event, WindowEvent::*},
+    dpi::{PhysicalPosition, PhysicalSize},
+    event::{Event, MouseScrollDelta, WindowEvent::*},
     event_loop::{ControlFlow, EventLoop},
 };
 
@@ -8,13 +8,6 @@ use crate::{
     rendering::{Display, GUIRenderer, SimRenderer},
     simulation::Simulation,
 };
-
-pub trait PetriEventLoop: 'static + Sized {
-    fn init(display: &Display, simulation: &mut Simulation) -> Self;
-    fn handle_event<T>(&mut self, display: &Display, simulation: &mut Simulation, event: &Event<T>);
-    fn update(&mut self, display: &Display);
-    fn render(&mut self, display: &Display, simulation: &Simulation, view: &TextureView);
-}
 
 pub struct RenderDriver {
     pub display: Display,
@@ -26,8 +19,8 @@ impl RenderDriver {
     pub fn new(simulation: &mut Simulation, event_loop: &EventLoop<()>) -> Self {
         let display = Display::new(&event_loop);
 
-        let sim_renderer = SimRenderer::init(&display, simulation);
-        let gui_renderer = GUIRenderer::init(&display, simulation);
+        let sim_renderer = SimRenderer::new(&display, simulation);
+        let gui_renderer = GUIRenderer::new(&display, simulation);
 
         Self {
             display,
@@ -37,15 +30,12 @@ impl RenderDriver {
     }
 
     pub fn handle_event(&mut self, simulation: &mut Simulation, event: &Event<()>) {
-        self.sim_renderer.handle_event(&self.display, simulation, &event);
-        self.gui_renderer.handle_event(&self.display, simulation, &event);
+        self.sim_renderer.handle_event(&mut self.display, simulation, &event);
+        self.gui_renderer.handle_event(&mut self.display, simulation, &event);
         self.display.handle_event(&event);
     }
 
     pub fn render(&mut self, simulation: &Simulation) {
-        self.sim_renderer.update(&self.display);
-        self.gui_renderer.update(&self.display);
-
         let (_output_frame, output_view) = self.display.get_frame().unwrap();
 
         self.sim_renderer.render(&self.display, simulation, &output_view);
@@ -67,5 +57,49 @@ impl RenderDriver {
             }
             _ => {}
         }
+    }
+}
+
+pub trait PetriEventHandler {
+    fn handle_event<T>(&mut self, display: &mut Display, simulation: &mut Simulation, event: &Event<T>) {
+        match event {
+            Event::WindowEvent { ref event, .. } => match event {
+                Resized(size) => {
+                    self.handle_resize(display, simulation, size);
+                }
+                MouseWheel {
+                    delta: MouseScrollDelta::LineDelta(_, y),
+                    ..
+                } => {
+                    self.handle_scroll(display, simulation, y);
+                }
+                CursorMoved { position, .. } => {
+                    self.handle_mouse_move(display, simulation, position);
+                }
+                KeyboardInput { input, .. } => {
+                    self.handle_keyboard_input(display, simulation, input);
+                }
+                _ => {}
+            },
+            _ => {}
+        }
+    }
+
+    fn forward_event<T>(&mut self, _display: &mut Display, _simulation: &mut Simulation, _event: &Event<T>) {}
+    fn handle_resize(&mut self, _display: &mut Display, _simulation: &mut Simulation, _size: &PhysicalSize<u32>) {}
+    fn handle_scroll(&mut self, _display: &mut Display, _simulation: &mut Simulation, _delta: &f32) {}
+    fn handle_mouse_move(
+        &mut self,
+        _display: &mut Display,
+        _simulation: &mut Simulation,
+        _pos: &PhysicalPosition<f64>,
+    ) {
+    }
+    fn handle_keyboard_input(
+        &mut self,
+        _display: &mut Display,
+        _simulation: &mut Simulation,
+        _input: &winit::event::KeyboardInput,
+    ) {
     }
 }
