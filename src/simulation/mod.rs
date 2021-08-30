@@ -1,9 +1,9 @@
+mod components;
+mod config;
 pub mod simulation;
 mod time;
-mod config;
-mod components;
 
-pub use simulation::*;
-pub use config::*;
 pub use components::*;
+pub use config::*;
+pub use simulation::*;
 pub use time::Time;

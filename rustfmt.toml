@@ -5,3 +5,4 @@ hard_tabs = false
 imports_indent = "Block"
 imports_granularity = "Crate"
 group_imports = "StdExternalCrate"
+max_width = 120

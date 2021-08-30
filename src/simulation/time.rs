@@ -1,4 +1,5 @@
-use std::time::{Instant, Duration};
+use std::time::{Duration, Instant};
+
 use fps_counter::FPSCounter;
 
 pub struct Time {
@@ -19,7 +20,7 @@ impl Default for Time {
             start_time: now,
             last_tick_time: now,
             tick_rate: 0,
-            tick_counter: FPSCounter::default()
+            tick_counter: FPSCounter::default(),
         }
     }
 }
@@ -35,7 +36,7 @@ impl Time {
     pub fn time_since_start(&self) -> Duration {
         return Instant::now() - self.start_time;
     }
-    
+
     pub fn delta_time(&self) -> Duration {
         return Instant::now() - self.last_tick_time;
     }

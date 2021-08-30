@@ -1,23 +1,22 @@
+use std::{iter, time::Instant};
+
+use egui::FontDefinitions;
+use egui_wgpu_backend::{RenderPass, ScreenDescriptor};
+use egui_winit_platform::{Platform, PlatformDescriptor};
+use wgpu::TextureView;
+
+use super::StatApp;
 use crate::{
     rendering::{Display, PetriEventLoop},
     simulation::Simulation,
 };
-use super::StatApp;
-
-use std::iter;
-use std::time::Instant;
-
-use egui::{FontDefinitions};
-use egui_wgpu_backend::{RenderPass, ScreenDescriptor};
-use egui_winit_platform::{Platform, PlatformDescriptor};
-use wgpu::TextureView;
 
 pub struct GUIRenderer {
     platform: Platform,
     rpass: RenderPass,
     start_time: Instant,
     previous_frame_time: Option<f32>,
-    debug: StatApp
+    debug: StatApp,
 }
 
 impl PetriEventLoop for GUIRenderer {
@@ -32,7 +31,6 @@ impl PetriEventLoop for GUIRenderer {
             style: Default::default(),
         });
 
-        
         // We use the egui_wgpu_backend crate as the render backend.
         let egui_rpass = RenderPass::new(&display.device, display.surface_config.format, 1);
         GUIRenderer {
@@ -45,12 +43,10 @@ impl PetriEventLoop for GUIRenderer {
     }
 
     fn handle_event<T>(&mut self, _display: &Display, _simulation: &mut Simulation, event: &winit::event::Event<T>) {
-        self.platform.handle_event(&event)        
+        self.platform.handle_event(&event)
     }
 
-    fn update(&mut self, _display: &Display) {
-        
-    }
+    fn update(&mut self, _display: &Display) {}
 
     fn render(&mut self, display: &Display, simulation: &Simulation, view: &TextureView) {
         self.platform.update_time(self.start_time.elapsed().as_secs_f64());
@@ -68,9 +64,9 @@ impl PetriEventLoop for GUIRenderer {
         let frame_time = (Instant::now() - egui_start).as_secs_f64() as f32;
         self.previous_frame_time = Some(frame_time);
 
-        let mut encoder = display.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("encoder"),
-        });
+        let mut encoder = display
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("encoder") });
 
         // Upload all resources for the GPU.
         let screen_descriptor = ScreenDescriptor {
@@ -78,18 +74,16 @@ impl PetriEventLoop for GUIRenderer {
             physical_height: display.surface_config.height,
             scale_factor: display.window.scale_factor() as f32,
         };
-        self.rpass.update_texture(&display.device, &display.queue, &self.platform.context().texture());
+        self.rpass
+            .update_texture(&display.device, &display.queue, &self.platform.context().texture());
         self.rpass.update_user_textures(&display.device, &display.queue);
-        self.rpass.update_buffers(&display.device, &display.queue, &paint_jobs, &screen_descriptor);
+        self.rpass
+            .update_buffers(&display.device, &display.queue, &paint_jobs, &screen_descriptor);
 
         // Record all render passes.
-        self.rpass.execute(
-            &mut encoder,
-            &view,
-            &paint_jobs,
-            &screen_descriptor,
-            None,
-        ).unwrap();
+        self.rpass
+            .execute(&mut encoder, &view, &paint_jobs, &screen_descriptor, None)
+            .unwrap();
 
         // Submit the commands.
         display.queue.submit(iter::once(encoder.finish()));

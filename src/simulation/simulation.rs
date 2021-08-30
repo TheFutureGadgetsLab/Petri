@@ -1,12 +1,12 @@
 use glam::Vec2;
 use legion::*;
 
-use super::{RigidCircle, components, config::Config, time::Time};
+use super::{components, config::Config, time::Time, RigidCircle};
 
 pub struct Simulation {
     pub world: World,
     pub resources: Resources,
-    pub bounds: (Vec2, Vec2)
+    pub bounds: (Vec2, Vec2),
 }
 
 impl Simulation {
@@ -18,15 +18,13 @@ impl Simulation {
         resources.insert(config);
 
         for _i in 1..config.num_particles {
-            world.push( (
-                components::RigidCircle::new_rand(10.0, &config.bounds),
-            ));
+            world.push((components::RigidCircle::new_rand(10.0, &config.bounds),));
         }
 
         Simulation {
             world,
             resources,
-            bounds: config.bounds
+            bounds: config.bounds,
         }
     }
 

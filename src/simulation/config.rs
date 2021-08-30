@@ -1,4 +1,4 @@
-use glam::{Vec2, vec2};
+use glam::{vec2, Vec2};
 
 #[derive(Clone, Copy)]
 pub struct Config {
@@ -10,7 +10,7 @@ impl Config {
     pub fn default() -> Config {
         Config {
             num_particles: 1_000_000,
-            bounds: (vec2(-1000.0, -1000.0), vec2(1000.0, 1000.0))
+            bounds: (vec2(-1000.0, -1000.0), vec2(1000.0, 1000.0)),
         }
     }
 }

@@ -1,4 +1,5 @@
-use glam::{Vec2};
+use glam::Vec2;
+
 use crate::rendering::Display;
 
 pub struct Camera {
@@ -12,10 +13,7 @@ pub struct Camera {
 impl Camera {
     pub fn new(display: &Display) -> Self {
         let winsize = display.window.inner_size();
-        let size = Vec2::new(
-         winsize.width as _,
-         winsize.height as _,
-        );
+        let size = Vec2::new(winsize.width as _, winsize.height as _);
 
         Camera {
             window_size: size,
@@ -25,10 +23,7 @@ impl Camera {
     }
 
     pub fn resize(&mut self, width: f32, height: f32) {
-        self.window_size = Vec2::new(
-         width as _,
-         height as _,
-        );
+        self.window_size = Vec2::new(width as _, height as _);
     }
 
     pub fn translate_by(&mut self, delta: Vec2) {

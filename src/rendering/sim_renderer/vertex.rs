@@ -1,22 +1,23 @@
+use legion::*;
+
 use crate::{
     rendering::Display,
-    simulation::{RigidCircle, Simulation}
+    simulation::{RigidCircle, Simulation},
 };
-use legion::*;
 
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable, Default)]
 pub struct Vertex {
     position: [f32; 2],
     color: [f32; 4],
-    size: f32
+    size: f32,
 }
 impl From<&RigidCircle> for Vertex {
     fn from(item: &RigidCircle) -> Vertex {
         Vertex {
             position: item.pos.into(),
             color: item.color,
-            size: item.radius
+            size: item.radius,
         }
     }
 }
@@ -46,9 +47,13 @@ impl VertexBuffer {
 
     pub fn update(&mut self, display: &Display, simulation: &Simulation) -> u32 {
         let vertices: Vec<Vertex> = <&RigidCircle>::query()
-            .iter(&simulation.world).map(|circ| circ.into()).collect();
-        
-        display.queue.write_buffer(&self.buf, 0, bytemuck::cast_slice(&vertices));
+            .iter(&simulation.world)
+            .map(|circ| circ.into())
+            .collect();
+
+        display
+            .queue
+            .write_buffer(&self.buf, 0, bytemuck::cast_slice(&vertices));
 
         vertices.len() as u32
     }

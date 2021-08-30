@@ -1,10 +1,15 @@
 mod rendering;
 mod simulation;
 
-use winit::event::Event::*;
-use winit::event_loop::{ControlFlow, EventLoop};
-use crate::rendering::RenderDriver;
-use crate::simulation::{Config, Simulation};
+use winit::{
+    event::Event::*,
+    event_loop::{ControlFlow, EventLoop},
+};
+
+use crate::{
+    rendering::RenderDriver,
+    simulation::{Config, Simulation},
+};
 
 fn main() {
     wgpu_subscriber::initialize_default_subscriber(None);
@@ -28,10 +33,10 @@ fn main() {
             MainEventsCleared => {
                 simulation.update();
                 renderer.request_render()
-            },
+            }
             // Handle changes to wndow
-            WindowEvent { event, ..} => renderer.handle_window_event(&event, control_flow),
-        _ => {}
+            WindowEvent { event, .. } => renderer.handle_window_event(&event, control_flow),
+            _ => {}
         }
     });
 }
