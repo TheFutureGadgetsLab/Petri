@@ -20,8 +20,8 @@ impl RigidCircle {
 
         let vel = pos
             * vec2(
-                thread_rng().gen_range(-0.005..0.005),
-                thread_rng().gen_range(-0.005..0.005),
+                thread_rng().gen_range(-0.001..0.001),
+                thread_rng().gen_range(-0.001..0.001),
             );
 
         RigidCircle {

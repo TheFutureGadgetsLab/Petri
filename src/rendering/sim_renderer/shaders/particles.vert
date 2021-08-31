@@ -21,7 +21,7 @@ void main() {
 
     v_color = a_color;
     v_pos   = u_zoom * (trans + pos);
-    v_size  = a_size * u_zoom.x;
+    v_size  = max(a_size * u_zoom.x, 1.0);
     
     gl_Position = vec4(v_pos, 0, 1);
     gl_PointSize = v_size;

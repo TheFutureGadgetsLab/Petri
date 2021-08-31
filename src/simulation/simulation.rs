@@ -17,7 +17,7 @@ impl Simulation {
         resources.insert(Time::default());
         resources.insert(config);
 
-        for _i in 1..config.num_particles {
+        for _i in 0..config.num_particles {
             world.push((components::RigidCircle::new_rand(10.0, &config.bounds),));
         }
 
