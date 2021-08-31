@@ -1,4 +1,4 @@
-use egui::{epaint::Color32, plot::Line, Frame};
+use egui::{epaint::Color32, plot::Plot, Frame};
 use glam::{vec2, Vec2};
 
 use crate::{rendering::Display, simulation::Simulation};
