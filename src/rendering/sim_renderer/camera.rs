@@ -1,4 +1,4 @@
-use glam::{Vec2, vec2};
+use glam::{vec2, Vec2};
 
 pub struct Camera {
     pub window_size: Vec2,

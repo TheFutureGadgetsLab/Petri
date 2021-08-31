@@ -5,7 +5,7 @@ use egui_wgpu_backend::{RenderPass, ScreenDescriptor};
 use egui_winit_platform::{Platform, PlatformDescriptor};
 use wgpu::TextureView;
 
-use super::StatApp;
+use super::{GridApp, StatApp};
 use crate::{
     rendering::{Display, PetriEventHandler},
     simulation::Simulation,
@@ -17,6 +17,7 @@ pub struct GUIRenderer {
     start_time: Instant,
     previous_frame_time: Option<f32>,
     debug: StatApp,
+    grid: GridApp,
 }
 
 impl GUIRenderer {
@@ -33,12 +34,14 @@ impl GUIRenderer {
 
         // We use the egui_wgpu_backend crate as the render backend.
         let egui_rpass = RenderPass::new(&display.device, display.surface_config.format, 1);
+
         Self {
             platform: platform,
             rpass: egui_rpass,
             start_time: Instant::now(),
             previous_frame_time: None,
             debug: StatApp,
+            grid: GridApp::default(),
         }
     }
 
@@ -49,6 +52,7 @@ impl GUIRenderer {
         let egui_start = Instant::now();
         self.platform.begin_frame();
 
+        self.grid.update(&self.platform.context(), &display, &simulation);
         self.debug.update(&self.platform.context(), &display, &simulation);
 
         // End the UI frame. We could now handle the output and draw the UI with the backend.
