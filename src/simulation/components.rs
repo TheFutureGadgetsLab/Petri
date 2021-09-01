@@ -1,6 +1,8 @@
 use glam::{vec2, Vec2};
 use rand::prelude::*;
 
+use super::Config;
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct RigidCircle {
     pub pos: Vec2,
@@ -10,7 +12,9 @@ pub struct RigidCircle {
 }
 
 impl RigidCircle {
-    pub fn new_rand(radius: f32, bounds: &(Vec2, Vec2)) -> RigidCircle {
+    pub fn new_rand(config: &Config) -> Self {
+        let bounds = config.bounds;
+
         let width = bounds.1.x - bounds.0.x;
         let height = bounds.1.y - bounds.0.y;
         let shortest_side = f32::min(width, height);
@@ -24,10 +28,10 @@ impl RigidCircle {
                 thread_rng().gen_range(-0.001..0.001),
             );
 
-        RigidCircle {
+        Self {
             pos,
             vel,
-            radius,
+            radius: config.cell_radius,
             color: [
                 thread_rng().gen_range(0.0..1.0),
                 thread_rng().gen_range(0.0..1.0),

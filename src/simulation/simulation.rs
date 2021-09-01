@@ -1,4 +1,3 @@
-use glam::Vec2;
 use legion::*;
 
 use super::{components, config::Config, time::Time, RigidCircle};
@@ -6,7 +5,7 @@ use super::{components, config::Config, time::Time, RigidCircle};
 pub struct Simulation {
     pub world: World,
     pub resources: Resources,
-    pub bounds: (Vec2, Vec2),
+    schedule: Schedule,
 }
 
 impl Simulation {
@@ -17,34 +16,36 @@ impl Simulation {
         resources.insert(Time::default());
         resources.insert(config);
 
-        for _i in 0..config.num_particles {
-            world.push((components::RigidCircle::new_rand(10.0, &config.bounds),));
+        for _i in 0..config.n_cells {
+            world.push((components::RigidCircle::new_rand(&config),));
         }
+
+        let schedule = Schedule::builder().add_system(update_positions_system()).build();
 
         Simulation {
             world,
             resources,
-            bounds: config.bounds,
+            schedule,
         }
     }
 
     pub fn update(&mut self) {
         self.resources.get_mut::<Time>().unwrap().tick();
+        self.schedule.execute(&mut self.world, &mut self.resources);
+    }
+}
 
-        let mut query = <&mut RigidCircle>::query();
+#[system(par_for_each)]
+fn update_positions(circ: &mut RigidCircle, #[resource] config: &Config) {
+    let bounds = config.bounds;
 
-        let bounds = &self.bounds;
-
-        query.par_for_each_mut(&mut self.world, |circ| {
-            circ.pos += circ.vel;
-            if circ.pos.x < bounds.0.x || circ.pos.x > bounds.1.x {
-                circ.pos.x = circ.pos.x.clamp(bounds.0.x, bounds.1.x);
-                circ.vel.x = -circ.vel.x;
-            }
-            if circ.pos.y < bounds.0.y || circ.pos.y > bounds.1.y {
-                circ.pos.y = circ.pos.y.clamp(bounds.0.y, bounds.1.y);
-                circ.vel.y = -circ.vel.y;
-            }
-        });
+    circ.pos += circ.vel;
+    if (circ.pos.x - circ.radius) <= bounds.0.x || (circ.pos.x + circ.radius) >= bounds.1.x {
+        circ.pos.x = circ.pos.x.clamp(bounds.0.x, bounds.1.x);
+        circ.vel.x = -circ.vel.x;
+    }
+    if (circ.pos.y - circ.radius) <= bounds.0.y || (circ.pos.y + circ.radius) > bounds.1.y {
+        circ.pos.y = circ.pos.y.clamp(bounds.0.y, bounds.1.y);
+        circ.vel.y = -circ.vel.y;
     }
 }
