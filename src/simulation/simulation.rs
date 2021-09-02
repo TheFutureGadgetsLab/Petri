@@ -58,21 +58,18 @@ impl Simulation {
         self.grid.maintain();
 
         let mut cols = vec![];
-        for (ent, circ) in <(Entity, &RigidCircle)>::query().iter(&self.world) {
+        <(Entity, &RigidCircle)>::query().for_each(&self.world, |(ent, circ)| {
             let around: Vec<GridHandle> = self
                 .grid
                 .query_around(circ.pos, circ.radius * 2.0)
                 .map(|(handle, ..)| handle)
                 .collect();
 
-            let ents: Vec<Entity> = around.iter().map(|handle| *self.grid.get(*handle).unwrap().1).collect();
-
-            for e in ents {
-                if *ent != e {
-                    cols.push(Col { a: *ent, b: e });
-                }
-            }
-        }
+            around.iter()
+                .map(|handle| *self.grid.get(*handle).unwrap().1)
+                .filter(|e | e != ent)
+                .for_each(|e| cols.push(Col { a: *ent, b: e }));
+        });
 
         for col in cols {
             let b_pos_in: Vec2;
