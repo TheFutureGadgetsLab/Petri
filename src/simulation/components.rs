@@ -1,3 +1,4 @@
+use flat_spatial::grid::GridHandle;
 use glam::{vec2, Vec2};
 use rand::prelude::*;
 
@@ -9,24 +10,19 @@ pub struct RigidCircle {
     pub vel: Vec2,
     pub radius: f32,
     pub color: [f32; 4],
+    pub handle: GridHandle,
 }
 
 impl RigidCircle {
     pub fn new_rand(config: &Config) -> Self {
         let bounds = config.bounds;
 
-        let width = bounds.1.x - bounds.0.x;
-        let height = bounds.1.y - bounds.0.y;
-        let shortest_side = f32::min(width, height);
-        let pos = vec2(thread_rng().gen_range(-1.0..1.0), thread_rng().gen_range(-1.0..1.0)).normalize()
-            * shortest_side
-            * 0.25;
+        let pos = vec2(
+            thread_rng().gen_range(bounds.0.x..bounds.1.x),
+            thread_rng().gen_range(bounds.0.y..bounds.1.y),
+        );
 
-        let vel = pos
-            * vec2(
-                thread_rng().gen_range(-0.001..0.001),
-                thread_rng().gen_range(-0.001..0.001),
-            );
+        let vel = vec2(thread_rng().gen_range(-0.01..0.01), thread_rng().gen_range(-0.01..0.01));
 
         Self {
             pos,
@@ -38,6 +34,7 @@ impl RigidCircle {
                 thread_rng().gen_range(0.0..1.0),
                 1.0,
             ],
+            handle: GridHandle::default(),
         }
     }
 }

@@ -1,4 +1,7 @@
+use flat_spatial::{grid::GridHandle, DenseGrid};
 use legion::*;
+
+type Grid = DenseGrid<Entity>;
 
 use super::{components, config::Config, time::Time, RigidCircle};
 
@@ -6,6 +9,7 @@ pub struct Simulation {
     pub world: World,
     pub resources: Resources,
     schedule: Schedule,
+    grid: Grid,
 }
 
 impl Simulation {
@@ -16,8 +20,14 @@ impl Simulation {
         resources.insert(Time::default());
         resources.insert(config);
 
+        let mut grid = Grid::new((config.cell_radius * 2.0) as _);
         for _i in 0..config.n_cells {
             world.push((components::RigidCircle::new_rand(&config),));
+        }
+
+        for (entity, circ) in <(Entity, &mut RigidCircle)>::query().iter_mut(&mut world) {
+            let handle = grid.insert(circ.pos, *entity);
+            circ.handle = handle;
         }
 
         let schedule = Schedule::builder().add_system(update_positions_system()).build();
@@ -26,12 +36,29 @@ impl Simulation {
             world,
             resources,
             schedule,
+            grid,
         }
     }
 
     pub fn update(&mut self) {
         self.resources.get_mut::<Time>().unwrap().tick();
         self.schedule.execute(&mut self.world, &mut self.resources);
+
+        for circ in <&RigidCircle>::query().iter(&self.world) {
+            self.grid.set_position(circ.handle, circ.pos);
+        }
+
+        self.grid.maintain();
+
+        for circ in <&RigidCircle>::query().iter(&self.world) {
+            let around: Vec<GridHandle> = self
+                .grid
+                .query_around(circ.pos, circ.radius * 2.0)
+                .map(|(handle, ..)| handle)
+                .collect();
+
+            let ents: Vec<Entity> = around.iter().map(|handle| *self.grid.get(*handle).unwrap().1).collect();
+        }
     }
 }
 
