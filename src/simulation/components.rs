@@ -22,7 +22,7 @@ impl RigidCircle {
             thread_rng().gen_range(bounds.0.y..bounds.1.y),
         );
 
-        let vel = vec2(thread_rng().gen_range(-0.01..0.01), thread_rng().gen_range(-0.01..0.01));
+        let vel = vec2(thread_rng().gen_range(-1.0..1.0), thread_rng().gen_range(-1.0..1.0));
 
         Self {
             pos,

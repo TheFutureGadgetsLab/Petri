@@ -1,5 +1,6 @@
 use flat_spatial::{grid::GridHandle, DenseGrid};
 use legion::*;
+use glam::Vec2;
 
 type Grid = DenseGrid<Entity>;
 
@@ -10,6 +11,11 @@ pub struct Simulation {
     pub resources: Resources,
     schedule: Schedule,
     grid: Grid,
+}
+
+struct Col {
+    a: Entity,
+    b: Entity,
 }
 
 impl Simulation {
@@ -43,6 +49,7 @@ impl Simulation {
     pub fn update(&mut self) {
         self.resources.get_mut::<Time>().unwrap().tick();
         self.schedule.execute(&mut self.world, &mut self.resources);
+        let config = self.resources.get::<Config>().unwrap();
 
         for circ in <&RigidCircle>::query().iter(&self.world) {
             self.grid.set_position(circ.handle, circ.pos);
@@ -50,7 +57,9 @@ impl Simulation {
 
         self.grid.maintain();
 
-        for circ in <&RigidCircle>::query().iter(&self.world) {
+
+        let mut cols = vec![];
+        for (ent, circ) in <(Entity, &RigidCircle)>::query().iter(&self.world) {
             let around: Vec<GridHandle> = self
                 .grid
                 .query_around(circ.pos, circ.radius * 2.0)
@@ -58,6 +67,31 @@ impl Simulation {
                 .collect();
 
             let ents: Vec<Entity> = around.iter().map(|handle| *self.grid.get(*handle).unwrap().1).collect();
+
+            for e in ents {
+                if *ent != e {
+                    cols.push(Col {a: *ent, b: e});
+                }
+            }
+        }
+
+        for col in cols {
+            let pos: Vec2;
+            let vel: Vec2;
+            {
+                let b_ent = self.world.entry(col.b).unwrap();
+                let b = b_ent.get_component::<RigidCircle>().unwrap();
+                pos = b.pos;
+                vel = b.vel;
+            }
+            let mut a_ent = self.world.entry_mut(col.a).unwrap();
+            let a = a_ent.get_component_mut::<RigidCircle>().unwrap();
+            a.vel = Vec2::ZERO;
+            let del = pos - a.pos;
+            let dist = del.length();
+            if dist > 0.0 {
+                a.pos += -del.normalize() * (config.cell_radius * 2.0 - dist).max(0.0) * 0.5;
+            }
         }
     }
 }
