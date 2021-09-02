@@ -41,7 +41,7 @@ impl VertexBuffer {
 
         VertexBuffer {
             buf: vertex_buffer,
-            size: size,
+            size,
         }
     }
 

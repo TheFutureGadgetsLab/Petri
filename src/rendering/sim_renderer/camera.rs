@@ -11,7 +11,7 @@ pub struct Camera {
 impl Camera {
     pub fn new(window_size: Vec2) -> Self {
         Camera {
-            window_size: window_size,
+            window_size,
             translation: Vec2::ZERO,
             zoom: 1.0,
         }

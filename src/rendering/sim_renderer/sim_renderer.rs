@@ -74,18 +74,18 @@ impl SimRenderer {
         let mut compiler = shaderc::Compiler::new().unwrap();
         let vert_comp = compiler
             .compile_into_spirv(
-                &include_str!("shaders/particles.vert"),
+                include_str!("shaders/particles.vert"),
                 shaderc::ShaderKind::Vertex,
-                &"shaders/particles.vert",
+                "shaders/particles.vert",
                 "main",
                 Some(&options),
             )
             .unwrap();
         let frag_comp = compiler
             .compile_into_spirv(
-                &include_str!("shaders/particles.frag"),
+                include_str!("shaders/particles.frag"),
                 shaderc::ShaderKind::Fragment,
-                &"shaders/particles.frag",
+                "shaders/particles.frag",
                 "main",
                 Some(&options),
             )
@@ -110,7 +110,7 @@ impl SimRenderer {
             label: Some("Render Pipeline"),
             layout: Some(&render_pipeline_layout),
             vertex: wgpu::VertexState {
-                module: &shader_vert,
+                module: shader_vert,
                 entry_point: "main",
                 buffers: &[wgpu::VertexBufferLayout {
                     array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
@@ -119,7 +119,7 @@ impl SimRenderer {
                 }],
             },
             fragment: Some(wgpu::FragmentState {
-                module: &shader_frag,
+                module: shader_frag,
                 entry_point: "main",
                 targets: &[wgpu::ColorTargetState {
                     format: display.surface_config.format,
@@ -161,14 +161,14 @@ impl SimRenderer {
             label: Some("Render Encoder"),
         });
 
-        let n_vertices = self.vertex_buffer.update(&display, &simulation);
+        let n_vertices = self.vertex_buffer.update(display, simulation);
 
         {
             // Set up render pass and associate the render pipeline we made
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Render Pass"),
                 color_attachments: &[wgpu::RenderPassColorAttachment {
-                    view: &view,
+                    view,
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color {

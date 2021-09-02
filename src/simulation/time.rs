@@ -34,14 +34,14 @@ impl Time {
     }
 
     pub fn time_since_start(&self) -> Duration {
-        return Instant::now() - self.start_time;
+        Instant::now() - self.start_time
     }
 
     pub fn delta_time(&self) -> Duration {
-        return Instant::now() - self.last_tick_time;
+        Instant::now() - self.last_tick_time
     }
 
     pub fn now() -> Instant {
-        return Instant::now();
+        Instant::now()
     }
 }

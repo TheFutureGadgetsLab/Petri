@@ -48,7 +48,7 @@ impl Display {
             .with_transparent(false)
             .with_title("Petri")
             .with_inner_size(winit::dpi::PhysicalSize::new(INITIAL_SIZE[0], INITIAL_SIZE[1]))
-            .build(&event_loop)
+            .build(event_loop)
             .unwrap();
 
         let size = window.inner_size();

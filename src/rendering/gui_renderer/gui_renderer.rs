@@ -36,7 +36,7 @@ impl GUIRenderer {
         let egui_rpass = RenderPass::new(&display.device, display.surface_config.format, 1);
 
         Self {
-            platform: platform,
+            platform,
             rpass: egui_rpass,
             start_time: Instant::now(),
             previous_frame_time: None,
@@ -52,8 +52,8 @@ impl GUIRenderer {
         let egui_start = Instant::now();
         self.platform.begin_frame();
 
-        self.grid.update(&self.platform.context(), &display, &simulation);
-        self.debug.update(&self.platform.context(), &display, &simulation);
+        self.grid.update(&self.platform.context(), display, simulation);
+        self.debug.update(&self.platform.context(), display, simulation);
 
         // End the UI frame. We could now handle the output and draw the UI with the backend.
         let (_output, paint_commands) = self.platform.end_frame(Some(&display.window));
@@ -80,7 +80,7 @@ impl GUIRenderer {
 
         // Record all render passes.
         self.rpass
-            .execute(&mut encoder, &view, &paint_jobs, &screen_descriptor, None)
+            .execute(&mut encoder, view, &paint_jobs, &screen_descriptor, None)
             .unwrap();
 
         // Submit the commands.
@@ -95,6 +95,6 @@ impl PetriEventHandler for GUIRenderer {
         _simulation: &mut Simulation,
         event: &winit::event::Event<T>,
     ) {
-        self.platform.handle_event(&event)
+        self.platform.handle_event(event)
     }
 }

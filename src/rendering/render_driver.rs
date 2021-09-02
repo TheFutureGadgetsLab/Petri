@@ -17,7 +17,7 @@ pub struct RenderDriver {
 
 impl RenderDriver {
     pub fn new(simulation: &mut Simulation, event_loop: &EventLoop<()>) -> Self {
-        let display = Display::new(&event_loop);
+        let display = Display::new(event_loop);
 
         let sim_renderer = SimRenderer::new(&display, simulation);
         let gui_renderer = GUIRenderer::new(&display, simulation);
@@ -30,9 +30,9 @@ impl RenderDriver {
     }
 
     pub fn handle_event(&mut self, simulation: &mut Simulation, event: &Event<()>) {
-        self.sim_renderer.handle_event(&mut self.display, simulation, &event);
-        self.gui_renderer.handle_event(&mut self.display, simulation, &event);
-        self.display.handle_event(&event);
+        self.sim_renderer.handle_event(&mut self.display, simulation, event);
+        self.gui_renderer.handle_event(&mut self.display, simulation, event);
+        self.display.handle_event(event);
     }
 
     pub fn render(&mut self, simulation: &Simulation) {

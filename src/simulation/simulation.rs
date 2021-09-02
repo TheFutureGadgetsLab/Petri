@@ -65,9 +65,10 @@ impl Simulation {
                 .map(|(handle, ..)| handle)
                 .collect();
 
-            around.iter()
+            around
+                .iter()
                 .map(|handle| *self.grid.get(*handle).unwrap().1)
-                .filter(|e | e != ent)
+                .filter(|e| e != ent)
                 .for_each(|e| cols.push(Col { a: *ent, b: e }));
         });
 
