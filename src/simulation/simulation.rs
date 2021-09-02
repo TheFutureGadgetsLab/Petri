@@ -136,11 +136,11 @@ fn update_positions(circ: &mut RigidCircle, #[resource] config: &Config) {
 
     circ.pos += circ.vel;
     if (circ.pos.x - circ.radius) <= bounds.0.x || (circ.pos.x + circ.radius) >= bounds.1.x {
-        circ.pos.x = circ.pos.x.clamp(bounds.0.x, bounds.1.x);
+        circ.pos.x = circ.pos.x.clamp(bounds.0.x + circ.radius, bounds.1.x - circ.radius);
         circ.vel.x = -circ.vel.x;
     }
     if (circ.pos.y - circ.radius) <= bounds.0.y || (circ.pos.y + circ.radius) > bounds.1.y {
-        circ.pos.y = circ.pos.y.clamp(bounds.0.y, bounds.1.y);
+        circ.pos.y = circ.pos.y.clamp(bounds.0.y + circ.radius, bounds.1.y - circ.radius);
         circ.vel.y = -circ.vel.y;
     }
 }
