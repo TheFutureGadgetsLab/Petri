@@ -76,21 +76,55 @@ impl Simulation {
         }
 
         for col in cols {
-            let pos: Vec2;
-            let vel: Vec2;
+
+            let B_pos_in: Vec2;
+            let B_vel_in: Vec2;
             {
                 let b_ent = self.world.entry(col.b).unwrap();
                 let b = b_ent.get_component::<RigidCircle>().unwrap();
-                pos = b.pos;
-                vel = b.vel;
+                B_pos_in = b.pos;
+                B_vel_in = b.vel;
             }
-            let mut a_ent = self.world.entry_mut(col.a).unwrap();
-            let a = a_ent.get_component_mut::<RigidCircle>().unwrap();
-            a.vel = Vec2::ZERO;
-            let del = pos - a.pos;
+
+            let A_pos_in: Vec2;
+            let A_vel_in: Vec2;
+            {
+                let a_ent = self.world.entry(col.a).unwrap();
+                let a = a_ent.get_component::<RigidCircle>().unwrap();
+                A_pos_in = a.pos;
+                A_vel_in = a.vel;
+            }
+
+            let B_pos_out: Vec2;
+            let B_vel_out: Vec2;
+            let A_pos_out: Vec2;
+            let A_vel_out: Vec2;
+            let del = B_pos_in - A_pos_in;
             let dist = del.length();
             if dist > 0.0 {
-                a.pos += -del.normalize() * (config.cell_radius * 2.0 - dist).max(0.0) * 0.5;
+                A_pos_out = A_pos_in - del.normalize() * (config.cell_radius * 2.0 - dist).max(0.0) * 0.5;
+                A_vel_out = B_vel_in;
+                B_pos_out = B_pos_in + del.normalize() * (config.cell_radius * 2.0 - dist).max(0.0) * 0.5;
+                B_vel_out = A_vel_in;
+            } else {
+                A_pos_out = A_pos_in;
+                A_vel_out = A_vel_in;
+                B_pos_out = B_pos_in;
+                B_vel_out = B_vel_in;
+            }
+
+            {
+                let mut b_ent = self.world.entry_mut(col.b).unwrap();
+                let b = b_ent.get_component_mut::<RigidCircle>().unwrap();
+                b.pos = B_pos_out;
+                b.vel = B_vel_out;
+            }
+
+            {
+                let mut a_ent = self.world.entry_mut(col.a).unwrap();
+                let a = a_ent.get_component_mut::<RigidCircle>().unwrap();
+                a.pos = A_pos_out;
+                a.vel = A_vel_out;
             }
         }
     }
