@@ -49,7 +49,6 @@ impl Simulation {
     pub fn update(&mut self) {
         self.resources.get_mut::<Time>().unwrap().tick();
         self.schedule.execute(&mut self.world, &mut self.resources);
-        let config = self.resources.get::<Config>().unwrap();
 
         for circ in <&RigidCircle>::query().iter(&self.world) {
             self.grid.set_position(circ.handle, circ.pos);
