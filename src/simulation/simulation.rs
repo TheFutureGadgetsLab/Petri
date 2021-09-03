@@ -1,5 +1,4 @@
 use flat_spatial::{grid::GridHandle, DenseGrid};
-use glam::Vec2;
 use legion::*;
 
 type Grid = DenseGrid<Entity>;
