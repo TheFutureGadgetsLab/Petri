@@ -73,54 +73,60 @@ impl Simulation {
         });
 
         for col in cols {
-            let b_pos_in: Vec2;
-            let b_vel_in: Vec2;
-            {
-                let b_ent = self.world.entry(col.b).unwrap();
-                let b = b_ent.get_component::<RigidCircle>().unwrap();
-                b_pos_in = b.pos;
-                b_vel_in = b.vel;
+            let RigidCircle {
+                pos: c1,
+                vel: v1,
+                radius: r1,
+                ..
+            } = self
+                .world
+                .entry_ref(col.a)
+                .unwrap()
+                .get_component::<RigidCircle>()
+                .unwrap()
+                .clone();
+            let RigidCircle {
+                pos: c2,
+                vel: v2,
+                radius: r2,
+                ..
+            } = self
+                .world
+                .entry_ref(col.b)
+                .unwrap()
+                .get_component::<RigidCircle>()
+                .unwrap()
+                .clone();
+
+            let norm = c1.distance_squared(c2);
+            let dist = norm.sqrt();
+
+            if dist > (r1 + r2) {
+                continue;
             }
 
-            let a_pos_in: Vec2;
-            let a_vel_in: Vec2;
-            {
-                let a_ent = self.world.entry(col.a).unwrap();
-                let a = a_ent.get_component::<RigidCircle>().unwrap();
-                a_pos_in = a.pos;
-                a_vel_in = a.vel;
-            }
+            let m1: f32 = 1.0;
+            let m2: f32 = 1.0;
 
-            let b_pos_out: Vec2;
-            let b_vel_out: Vec2;
-            let a_pos_out: Vec2;
-            let a_vel_out: Vec2;
-            let del = b_pos_in - a_pos_in;
-            let dist = del.length();
-            if dist > 0.0 {
-                a_pos_out = a_pos_in - del.normalize() * (config.cell_radius * 2.0 - dist).max(0.0) * 0.5;
-                a_vel_out = b_vel_in;
-                b_pos_out = b_pos_in + del.normalize() * (config.cell_radius * 2.0 - dist).max(0.0) * 0.5;
-                b_vel_out = a_vel_in;
-            } else {
-                a_pos_out = a_pos_in;
-                a_vel_out = a_vel_in;
-                b_pos_out = b_pos_in;
-                b_vel_out = b_vel_in;
-            }
+            let msum = m1 + m2;
+
+            let nv1 = v1 - ((2. * m2) / msum * (v1 - v2).dot(c1 - c2) / norm) * (c1 - c2);
+            let nv2 = v2 - ((2. * m1) / msum * (v2 - v1).dot(c2 - c1) / norm) * (c2 - c1);
+
+            let del = c2 - c1;
+            let nc1 = c1 - del / dist * (r1 * 2.0 - dist).max(0.0) * 0.5;
+            let nc2 = c2 + del / dist * (r2 * 2.0 - dist).max(0.0) * 0.5;
 
             {
                 let mut b_ent = self.world.entry_mut(col.b).unwrap();
                 let b = b_ent.get_component_mut::<RigidCircle>().unwrap();
-                b.pos = b_pos_out;
-                b.vel = b_vel_out;
-            }
+                b.vel = nv2;
+                b.pos = nc2;
 
-            {
                 let mut a_ent = self.world.entry_mut(col.a).unwrap();
                 let a = a_ent.get_component_mut::<RigidCircle>().unwrap();
-                a.pos = a_pos_out;
-                a.vel = a_vel_out;
+                a.vel = nv1;
+                a.pos = nc1;
             }
         }
     }
