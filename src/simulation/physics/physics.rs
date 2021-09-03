@@ -1,9 +1,7 @@
-use flat_spatial::{grid::GridHandle, DenseGrid};
 use legion::*;
 
-type Grid = DenseGrid<Entity>;
-
-use super::{config::Config, RigidCircle};
+use super::spatial_grid::{DenseGrid, GridHandle};
+use crate::simulation::{Config, RigidCircle};
 
 struct Col {
     a: Entity,
@@ -11,13 +9,13 @@ struct Col {
 }
 
 pub struct PhysicsPipeline {
-    grid: Grid,
+    grid: DenseGrid,
     schedule: Schedule,
 }
 
 impl PhysicsPipeline {
     pub fn new(world: &mut World, config: &Config) -> Self {
-        let mut grid: Grid = Grid::new((config.cell_radius * 2.0) as _);
+        let mut grid = DenseGrid::new((config.cell_radius * 2.0) as _);
 
         for (entity, circ) in <(Entity, &mut RigidCircle)>::query().iter_mut(world) {
             let handle = grid.insert(circ.pos, *entity);

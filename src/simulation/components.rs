@@ -1,8 +1,7 @@
-use flat_spatial::grid::GridHandle;
 use glam::{vec2, Vec2};
 use rand::prelude::*;
 
-use super::Config;
+use super::{physics::GridHandle, Config};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct RigidCircle {
