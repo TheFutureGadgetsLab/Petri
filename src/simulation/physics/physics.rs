@@ -1,6 +1,8 @@
+use std::time::Instant;
+
 use legion::*;
 
-use super::spatial_grid::{DenseGrid, GridHandle};
+use super::spatial_grid::DenseGrid;
 use crate::simulation::{Config, RigidCircle};
 
 struct Col {
@@ -14,13 +16,10 @@ pub struct PhysicsPipeline {
 }
 
 impl PhysicsPipeline {
-    pub fn new(world: &mut World, config: &Config) -> Self {
-        let mut grid = DenseGrid::new((config.cell_radius * 2.0) as _);
+    pub fn new(_world: &mut World, config: &Config) -> Self {
+        let (min, max) = config.bounds;
 
-        for (entity, circ) in <(Entity, &mut RigidCircle)>::query().iter_mut(world) {
-            let handle = grid.insert(circ.pos, *entity);
-            circ.handle = handle;
-        }
+        let grid = DenseGrid::new(config.cell_radius * 2.0, min, max);
 
         let schedule = Schedule::builder().add_system(update_positions_system()).build();
 
@@ -30,29 +29,25 @@ impl PhysicsPipeline {
     pub fn step(&mut self, world: &mut World, resources: &mut Resources) {
         self.schedule.execute(world, resources);
 
-        for circ in <&RigidCircle>::query().iter(world) {
-            self.grid.set_position(circ.handle, circ.pos);
+        self.grid.clear();
+        for (entity, circ) in <(Entity, &RigidCircle)>::query().iter(world) {
+            self.grid.insert(circ.pos, *entity);
         }
 
-        self.grid.maintain();
-
+        let start = Instant::now();
         let mut cols = vec![];
         <(Entity, &RigidCircle)>::query().for_each(world, |(ent, circ)| {
-            let around: Vec<GridHandle> = self
-                .grid
-                .query_around(circ.pos, circ.radius * 2.0)
-                .map(|(handle, ..)| handle)
-                .collect();
-            cols.extend(
-                around
-                    .iter()
-                    .map(|handle| *self.grid.get(*handle).unwrap().1)
-                    .filter_map(|e| match e != *ent {
-                        true => Some(Col { a: e, b: *ent }),
-                        false => None,
-                    }),
-            );
+            let around = self.grid.query(circ.pos, 2.0 * circ.radius);
+            cols.extend(around.iter().filter_map(|e| match e != ent {
+                true => Some(Col { a: *e, b: *ent }),
+                false => None,
+            }));
         });
+
+        println!(
+            "Collision detection / s: {}",
+            1.0 / (Instant::now() - start).as_secs_f32()
+        );
 
         for col in cols.iter() {
             self.resolve_collision(world, col);

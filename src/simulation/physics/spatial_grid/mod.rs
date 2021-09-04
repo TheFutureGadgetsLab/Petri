@@ -1,5 +1,2 @@
-pub mod cell;
-pub mod grid;
-pub mod storage;
-
-pub use grid::{DenseGrid, GridHandle};
+pub mod spatial_grid;
+pub use spatial_grid::DenseGrid;

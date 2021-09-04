@@ -1,7 +1,7 @@
 use glam::{vec2, Vec2};
 use rand::prelude::*;
 
-use super::{physics::GridHandle, Config};
+use super::Config;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct RigidCircle {
@@ -9,7 +9,6 @@ pub struct RigidCircle {
     pub vel: Vec2,
     pub radius: f32,
     pub color: [f32; 4],
-    pub handle: GridHandle,
 }
 
 impl RigidCircle {
@@ -33,7 +32,6 @@ impl RigidCircle {
                 thread_rng().gen_range(0.0..1.0),
                 1.0,
             ],
-            handle: GridHandle::default(),
         }
     }
 }
