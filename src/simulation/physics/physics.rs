@@ -3,7 +3,10 @@ use std::time::Instant;
 use legion::*;
 
 use super::spatial_grid::DenseGrid;
-use crate::simulation::{Config, RigidCircle};
+use crate::{
+    simulation::{Config, RigidCircle},
+    timing::TIMING_DATABASE,
+};
 
 struct Col {
     a: Entity,
@@ -12,7 +15,6 @@ struct Col {
 
 pub struct PhysicsPipeline {
     grid: DenseGrid,
-    schedule: Schedule,
 }
 
 impl PhysicsPipeline {
@@ -21,20 +23,63 @@ impl PhysicsPipeline {
 
         let grid = DenseGrid::new(config.cell_radius * 2.0, min, max);
 
-        let schedule = Schedule::builder().add_system(update_positions_system()).build();
-
-        Self { grid, schedule }
+        Self { grid }
     }
 
     pub fn step(&mut self, world: &mut World, resources: &mut Resources) {
-        self.schedule.execute(world, resources);
+        let start = Instant::now();
+
+        self.update_positions(world, resources);
+        self.update_grid(world);
+
+        let cols = self.detect_collisions(world);
+
+        self.resolve_collisions(world, &cols);
+
+        TIMING_DATABASE.write().physics.step.update(Instant::now() - start);
+    }
+
+    fn update_positions(&self, world: &mut World, resources: &Resources) {
+        let start = Instant::now();
+
+        let bounds = resources.get::<Config>().unwrap().bounds;
+
+        <&mut RigidCircle>::query().par_for_each_mut(world, |circ| {
+            circ.pos += circ.vel;
+            if (circ.pos.x - circ.radius) <= bounds.0.x || (circ.pos.x + circ.radius) >= bounds.1.x {
+                circ.pos.x = circ.pos.x.clamp(bounds.0.x + circ.radius, bounds.1.x - circ.radius);
+                circ.vel.x = -circ.vel.x;
+            }
+            if (circ.pos.y - circ.radius) <= bounds.0.y || (circ.pos.y + circ.radius) > bounds.1.y {
+                circ.pos.y = circ.pos.y.clamp(bounds.0.y + circ.radius, bounds.1.y - circ.radius);
+                circ.vel.y = -circ.vel.y;
+            }
+        });
+        TIMING_DATABASE
+            .write()
+            .physics
+            .pos_update
+            .update(Instant::now() - start);
+    }
+
+    fn update_grid(&mut self, world: &World) {
+        let start = Instant::now();
 
         self.grid.clear();
-        for (entity, circ) in <(Entity, &RigidCircle)>::query().iter(world) {
+        <(Entity, &RigidCircle)>::query().for_each(world, |(entity, circ)| {
             self.grid.insert(circ.pos, *entity);
-        }
+        });
 
+        TIMING_DATABASE
+            .write()
+            .physics
+            .grid_update
+            .update(Instant::now() - start);
+    }
+
+    fn detect_collisions(&self, world: &World) -> Vec<Col> {
         let start = Instant::now();
+
         let mut cols = vec![];
         <(Entity, &RigidCircle)>::query().for_each(world, |(ent, circ)| {
             let around = self.grid.query(circ.pos, 2.0 * circ.radius);
@@ -44,36 +89,46 @@ impl PhysicsPipeline {
             }));
         });
 
-        println!(
-            "Collision detection / s: {}",
-            1.0 / (Instant::now() - start).as_secs_f32()
-        );
+        TIMING_DATABASE
+            .write()
+            .physics
+            .col_detect
+            .update(Instant::now() - start);
 
-        for col in cols.iter() {
-            self.resolve_collision(world, col);
-        }
+        cols
     }
 
-    fn resolve_collision(&mut self, world: &mut World, col: &Col) {
-        let mut a_copy = *world.entry_ref(col.a).unwrap().get_component::<RigidCircle>().unwrap();
-        let mut b_copy = *world.entry_ref(col.b).unwrap().get_component::<RigidCircle>().unwrap();
+    fn resolve_collisions(&self, world: &mut World, cols: &Vec<Col>) {
+        let start = Instant::now();
 
-        // Updates position and velocity
-        if elastic_collision(&mut a_copy, &mut b_copy) {
-            let mut b_ent = world.entry_mut(col.b).unwrap();
-            let b = b_ent.get_component_mut::<RigidCircle>().unwrap();
-            b.pos = b_copy.pos;
-            b.vel = b_copy.vel;
+        cols.iter().for_each(|col| {
+            let mut a_copy = *world.entry_ref(col.a).unwrap().get_component::<RigidCircle>().unwrap();
+            let mut b_copy = *world.entry_ref(col.b).unwrap().get_component::<RigidCircle>().unwrap();
 
-            let mut a_ent = world.entry_mut(col.a).unwrap();
-            let a = a_ent.get_component_mut::<RigidCircle>().unwrap();
-            a.pos = a_copy.pos;
-            a.vel = a_copy.vel;
-        }
+            // Updates position and velocity
+            if elastic_collision(&mut a_copy, &mut b_copy) {
+                let mut b_ent = world.entry_mut(col.b).unwrap();
+                let b = b_ent.get_component_mut::<RigidCircle>().unwrap();
+                b.pos = b_copy.pos;
+                b.vel = b_copy.vel;
+
+                let mut a_ent = world.entry_mut(col.a).unwrap();
+                let a = a_ent.get_component_mut::<RigidCircle>().unwrap();
+                a.pos = a_copy.pos;
+                a.vel = a_copy.vel;
+            }
+        });
+
+        TIMING_DATABASE
+            .write()
+            .physics
+            .col_resolve
+            .update(Instant::now() - start);
     }
 }
 
-/// Updates Rigid Circles in place
+/// Elastic collision between two circles.
+/// Updates RigidCircles in place
 fn elastic_collision(a: &mut RigidCircle, b: &mut RigidCircle) -> bool {
     let norm = a.pos.distance_squared(b.pos);
     let dist = norm.sqrt();
@@ -99,19 +154,4 @@ fn elastic_collision(a: &mut RigidCircle, b: &mut RigidCircle) -> bool {
     b.pos += del / dist * (b.radius * 2.0 - dist).max(0.0) * 0.5;
 
     true
-}
-
-#[system(par_for_each)]
-fn update_positions(circ: &mut RigidCircle, #[resource] config: &Config) {
-    let bounds = config.bounds;
-
-    circ.pos += circ.vel;
-    if (circ.pos.x - circ.radius) <= bounds.0.x || (circ.pos.x + circ.radius) >= bounds.1.x {
-        circ.pos.x = circ.pos.x.clamp(bounds.0.x + circ.radius, bounds.1.x - circ.radius);
-        circ.vel.x = -circ.vel.x;
-    }
-    if (circ.pos.y - circ.radius) <= bounds.0.y || (circ.pos.y + circ.radius) > bounds.1.y {
-        circ.pos.y = circ.pos.y.clamp(bounds.0.y + circ.radius, bounds.1.y - circ.radius);
-        circ.vel.y = -circ.vel.y;
-    }
 }

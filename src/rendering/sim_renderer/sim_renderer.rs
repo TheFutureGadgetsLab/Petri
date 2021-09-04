@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use bytemuck;
 use glam::vec2;
 use shaderc::CompileOptions;
@@ -8,6 +10,7 @@ use super::{camera::Camera, Vertex, VertexBuffer};
 use crate::{
     rendering::{Display, PetriEventHandler},
     simulation::Simulation,
+    timing::TIMING_DATABASE,
 };
 
 #[repr(C)]
@@ -152,6 +155,7 @@ impl SimRenderer {
     }
 
     pub fn render(&mut self, display: &Display, simulation: &Simulation, view: &TextureView) {
+        let start = Instant::now();
         let cam_uniform = CameraUniform::from(&display.cam);
         display
             .queue
@@ -191,6 +195,8 @@ impl SimRenderer {
         // Submit will accept anything that implements IntoIter
         // Submits the command buffer
         display.queue.submit(std::iter::once(encoder.finish()));
+
+        TIMING_DATABASE.write().sim_render.render.update(Instant::now() - start)
     }
 }
 

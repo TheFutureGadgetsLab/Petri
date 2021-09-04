@@ -1,8 +1,11 @@
+use std::time::Instant;
+
 use legion::*;
 
 use crate::{
     rendering::Display,
     simulation::{RigidCircle, Simulation},
+    timing::TIMING_DATABASE,
 };
 
 #[repr(C)]
@@ -46,6 +49,8 @@ impl VertexBuffer {
     }
 
     pub fn update(&mut self, display: &Display, simulation: &Simulation) -> u32 {
+        let start = Instant::now();
+
         let vertices: Vec<Vertex> = <&RigidCircle>::query()
             .iter(&simulation.world)
             .map(|circ| circ.into())
@@ -54,6 +59,12 @@ impl VertexBuffer {
         display
             .queue
             .write_buffer(&self.buf, 0, bytemuck::cast_slice(&vertices));
+
+        TIMING_DATABASE
+            .write()
+            .sim_render
+            .vertex_buffer_update
+            .update(Instant::now() - start);
 
         vertices.len() as u32
     }

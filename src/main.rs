@@ -1,5 +1,6 @@
 mod rendering;
 mod simulation;
+mod timing;
 
 use winit::{
     event::Event::*,
