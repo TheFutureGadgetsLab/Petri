@@ -17,9 +17,8 @@ pub struct PhysicsPipeline {
 
 impl PhysicsPipeline {
     pub fn new(_world: &mut World, config: &Config) -> Self {
-        let (min, max) = config.bounds;
 
-        let grid = DenseGrid::new(config.cell_radius * 2.0, min, max);
+        let grid = DenseGrid::new((config.cell_radius * 32.0) as u32, (config.bounds.1.x) as u32);
 
         let schedule = Schedule::builder().add_system(update_positions_system()).build();
 

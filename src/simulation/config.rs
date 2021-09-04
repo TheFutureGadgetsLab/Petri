@@ -10,9 +10,9 @@ pub struct Config {
 impl Config {
     pub fn default() -> Config {
         Config {
-            n_cells: 10_000,
-            cell_radius: 10.0,
-            bounds: (vec2(-2000.0, -2000.0), vec2(2000.0, 2000.0)),
+            n_cells: 100_000,
+            cell_radius: 2.0,
+            bounds: (vec2(0.0, 0.0), vec2(8192.0, 8192.0)),
         }
     }
 }
