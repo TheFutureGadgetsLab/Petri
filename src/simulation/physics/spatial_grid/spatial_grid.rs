@@ -2,24 +2,34 @@ use glam::Vec2;
 use legion::Entity;
 type Cell = Vec<(Vec2, Entity)>;
 
+const fn num_bits<T>() -> usize { std::mem::size_of::<T>() * 8 }
+
+fn log_2(x: u32) -> u32 {
+    assert!(x > 0);
+    num_bits::<u32>() as u32 - x.leading_zeros() - 1
+}
+
 pub struct DenseGrid {
-    n_rows: usize,
-    n_cols: usize,
-    cell_size: f32,
-    ll: Vec2,
+    /// Side length, must be power of 2
+    side_len: u32,
+    /// log2(ncells_side)
+    log2_side: u32,
+    /// log2(cell_size)
+    log2_cell: u32,
+
     cells: Vec<Cell>,
 }
 
 impl DenseGrid {
-    pub fn new(cell_size: f32, min: Vec2, max: Vec2) -> Self {
-        let (n_rows, n_cols) = ((max - min) / cell_size).ceil().as_uvec2().into();
-
+    pub fn new(cell_size: u32, side_len: u32) -> Self {
+        assert!(side_len.is_power_of_two());
+        assert!(cell_size.is_power_of_two());
+        let ncells_side = side_len / cell_size;
         Self {
-            n_rows: n_rows as _,
-            n_cols: n_rows as _,
-            cell_size,
-            ll: min.abs(),
-            cells: (0..(n_rows * n_cols)).map(|_| Cell::default()).collect(),
+            side_len,
+            log2_side: log_2(ncells_side),
+            log2_cell: log_2(cell_size),
+            cells: (0..(ncells_side * ncells_side)).map(|_| Cell::default()).collect(),
         }
     }
 
@@ -29,9 +39,9 @@ impl DenseGrid {
     }
 
     fn flat_ind(&self, pos: Vec2) -> usize {
-        let r = ((pos.y + self.ll.y) / self.cell_size) as usize;
-        let c = ((pos.x + self.ll.x) / self.cell_size) as usize;
-        r * self.n_cols + c
+        let x = (pos.x.floor() as u32) >> self.log2_cell;
+        let y = (pos.y.floor() as u32) >> self.log2_cell;
+        ((y << self.log2_side) | x) as usize
     }
 
     pub fn clear(&mut self) {
@@ -39,21 +49,18 @@ impl DenseGrid {
     }
 
     pub fn query(&self, pos: Vec2, radius: f32) -> Vec<Entity> {
-        let min = ((pos - radius + self.ll) / self.cell_size).floor();
-        let max = ((pos + radius + self.ll) / self.cell_size).floor();
-
-        let minc = min.x as usize;
-        let maxc = (max.x as usize).min(self.n_cols - 1);
-        let minr = min.y as usize;
-        let maxr = (max.y as usize).min(self.n_rows - 1);
+        let x1 = ((pos.x - radius).max(0.0).floor() as u32) >> self.log2_cell;
+        let y1 = ((pos.y - radius).max(0.0).floor() as u32) >> self.log2_cell;
+        let x2 = ((pos.x + radius).min((self.side_len - 1) as f32).floor() as u32) >> self.log2_cell;
+        let y2 = ((pos.y + radius).min((self.side_len - 1) as f32).floor() as u32) >> self.log2_cell;
 
         let radius2 = radius.powi(2);
         let mut hits = vec![];
-        for r in minr..=maxr {
-            for c in minc..=maxc {
+        for x in x1..=x2 {
+            for y in y1..=y2 {
                 unsafe {
                     self.cells
-                        .get_unchecked(r * self.n_cols + c)
+                        .get_unchecked(((y << self.log2_side) | x) as usize)
                         .iter()
                         .filter_map(|(other, id)| match pos.distance_squared(*other) < radius2 {
                             true => Some(id),
