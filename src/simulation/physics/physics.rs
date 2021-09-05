@@ -119,21 +119,22 @@ impl PhysicsPipeline {
         let start = Instant::now();
 
         cols.iter().for_each(|col| {
-            let mut a_copy = *world.entry_ref(col.a).unwrap().get_component::<RigidCircle>().unwrap();
-            let mut b_copy = *world.entry_ref(col.b).unwrap().get_component::<RigidCircle>().unwrap();
+            let mut a = unsafe {
+                world
+                    .entry_ref(col.a)
+                    .unwrap()
+                    .into_component_unchecked::<RigidCircle>()
+                    .unwrap()
+            };
+            let mut b = unsafe {
+                world
+                    .entry_ref(col.b)
+                    .unwrap()
+                    .into_component_unchecked::<RigidCircle>()
+                    .unwrap()
+            };
 
-            // Updates position and velocity
-            if elastic_collision(&mut a_copy, &mut b_copy) {
-                let mut b_ent = world.entry_mut(col.b).unwrap();
-                let b = b_ent.get_component_mut::<RigidCircle>().unwrap();
-                b.pos = b_copy.pos;
-                b.vel = b_copy.vel;
-
-                let mut a_ent = world.entry_mut(col.a).unwrap();
-                let a = a_ent.get_component_mut::<RigidCircle>().unwrap();
-                a.pos = a_copy.pos;
-                a.vel = a_copy.vel;
-            }
+            elastic_collision(&mut a, &mut b);
         });
 
         TIMING_DATABASE
