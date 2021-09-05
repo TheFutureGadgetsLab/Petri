@@ -2,18 +2,14 @@ use glam::{vec2, Vec2};
 use legion::Entity;
 type Cell = Vec<(Vec2, Entity)>;
 
-const fn num_bits<T>() -> usize {
-    std::mem::size_of::<T>() * 8
-}
-
 fn log_2(x: u32) -> u32 {
-    assert!(x > 0);
-    num_bits::<u32>() as u32 - x.leading_zeros() - 1
+    debug_assert!(x > 0);
+    (std::mem::size_of::<u32>() as u32) * 8 - x.leading_zeros() - 1
 }
 
 pub struct DenseGrid {
     /// Side length, must be power of 2
-    side_len: u32,
+    side_len: f32,
     /// log2(ncells_side)
     log2_side: u32,
     /// log2(cell_size)
@@ -30,7 +26,7 @@ impl DenseGrid {
         assert!(cell_size.is_power_of_two());
         let ncells_side = side_len / cell_size;
         Self {
-            side_len,
+            side_len: side_len as f32,
             log2_side: log_2(ncells_side),
             log2_cell: log_2(cell_size),
             pad: Vec2::new((cell_size / 2) as f32, (cell_size / 2) as f32),
@@ -39,10 +35,7 @@ impl DenseGrid {
     }
 
     pub fn safe_bounds(&self) -> (Vec2, Vec2) {
-        (
-            self.pad,
-            vec2(self.side_len as f32, self.side_len as f32) - (self.pad * 2.0),
-        )
+        (self.pad, vec2(self.side_len, self.side_len) - (self.pad * 2.0))
     }
 
     pub fn insert(&mut self, pos: Vec2, entity: Entity) {
@@ -69,7 +62,7 @@ impl DenseGrid {
         let y2 = ((tr.y) as u32) >> self.log2_cell;
 
         let radius2 = radius.powi(2);
-        let mut hits = vec![];
+        let mut hits = Vec::<Entity>::with_capacity(2);
         for y in y1..=y2 {
             let s = y << self.log2_side;
             for x in x1..=x2 {

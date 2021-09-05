@@ -1,7 +1,10 @@
 use std::{hash::Hash, time::Instant};
 
 use dashmap::DashSet;
+use fxhash::FxBuildHasher;
 use legion::*;
+
+type ColSet = DashSet<Col, FxBuildHasher>;
 
 use super::spatial_grid::DenseGrid;
 use crate::{
@@ -90,10 +93,9 @@ impl PhysicsPipeline {
             .update(Instant::now() - start);
     }
 
-    fn detect_collisions(&self, world: &World) -> DashSet<Col> {
+    fn detect_collisions(&self, world: &World) -> ColSet {
         let start = Instant::now();
-
-        let cols = DashSet::new();
+        let cols: DashSet<Col, FxBuildHasher> = DashSet::with_hasher(FxBuildHasher::default());
         <(Entity, &RigidCircle)>::query().par_for_each(world, |(ent, circ)| {
             let around = self.grid.query(circ.pos, 2.0 * circ.radius);
 
@@ -117,7 +119,7 @@ impl PhysicsPipeline {
         cols
     }
 
-    fn resolve_collisions(&self, world: &mut World, cols: &DashSet<Col>) {
+    fn resolve_collisions(&self, world: &mut World, cols: &ColSet) {
         let start = Instant::now();
 
         cols.iter().for_each(|col| {
@@ -160,8 +162,8 @@ fn elastic_collision(a: &mut RigidCircle, b: &mut RigidCircle) -> bool {
     let norm = del.length_squared();
     let vdel = b.vel - a.vel;
 
-    a.vel = a.vel - ((-vdel).dot(-del) / norm) * (-del);
-    b.vel = b.vel - ((vdel).dot(del) / norm) * (del);
+    a.vel -= ((-vdel).dot(-del) / norm) * (-del);
+    b.vel -= ((vdel).dot(del) / norm) * (del);
 
     a.pos -= del / dist * (a.radius * 2.0 - dist) * 0.5;
     b.pos += del / dist * (b.radius * 2.0 - dist) * 0.5;

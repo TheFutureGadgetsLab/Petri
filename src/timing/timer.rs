@@ -26,7 +26,7 @@ impl Timer {
         };
         Self {
             timer: Histogram::new(3).unwrap(),
-            res: res,
+            res,
             res_str: res_str.into(),
         }
     }
