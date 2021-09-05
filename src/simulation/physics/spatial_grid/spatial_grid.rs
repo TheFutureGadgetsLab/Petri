@@ -70,11 +70,12 @@ impl DenseGrid {
 
         let radius2 = radius.powi(2);
         let mut hits = vec![];
-        for x in x1..=x2 {
-            for y in y1..=y2 {
+        for y in y1..=y2 {
+            let s = y << self.log2_side;
+            for x in x1..=x2{
                 unsafe {
                     self.cells
-                        .get_unchecked(((y << self.log2_side) | x) as usize)
+                        .get_unchecked((s | x) as usize)
                         .iter()
                         .filter_map(|(other, id)| match pos.distance_squared(*other) < radius2 {
                             true => Some(id),

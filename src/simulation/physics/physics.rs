@@ -128,28 +128,22 @@ impl PhysicsPipeline {
 /// Elastic collision between two circles.
 /// Updates RigidCircles in place
 fn elastic_collision(a: &mut RigidCircle, b: &mut RigidCircle) -> bool {
-    let norm = a.pos.distance_squared(b.pos);
-    let dist = norm.sqrt();
+    let del = b.pos - a.pos;
+    let dist = del.length();
 
     // No Collision
     if dist > (a.radius + b.radius) {
         return false;
     }
 
-    let m1: f32 = 1.0;
-    let m2: f32 = 1.0;
+    let norm = del.length_squared();
+    let vdel = b.vel - a.vel;
 
-    let msum = m1 + m2;
+    a.vel = a.vel - ((-vdel).dot(-del) / norm) * (-del);
+    b.vel = b.vel - ((vdel).dot(del) / norm) * (del);
 
-    let avel = a.vel - ((2. * m2) / msum * (a.vel - b.vel).dot(a.pos - b.pos) / norm) * (a.pos - b.pos);
-    let bvel = b.vel - ((2. * m1) / msum * (b.vel - a.vel).dot(b.pos - a.pos) / norm) * (b.pos - a.pos);
-
-    a.vel = avel;
-    b.vel = bvel;
-
-    let del = b.pos - a.pos;
-    a.pos -= del / dist * (a.radius * 2.0 - dist).max(0.0) * 0.5;
-    b.pos += del / dist * (b.radius * 2.0 - dist).max(0.0) * 0.5;
+    a.pos -= del / dist * (a.radius * 2.0 - dist) * 0.5;
+    b.pos += del / dist * (b.radius * 2.0 - dist) * 0.5;
 
     true
 }
