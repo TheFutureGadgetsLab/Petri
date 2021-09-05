@@ -29,11 +29,11 @@ pub struct PhysicsTimers {
 impl Default for PhysicsTimers {
     fn default() -> Self {
         Self {
-            step: Timer::new(Resolution::MICRO),
-            pos_update: Timer::new(Resolution::MICRO),
-            grid_update: Timer::new(Resolution::MICRO),
-            col_detect: Timer::new(Resolution::MICRO),
-            col_resolve: Timer::new(Resolution::MICRO),
+            step: Timer::new(Resolution::Micro),
+            pos_update: Timer::new(Resolution::Micro),
+            grid_update: Timer::new(Resolution::Micro),
+            col_detect: Timer::new(Resolution::Micro),
+            col_resolve: Timer::new(Resolution::Micro),
         }
     }
 }
@@ -46,8 +46,8 @@ pub struct SimRenderTimers {
 impl Default for SimRenderTimers {
     fn default() -> Self {
         Self {
-            vertex_buffer_update: Timer::new(Resolution::MICRO),
-            render: Timer::new(Resolution::MICRO),
+            vertex_buffer_update: Timer::new(Resolution::Micro),
+            render: Timer::new(Resolution::Micro),
         }
     }
 }

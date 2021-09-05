@@ -93,8 +93,8 @@ impl Display {
     }
 
     pub fn handle_event(&mut self, event: &Event<()>) {
-        match event {
-            Event::WindowEvent { ref event, .. } => match event {
+        if let Event::WindowEvent { ref event, .. } = event {
+            match event {
                 WindowEvent::MouseInput { button, state, .. } => {
                     let mut butt_idx = 0usize;
                     match button {
@@ -129,8 +129,7 @@ impl Display {
                     self.mouse.pos = pos;
                 }
                 _ => {}
-            },
-            _ => {}
+            }
         }
     }
 

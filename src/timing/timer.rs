@@ -4,10 +4,10 @@ use hdrhistogram::Histogram;
 
 #[allow(dead_code)]
 pub enum Resolution {
-    SECOND,
-    MILLI,
-    MICRO,
-    NANO,
+    Second,
+    Milli,
+    Micro,
+    Nano,
 }
 
 pub struct Timer {
@@ -19,13 +19,13 @@ pub struct Timer {
 impl Timer {
     pub fn new(res: Resolution) -> Self {
         let res_str = match res {
-            Resolution::SECOND => "(s)",
-            Resolution::MILLI => "(ms)",
-            Resolution::MICRO => "(us)",
-            Resolution::NANO => "(ns)",
+            Resolution::Second => "(s)",
+            Resolution::Milli => "(ms)",
+            Resolution::Micro => "(us)",
+            Resolution::Nano => "(ns)",
         };
         Self {
-            timer: Histogram::new(3).unwrap(),
+            timer: Histogram::new(2).unwrap(),
             res,
             res_str: res_str.into(),
         }
@@ -33,10 +33,10 @@ impl Timer {
 
     pub fn update(&mut self, delta: Duration) {
         let delta = match self.res {
-            Resolution::SECOND => delta.as_secs(),
-            Resolution::MILLI => delta.as_millis() as u64,
-            Resolution::MICRO => delta.as_micros() as u64,
-            Resolution::NANO => delta.as_nanos() as u64,
+            Resolution::Second => delta.as_secs(),
+            Resolution::Milli => delta.as_millis() as u64,
+            Resolution::Micro => delta.as_micros() as u64,
+            Resolution::Nano => delta.as_nanos() as u64,
         };
         self.timer.record(delta).unwrap();
     }
@@ -58,7 +58,7 @@ impl Default for Timer {
     fn default() -> Self {
         Self {
             timer: Histogram::new(3).unwrap(),
-            res: Resolution::MILLI,
+            res: Resolution::Milli,
             res_str: "(ms)".into(),
         }
     }
