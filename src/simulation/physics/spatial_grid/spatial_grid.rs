@@ -72,7 +72,7 @@ impl DenseGrid {
         let mut hits = vec![];
         for y in y1..=y2 {
             let s = y << self.log2_side;
-            for x in x1..=x2{
+            for x in x1..=x2 {
                 unsafe {
                     self.cells
                         .get_unchecked((s | x) as usize)

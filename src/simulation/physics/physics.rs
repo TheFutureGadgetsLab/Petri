@@ -1,5 +1,6 @@
-use std::time::Instant;
+use std::{hash::Hash, time::Instant};
 
+use dashmap::DashSet;
 use legion::*;
 
 use super::spatial_grid::DenseGrid;
@@ -8,9 +9,23 @@ use crate::{
     timing::TIMING_DATABASE,
 };
 
+#[derive(Eq)]
 struct Col {
     a: Entity,
     b: Entity,
+}
+
+impl PartialEq for Col {
+    fn eq(&self, other: &Self) -> bool {
+        ((self.a == other.a) & (self.b == other.b)) || ((self.a == other.b) & (self.b == other.a))
+    }
+}
+
+impl Hash for Col {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.a.hash(state);
+        self.b.hash(state);
+    }
 }
 
 pub struct PhysicsPipeline {
@@ -75,16 +90,22 @@ impl PhysicsPipeline {
             .update(Instant::now() - start);
     }
 
-    fn detect_collisions(&self, world: &World) -> Vec<Col> {
+    fn detect_collisions(&self, world: &World) -> DashSet<Col> {
         let start = Instant::now();
 
-        let mut cols = vec![];
-        <(Entity, &RigidCircle)>::query().for_each(world, |(ent, circ)| {
+        let cols = DashSet::new();
+        <(Entity, &RigidCircle)>::query().par_for_each(world, |(ent, circ)| {
             let around = self.grid.query(circ.pos, 2.0 * circ.radius);
-            cols.extend(around.iter().filter_map(|e| match e != ent {
-                true => Some(Col { a: *e, b: *ent }),
-                false => None,
-            }));
+
+            around
+                .iter()
+                .filter_map(|e| match e != ent {
+                    true => Some(Col { a: *e, b: *ent }),
+                    false => None,
+                })
+                .for_each(|a| {
+                    cols.insert(a);
+                });
         });
 
         TIMING_DATABASE
@@ -96,7 +117,7 @@ impl PhysicsPipeline {
         cols
     }
 
-    fn resolve_collisions(&self, world: &mut World, cols: &Vec<Col>) {
+    fn resolve_collisions(&self, world: &mut World, cols: &DashSet<Col>) {
         let start = Instant::now();
 
         cols.iter().for_each(|col| {

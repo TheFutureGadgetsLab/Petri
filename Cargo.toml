@@ -30,6 +30,7 @@ egui_winit_platform = "0.10.0"
 hdrhistogram = "*"
 lazy_static = "1.4.0"
 parking_lot = "*"
+dashmap = "*"
 
 [profile.dev.package."*"]
 opt-level = 3
