@@ -70,6 +70,8 @@ impl PhysicsPipeline {
                 circ.pos.y = circ.pos.y.clamp(bounds.0.y + circ.radius, bounds.1.y - circ.radius);
                 circ.vel.y = -circ.vel.y;
             }
+
+            circ.grid_ind = self.grid.flat_ind(circ.pos);
         });
         TIMING_DATABASE
             .write()
@@ -83,7 +85,7 @@ impl PhysicsPipeline {
 
         self.grid.clear();
         <(Entity, &RigidCircle)>::query().for_each(world, |(entity, circ)| {
-            self.grid.insert(circ.pos, *entity);
+            self.grid.insert(circ.pos, *entity, circ.grid_ind);
         });
 
         TIMING_DATABASE
@@ -97,17 +99,11 @@ impl PhysicsPipeline {
         let start = Instant::now();
         let cols: DashSet<Col, FxBuildHasher> = DashSet::with_hasher(FxBuildHasher::default());
         <(Entity, &RigidCircle)>::query().par_for_each(world, |(ent, circ)| {
-            let around = self.grid.query(circ.pos, 2.0 * circ.radius);
+            let around = self.grid.query(circ.pos, 2.0 * circ.radius, *ent);
 
-            around
-                .iter()
-                .filter_map(|e| match e != ent {
-                    true => Some(Col { a: *e, b: *ent }),
-                    false => None,
-                })
-                .for_each(|a| {
-                    cols.insert(a);
-                });
+            around.iter().for_each(|e| {
+                cols.insert(Col { a: *ent, b: *e });
+            });
         });
 
         TIMING_DATABASE

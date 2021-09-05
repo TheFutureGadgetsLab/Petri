@@ -17,7 +17,10 @@ impl Simulation {
         resources.insert(config);
 
         for _i in 0..config.n_cells {
-            world.push((components::RigidCircle::new_rand(&config),));
+            world.push((
+                components::RigidCircle::new_rand(&config),
+                components::Color::new_rand(),
+            ));
         }
 
         let physics = PhysicsPipeline::new(&mut world, &config);

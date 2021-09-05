@@ -4,7 +4,7 @@ use legion::*;
 
 use crate::{
     rendering::Display,
-    simulation::{RigidCircle, Simulation},
+    simulation::{Color, RigidCircle, Simulation},
     timing::TIMING_DATABASE,
 };
 
@@ -13,14 +13,15 @@ use crate::{
 pub struct Vertex {
     position: [f32; 2],
     color: [f32; 4],
-    size: f32,
+    radius: f32,
 }
-impl From<&RigidCircle> for Vertex {
-    fn from(item: &RigidCircle) -> Vertex {
-        Vertex {
-            position: item.pos.into(),
-            color: item.color,
-            size: item.radius,
+
+impl Vertex {
+    pub fn new(circ: &RigidCircle, color: &[f32; 4]) -> Self {
+        Self {
+            position: circ.pos.into(),
+            color: *color,
+            radius: circ.radius,
         }
     }
 }
@@ -51,9 +52,9 @@ impl VertexBuffer {
     pub fn update(&mut self, display: &Display, simulation: &Simulation) -> u32 {
         let start = Instant::now();
 
-        let vertices: Vec<Vertex> = <&RigidCircle>::query()
+        let vertices: Vec<Vertex> = <(&RigidCircle, &Color)>::query()
             .iter(&simulation.world)
-            .map(|circ| circ.into())
+            .map(|(circ, color)| Vertex::new(circ, &color.val))
             .collect();
 
         display

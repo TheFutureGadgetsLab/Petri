@@ -1,10 +1,14 @@
 use glam::{vec2, Vec2};
 use legion::Entity;
+use smallvec::{smallvec, SmallVec};
+
 type Cell = Vec<(Vec2, Entity)>;
+
+const U32_SIZE: u32 = (std::mem::size_of::<u32>() as u32) * 8;
 
 fn log_2(x: u32) -> u32 {
     debug_assert!(x > 0);
-    (std::mem::size_of::<u32>() as u32) * 8 - x.leading_zeros() - 1
+    U32_SIZE - x.leading_zeros() - 1
 }
 
 pub struct DenseGrid {
@@ -38,12 +42,11 @@ impl DenseGrid {
         (self.pad, vec2(self.side_len, self.side_len) - (self.pad * 2.0))
     }
 
-    pub fn insert(&mut self, pos: Vec2, entity: Entity) {
-        let ind = self.flat_ind(pos);
+    pub fn insert(&mut self, pos: Vec2, entity: Entity, ind: usize) {
         self.cells[ind].push((pos, entity));
     }
 
-    fn flat_ind(&self, pos: Vec2) -> usize {
+    pub fn flat_ind(&self, pos: Vec2) -> usize {
         let x = ((pos.x + self.pad.x) as u32) >> self.log2_cell;
         let y = ((pos.y + self.pad.y) as u32) >> self.log2_cell;
         ((y << self.log2_side) | x) as usize
@@ -53,29 +56,25 @@ impl DenseGrid {
         self.cells.iter_mut().for_each(|cell| cell.clear());
     }
 
-    pub fn query(&self, pos: Vec2, radius: f32) -> Vec<Entity> {
+    pub fn query(&self, pos: Vec2, radius: f32, ignore: Entity) -> SmallVec<[Entity; 4]> {
         let tr = pos + self.pad + radius;
         let bl = pos + self.pad - radius;
         let x1 = ((bl.x) as u32) >> self.log2_cell;
-        let y1 = ((tr.y) as u32) >> self.log2_cell;
-        let x2 = ((bl.x) as u32) >> self.log2_cell;
+        let y1 = ((bl.y) as u32) >> self.log2_cell;
+        let x2 = ((tr.x) as u32) >> self.log2_cell;
         let y2 = ((tr.y) as u32) >> self.log2_cell;
 
         let radius2 = radius.powi(2);
-        let mut hits = Vec::<Entity>::with_capacity(2);
+        let mut hits = smallvec![];
         for y in y1..=y2 {
             let s = y << self.log2_side;
             for x in x1..=x2 {
-                unsafe {
-                    self.cells
-                        .get_unchecked((s | x) as usize)
-                        .iter()
-                        .filter_map(|(other, id)| match pos.distance_squared(*other) < radius2 {
-                            true => Some(id),
-                            false => None,
-                        })
-                        .for_each(|id| hits.push(*id))
-                }
+                hits.extend(self.cells[(s | x) as usize].iter().filter_map(|(other, id)| {
+                    match (*id != ignore) & (pos.distance_squared(*other) < radius2) {
+                        true => Some(*id),
+                        false => None,
+                    }
+                }));
             }
         }
 
