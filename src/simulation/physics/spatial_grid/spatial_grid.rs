@@ -1,8 +1,10 @@
-use glam::Vec2;
+use glam::{vec2, Vec2};
 use legion::Entity;
 type Cell = Vec<(Vec2, Entity)>;
 
-const fn num_bits<T>() -> usize { std::mem::size_of::<T>() * 8 }
+const fn num_bits<T>() -> usize {
+    std::mem::size_of::<T>() * 8
+}
 
 fn log_2(x: u32) -> u32 {
     assert!(x > 0);
@@ -16,6 +18,8 @@ pub struct DenseGrid {
     log2_side: u32,
     /// log2(cell_size)
     log2_cell: u32,
+    /// Corner padding to add to ensure there are no out-of-bounds queries
+    pad: Vec2,
 
     cells: Vec<Cell>,
 }
@@ -29,8 +33,16 @@ impl DenseGrid {
             side_len,
             log2_side: log_2(ncells_side),
             log2_cell: log_2(cell_size),
+            pad: Vec2::new((cell_size / 2) as f32, (cell_size / 2) as f32),
             cells: (0..(ncells_side * ncells_side)).map(|_| Cell::default()).collect(),
         }
+    }
+
+    pub fn safe_bounds(&self) -> (Vec2, Vec2) {
+        (
+            self.pad,
+            vec2(self.side_len as f32, self.side_len as f32) - (self.pad * 2.0),
+        )
     }
 
     pub fn insert(&mut self, pos: Vec2, entity: Entity) {
@@ -39,8 +51,8 @@ impl DenseGrid {
     }
 
     fn flat_ind(&self, pos: Vec2) -> usize {
-        let x = (pos.x.floor() as u32) >> self.log2_cell;
-        let y = (pos.y.floor() as u32) >> self.log2_cell;
+        let x = ((pos.x + self.pad.x) as u32) >> self.log2_cell;
+        let y = ((pos.y + self.pad.y) as u32) >> self.log2_cell;
         ((y << self.log2_side) | x) as usize
     }
 
@@ -49,10 +61,12 @@ impl DenseGrid {
     }
 
     pub fn query(&self, pos: Vec2, radius: f32) -> Vec<Entity> {
-        let x1 = ((pos.x - radius).max(0.0).floor() as u32) >> self.log2_cell;
-        let y1 = ((pos.y - radius).max(0.0).floor() as u32) >> self.log2_cell;
-        let x2 = ((pos.x + radius).min((self.side_len - 1) as f32).floor() as u32) >> self.log2_cell;
-        let y2 = ((pos.y + radius).min((self.side_len - 1) as f32).floor() as u32) >> self.log2_cell;
+        let tr = pos + self.pad + radius;
+        let bl = pos + self.pad - radius;
+        let x1 = ((bl.x) as u32) >> self.log2_cell;
+        let y1 = ((tr.y) as u32) >> self.log2_cell;
+        let x2 = ((bl.x) as u32) >> self.log2_cell;
+        let y2 = ((tr.y) as u32) >> self.log2_cell;
 
         let radius2 = radius.powi(2);
         let mut hits = vec![];

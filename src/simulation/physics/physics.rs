@@ -19,7 +19,6 @@ pub struct PhysicsPipeline {
 
 impl PhysicsPipeline {
     pub fn new(_world: &mut World, config: &Config) -> Self {
-
         let grid = DenseGrid::new((config.cell_radius * 32.0) as u32, (config.bounds.1.x) as u32);
 
         Self { grid }
@@ -38,10 +37,10 @@ impl PhysicsPipeline {
         TIMING_DATABASE.write().physics.step.update(Instant::now() - start);
     }
 
-    fn update_positions(&self, world: &mut World, resources: &Resources) {
+    fn update_positions(&self, world: &mut World, _resources: &Resources) {
         let start = Instant::now();
 
-        let bounds = resources.get::<Config>().unwrap().bounds;
+        let bounds = self.grid.safe_bounds();
 
         <&mut RigidCircle>::query().par_for_each_mut(world, |circ| {
             circ.pos += circ.vel;
