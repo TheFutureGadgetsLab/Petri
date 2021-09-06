@@ -1,6 +1,6 @@
-mod rendering;
-mod simulation;
-mod timing;
+pub mod rendering;
+pub mod simulation;
+pub mod timing;
 
 use winit::{
     event::Event::*,

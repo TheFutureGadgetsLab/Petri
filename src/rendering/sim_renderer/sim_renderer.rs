@@ -10,7 +10,7 @@ use super::{camera::Camera, Vertex, VertexBuffer};
 use crate::{
     rendering::{Display, PetriEventHandler},
     simulation::Simulation,
-    timing::TIMING_DATABASE,
+    timing::{registry::time_func, TIMING_DATABASE},
 };
 
 #[repr(C)]
@@ -196,7 +196,7 @@ impl SimRenderer {
         // Submits the command buffer
         display.queue.submit(std::iter::once(encoder.finish()));
 
-        TIMING_DATABASE.write().sim_render.render.update(Instant::now() - start)
+        time_func!(sim_render, render, start);
     }
 }
 

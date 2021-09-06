@@ -1,6 +1,5 @@
 use glam::{vec2, Vec2};
 use legion::Entity;
-use smallvec::{smallvec, SmallVec};
 
 type Cell = Vec<(Vec2, Entity)>;
 
@@ -56,7 +55,7 @@ impl DenseGrid {
         self.cells.iter_mut().for_each(|cell| cell.clear());
     }
 
-    pub fn query(&self, pos: Vec2, radius: f32, ignore: Entity) -> SmallVec<[Entity; 4]> {
+    pub fn query(&self, pos: Vec2, radius: f32, ignore: Entity) -> Vec<Entity> {
         let tr = pos + self.pad + radius;
         let bl = pos + self.pad - radius;
         let x1 = ((bl.x) as u32) >> self.log2_cell;
@@ -65,7 +64,7 @@ impl DenseGrid {
         let y2 = ((tr.y) as u32) >> self.log2_cell;
 
         let radius2 = radius.powi(2);
-        let mut hits = smallvec![];
+        let mut hits = Vec::with_capacity(4);
         for y in y1..=y2 {
             let s = y << self.log2_side;
             for x in x1..=x2 {

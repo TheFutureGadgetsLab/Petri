@@ -5,7 +5,7 @@ use legion::*;
 use crate::{
     rendering::Display,
     simulation::{Color, RigidCircle, Simulation},
-    timing::TIMING_DATABASE,
+    timing::{registry::time_func, TIMING_DATABASE},
 };
 
 #[repr(C)]
@@ -61,12 +61,7 @@ impl VertexBuffer {
             .queue
             .write_buffer(&self.buf, 0, bytemuck::cast_slice(&vertices));
 
-        TIMING_DATABASE
-            .write()
-            .sim_render
-            .vertex_buffer_update
-            .update(Instant::now() - start);
-
+        time_func!(sim_render, vertex_buffer_update, start);
         vertices.len() as u32
     }
 }

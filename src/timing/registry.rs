@@ -1,3 +1,4 @@
+#![macro_use]
 use lazy_static::lazy_static;
 use parking_lot::RwLock;
 
@@ -6,6 +7,13 @@ use super::timer::{Resolution, Timer};
 lazy_static! {
     pub static ref TIMING_DATABASE: RwLock<GlobalTimers> = RwLock::new(GlobalTimers::default());
 }
+
+macro_rules! time_func {
+    ($module:ident,$stage:ident,$start:ident) => {
+        TIMING_DATABASE.write().$module.$stage.update(Instant::now() - $start);
+    };
+}
+pub(crate) use time_func;
 
 #[derive(Default)]
 pub struct GlobalTimers {

@@ -1,35 +1,15 @@
-use std::{hash::Hash, time::Instant};
+use std::time::Instant;
 
-use dashmap::DashSet;
-use fxhash::FxBuildHasher;
 use legion::*;
 
-type ColSet = DashSet<Col, FxBuildHasher>;
-
-use super::spatial_grid::DenseGrid;
+use super::{
+    collision_structures::{Collision, CollisionSet},
+    spatial_grid::DenseGrid,
+};
 use crate::{
     simulation::{Config, RigidCircle},
-    timing::TIMING_DATABASE,
+    timing::{registry::time_func, TIMING_DATABASE},
 };
-
-#[derive(Eq)]
-struct Col {
-    a: Entity,
-    b: Entity,
-}
-
-impl PartialEq for Col {
-    fn eq(&self, other: &Self) -> bool {
-        ((self.a == other.a) & (self.b == other.b)) || ((self.a == other.b) & (self.b == other.a))
-    }
-}
-
-impl Hash for Col {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.a.hash(state);
-        self.b.hash(state);
-    }
-}
 
 pub struct PhysicsPipeline {
     grid: DenseGrid,
@@ -52,7 +32,7 @@ impl PhysicsPipeline {
 
         self.resolve_collisions(world, &cols);
 
-        TIMING_DATABASE.write().physics.step.update(Instant::now() - start);
+        time_func!(physics, step, start);
     }
 
     fn update_positions(&self, world: &mut World, _resources: &Resources) {
@@ -73,11 +53,8 @@ impl PhysicsPipeline {
 
             circ.grid_ind = self.grid.flat_ind(circ.pos);
         });
-        TIMING_DATABASE
-            .write()
-            .physics
-            .pos_update
-            .update(Instant::now() - start);
+
+        time_func!(physics, pos_update, start);
     }
 
     fn update_grid(&mut self, world: &World) {
@@ -88,34 +65,25 @@ impl PhysicsPipeline {
             self.grid.insert(circ.pos, *entity, circ.grid_ind);
         });
 
-        TIMING_DATABASE
-            .write()
-            .physics
-            .grid_update
-            .update(Instant::now() - start);
+        time_func!(physics, grid_update, start);
     }
 
-    fn detect_collisions(&self, world: &World) -> ColSet {
+    fn detect_collisions(&self, world: &World) -> CollisionSet {
         let start = Instant::now();
-        let cols: DashSet<Col, FxBuildHasher> = DashSet::with_hasher(FxBuildHasher::default());
+        let cols: CollisionSet = CollisionSet::default();
         <(Entity, &RigidCircle)>::query().par_for_each(world, |(ent, circ)| {
             let around = self.grid.query(circ.pos, 2.0 * circ.radius, *ent);
 
             around.iter().for_each(|e| {
-                cols.insert(Col { a: *ent, b: *e });
+                cols.insert(Collision::new(*ent, *e));
             });
         });
 
-        TIMING_DATABASE
-            .write()
-            .physics
-            .col_detect
-            .update(Instant::now() - start);
-
+        time_func!(physics, col_detect, start);
         cols
     }
 
-    fn resolve_collisions(&self, world: &mut World, cols: &ColSet) {
+    fn resolve_collisions(&self, world: &mut World, cols: &CollisionSet) {
         let start = Instant::now();
 
         cols.iter().for_each(|col| {
@@ -137,11 +105,7 @@ impl PhysicsPipeline {
             elastic_collision(&mut a, &mut b);
         });
 
-        TIMING_DATABASE
-            .write()
-            .physics
-            .col_resolve
-            .update(Instant::now() - start);
+        time_func!(physics, col_resolve, start);
     }
 }
 
