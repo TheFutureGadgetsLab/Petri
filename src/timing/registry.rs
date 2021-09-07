@@ -10,7 +10,15 @@ lazy_static! {
 
 macro_rules! time_func {
     ($module:ident,$stage:ident,$start:ident) => {
-        TIMING_DATABASE.write().$module.$stage.update(Instant::now() - $start);
+        unsafe {
+            TIMING_DATABASE
+                .data_ptr()
+                .as_mut()
+                .unwrap()
+                .$module
+                .$stage
+                .update(Instant::now() - $start);
+        }
     };
 }
 pub(crate) use time_func;

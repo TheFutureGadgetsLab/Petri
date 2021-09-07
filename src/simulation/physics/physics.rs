@@ -61,7 +61,7 @@ impl PhysicsPipeline {
         let start = Instant::now();
 
         self.grid.clear();
-        <(Entity, &RigidCircle)>::query().for_each(world, |(entity, circ)| {
+        <(Entity, &RigidCircle)>::query().par_for_each(world, |(entity, circ)| {
             self.grid.insert(circ.pos, *entity, circ.grid_ind);
         });
 

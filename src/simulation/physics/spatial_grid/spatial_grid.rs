@@ -1,5 +1,6 @@
 use glam::{vec2, Vec2};
 use legion::Entity;
+use parking_lot::RwLock;
 
 type Cell = Vec<(Vec2, Entity)>;
 
@@ -20,7 +21,7 @@ pub struct DenseGrid {
     /// Corner padding to add to ensure there are no out-of-bounds queries
     pad: Vec2,
 
-    cells: Vec<Cell>,
+    cells: Vec<RwLock<Cell>>,
 }
 
 impl DenseGrid {
@@ -33,7 +34,9 @@ impl DenseGrid {
             log2_side: log_2(ncells_side),
             log2_cell: log_2(cell_size),
             pad: Vec2::new((cell_size / 2) as f32, (cell_size / 2) as f32),
-            cells: (0..(ncells_side * ncells_side)).map(|_| Cell::default()).collect(),
+            cells: (0..(ncells_side * ncells_side))
+                .map(|_| RwLock::new(Cell::default()))
+                .collect(),
         }
     }
 
@@ -41,8 +44,8 @@ impl DenseGrid {
         (self.pad, vec2(self.side_len, self.side_len) - (self.pad * 2.0))
     }
 
-    pub fn insert(&mut self, pos: Vec2, entity: Entity, ind: usize) {
-        self.cells[ind].push((pos, entity));
+    pub fn insert(&self, pos: Vec2, entity: Entity, ind: usize) {
+        self.cells[ind].write().push((pos, entity));
     }
 
     pub fn flat_ind(&self, pos: Vec2) -> usize {
@@ -52,7 +55,7 @@ impl DenseGrid {
     }
 
     pub fn clear(&mut self) {
-        self.cells.iter_mut().for_each(|cell| cell.clear());
+        self.cells.iter_mut().for_each(|cell| cell.write().clear());
     }
 
     pub fn query(&self, pos: Vec2, radius: f32, ignore: Entity) -> Vec<Entity> {
@@ -68,7 +71,9 @@ impl DenseGrid {
         for y in y1..=y2 {
             let s = y << self.log2_side;
             for x in x1..=x2 {
-                hits.extend(self.cells[(s | x) as usize].iter().filter_map(|(other, id)| {
+                // We know this is at a read only stage. Safe to disregard lock
+                let cell = unsafe { self.cells[(s | x) as usize].data_ptr().as_ref().unwrap() };
+                hits.extend(cell.iter().filter_map(|(other, id)| {
                     match (*id != ignore) & (pos.distance_squared(*other) < radius2) {
                         true => Some(*id),
                         false => None,
