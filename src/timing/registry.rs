@@ -8,21 +8,6 @@ lazy_static! {
     pub static ref TIMING_DATABASE: RwLock<GlobalTimers> = RwLock::new(GlobalTimers::default());
 }
 
-macro_rules! time_func {
-    ($module:ident,$stage:ident,$start:ident) => {
-        unsafe {
-            TIMING_DATABASE
-                .data_ptr()
-                .as_mut()
-                .unwrap()
-                .$module
-                .$stage
-                .update(Instant::now() - $start);
-        }
-    };
-}
-pub(crate) use time_func;
-
 #[derive(Default)]
 pub struct GlobalTimers {
     pub physics: PhysicsTimers,

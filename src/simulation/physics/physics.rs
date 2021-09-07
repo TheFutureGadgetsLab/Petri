@@ -1,5 +1,3 @@
-use std::time::Instant;
-
 use legion::*;
 
 use super::{
@@ -8,7 +6,7 @@ use super::{
 };
 use crate::{
     simulation::{Config, RigidCircle},
-    timing::{registry::time_func, TIMING_DATABASE},
+    timing::timer::time_func,
 };
 
 pub struct PhysicsPipeline {
@@ -23,7 +21,7 @@ impl PhysicsPipeline {
     }
 
     pub fn step(&mut self, world: &mut World, resources: &mut Resources) {
-        let start = Instant::now();
+        time_func!(physics, step);
 
         self.update_positions(world, resources);
         self.update_grid(world);
@@ -31,12 +29,10 @@ impl PhysicsPipeline {
         let cols = self.detect_collisions(world);
 
         self.resolve_collisions(world, &cols);
-
-        time_func!(physics, step, start);
     }
 
     fn update_positions(&self, world: &mut World, _resources: &Resources) {
-        let start = Instant::now();
+        time_func!(physics, pos_update);
 
         let bounds = self.grid.safe_bounds();
 
@@ -53,23 +49,20 @@ impl PhysicsPipeline {
 
             circ.grid_ind = self.grid.flat_ind(circ.pos);
         });
-
-        time_func!(physics, pos_update, start);
     }
 
     fn update_grid(&mut self, world: &World) {
-        let start = Instant::now();
+        time_func!(physics, grid_update);
 
         self.grid.clear();
         <(Entity, &RigidCircle)>::query().par_for_each(world, |(entity, circ)| {
             self.grid.insert(circ.pos, *entity, circ.grid_ind);
         });
-
-        time_func!(physics, grid_update, start);
     }
 
     fn detect_collisions(&self, world: &World) -> CollisionSet {
-        let start = Instant::now();
+        time_func!(physics, col_detect);
+
         let cols: CollisionSet = CollisionSet::default();
         <(Entity, &RigidCircle)>::query().par_for_each(world, |(ent, circ)| {
             let around = self.grid.query(circ.pos, 2.0 * circ.radius, *ent);
@@ -79,12 +72,11 @@ impl PhysicsPipeline {
             });
         });
 
-        time_func!(physics, col_detect, start);
         cols
     }
 
     fn resolve_collisions(&self, world: &mut World, cols: &CollisionSet) {
-        let start = Instant::now();
+        time_func!(physics, col_resolve);
 
         cols.iter().for_each(|col| {
             let mut a = unsafe {
@@ -104,8 +96,6 @@ impl PhysicsPipeline {
 
             elastic_collision(&mut a, &mut b);
         });
-
-        time_func!(physics, col_resolve, start);
     }
 }
 

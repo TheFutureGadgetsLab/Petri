@@ -1,4 +1,9 @@
-use std::{fmt, time::Duration};
+// I hate all of this
+
+use std::{
+    fmt,
+    time::{Duration, Instant},
+};
 
 use hdrhistogram::Histogram;
 
@@ -63,3 +68,32 @@ impl Default for Timer {
         }
     }
 }
+
+pub struct DropTimer<'a> {
+    start: Instant,
+    target: &'a mut Timer,
+}
+
+impl<'a> DropTimer<'a> {
+    pub fn new(target: &'a mut Timer) -> Self {
+        Self {
+            start: Instant::now(),
+            target: target,
+        }
+    }
+}
+
+impl<'a> Drop for DropTimer<'a> {
+    fn drop(&mut self) {
+        self.target.update(Instant::now() - self.start);
+    }
+}
+
+macro_rules! time_func {
+    ($module:ident,$stage:ident) => {
+        use crate::timing::{DropTimer, TIMING_DATABASE};
+        let mut __timer_data = unsafe { TIMING_DATABASE.data_ptr().as_mut().unwrap() };
+        let __drop_timer = DropTimer::new(&mut __timer_data.$module.$stage);
+    };
+}
+pub(crate) use time_func;
