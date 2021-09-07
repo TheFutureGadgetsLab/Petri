@@ -8,7 +8,6 @@ pub struct RigidCircle {
     pub pos: Vec2,
     pub vel: Vec2,
     pub radius: f32,
-    pub grid_ind: usize,
 }
 
 #[derive(Clone, Copy)]
@@ -31,7 +30,6 @@ impl RigidCircle {
             pos,
             vel,
             radius: config.cell_radius,
-            grid_ind: 0,
         }
     }
 }

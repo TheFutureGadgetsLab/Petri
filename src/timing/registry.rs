@@ -22,7 +22,6 @@ pub struct GUITimers {
 pub struct PhysicsTimers {
     pub step: Timer,
     pub pos_update: Timer,
-    pub grid_update: Timer,
     pub col_detect: Timer,
     pub col_resolve: Timer,
 }
@@ -32,7 +31,6 @@ impl Default for PhysicsTimers {
         Self {
             step: Timer::new(Resolution::Micro),
             pos_update: Timer::new(Resolution::Micro),
-            grid_update: Timer::new(Resolution::Micro),
             col_detect: Timer::new(Resolution::Micro),
             col_resolve: Timer::new(Resolution::Micro),
         }

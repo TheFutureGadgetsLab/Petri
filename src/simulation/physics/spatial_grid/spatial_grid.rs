@@ -44,10 +44,11 @@ impl DenseGrid {
         (self.pad, vec2(self.side_len, self.side_len) - (self.pad * 2.0))
     }
 
-    pub fn insert(&self, pos: Vec2, entity: Entity, ind: usize) {
-        self.cells[ind].write().push((pos, entity));
+    pub fn insert(&self, pos: Vec2, entity: Entity) {
+        self.cells[self.flat_ind(pos)].write().push((pos, entity));
     }
 
+    #[inline]
     pub fn flat_ind(&self, pos: Vec2) -> usize {
         let x = ((pos.x + self.pad.x) as u32) >> self.log2_cell;
         let y = ((pos.y + self.pad.y) as u32) >> self.log2_cell;

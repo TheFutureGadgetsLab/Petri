@@ -24,19 +24,17 @@ impl PhysicsPipeline {
         time_func!(physics, step);
 
         self.update_positions(world, resources);
-        self.update_grid(world);
-
         let cols = self.detect_collisions(world);
-
         self.resolve_collisions(world, &cols);
     }
 
-    fn update_positions(&self, world: &mut World, _resources: &Resources) {
+    fn update_positions(&mut self, world: &mut World, _resources: &Resources) {
         time_func!(physics, pos_update);
 
         let bounds = self.grid.safe_bounds();
 
-        <&mut RigidCircle>::query().par_for_each_mut(world, |circ| {
+        self.grid.clear();
+        <(Entity, &mut RigidCircle)>::query().par_for_each_mut(world, |(entity, circ)| {
             circ.pos += circ.vel;
             if (circ.pos.x - circ.radius) <= bounds.0.x || (circ.pos.x + circ.radius) >= bounds.1.x {
                 circ.pos.x = circ.pos.x.clamp(bounds.0.x + circ.radius, bounds.1.x - circ.radius);
@@ -47,16 +45,7 @@ impl PhysicsPipeline {
                 circ.vel.y = -circ.vel.y;
             }
 
-            circ.grid_ind = self.grid.flat_ind(circ.pos);
-        });
-    }
-
-    fn update_grid(&mut self, world: &World) {
-        time_func!(physics, grid_update);
-
-        self.grid.clear();
-        <(Entity, &RigidCircle)>::query().par_for_each(world, |(entity, circ)| {
-            self.grid.insert(circ.pos, *entity, circ.grid_ind);
+            self.grid.insert(circ.pos, *entity);
         });
     }
 

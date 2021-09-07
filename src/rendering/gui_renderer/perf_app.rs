@@ -25,9 +25,6 @@ impl PerfApp {
         ui.label(format!("Pos Update {}", database.physics.pos_update.res_str));
         ui.label(format!("\t{}", database.physics.pos_update));
 
-        ui.label(format!("Grid Update {}", database.physics.grid_update.res_str));
-        ui.label(format!("\t{}", database.physics.grid_update));
-
         ui.label(format!("Col Detection {}", database.physics.col_detect.res_str));
         ui.label(format!("\t{}", database.physics.col_detect));
 
