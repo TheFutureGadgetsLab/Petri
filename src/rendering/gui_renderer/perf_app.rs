@@ -27,9 +27,6 @@ impl PerfApp {
 
         ui.label(format!("Col Detection {}", database.physics.col_detect.res_str));
         ui.label(format!("\t{}", database.physics.col_detect));
-
-        ui.label(format!("Col Resolve {}", database.physics.col_resolve.res_str));
-        ui.label(format!("\t{}", database.physics.col_resolve));
     }
 
     fn sim_render(&self, ui: &mut egui::Ui) {

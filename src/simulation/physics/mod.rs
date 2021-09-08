@@ -1,4 +1,3 @@
-mod collision_structures;
 pub mod physics;
 mod spatial_grid;
 

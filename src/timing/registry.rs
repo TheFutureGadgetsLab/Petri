@@ -24,7 +24,6 @@ pub struct PhysicsTimers {
     pub step: Timer,
     pub pos_update: Timer,
     pub col_detect: Timer,
-    pub col_resolve: Timer,
 }
 
 #[derive(Default)]

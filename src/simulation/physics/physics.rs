@@ -1,7 +1,6 @@
 use legion::{storage::Component, *};
 
 use super::{
-    collision_structures::{Collision, CollisionSet},
     spatial_grid::DenseGrid,
 };
 use crate::{
@@ -24,7 +23,7 @@ impl PhysicsPipeline {
         time_func!(physics, step);
 
         self.update_positions(world, resources);
-        let cols = self.detect_collisions(world);
+        self.detect_collisions(world);
     }
 
     fn update_positions(&mut self, world: &mut World, resources: &Resources) {
@@ -82,9 +81,9 @@ impl PhysicsPipeline {
 fn elastic_collision(a: &mut RigidCircle, b: &RigidCircle) {
     let del = b.pos - a.pos;
     let dist = del.length();
-    let norm = del.length_squared();
+    let norm = dist.powi(2);
     let vdel = b.vel - a.vel;
 
-    a.to_vel -= ((-vdel).dot(-del) / norm) * (-del);
+    a.to_vel += ((vdel).dot(del) / norm) * del;
     a.to_pos -= del / dist * (a.radius * 2.0 - dist) * 0.5;
 }
