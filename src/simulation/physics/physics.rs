@@ -28,10 +28,10 @@ impl PhysicsPipeline {
         self.resolve_collisions(world, &cols);
     }
 
-    fn update_positions(&mut self, world: &mut World, _resources: &Resources) {
+    fn update_positions(&mut self, world: &mut World, resources: &Resources) {
         time_func!(physics, pos_update);
 
-        let bounds = self.grid.safe_bounds();
+        let bounds = resources.get::<Config>().unwrap().bounds;
 
         self.grid.clear();
         <(Entity, &mut RigidCircle)>::query().par_for_each_mut(world, |(entity, circ)| {

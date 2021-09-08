@@ -1,4 +1,4 @@
-use glam::{vec2, Vec2};
+use glam::Vec2;
 use itertools::Itertools;
 use legion::Entity;
 use parking_lot::RwLock;
@@ -13,14 +13,10 @@ fn log_2(x: u32) -> u32 {
 }
 
 pub struct DenseGrid {
-    /// Side length, must be power of 2
-    side_len: f32,
     /// log2(ncells_side)
     log2_side: u32,
     /// log2(cell_size)
     log2_cell: u32,
-    /// Corner padding to add to ensure there are no out-of-bounds queries
-    pad: Vec2,
 
     cells: Vec<RwLock<Cell>>,
 }
@@ -31,18 +27,12 @@ impl DenseGrid {
         assert!(cell_size.is_power_of_two());
         let ncells_side = side_len / cell_size;
         Self {
-            side_len: side_len as f32,
             log2_side: log_2(ncells_side),
             log2_cell: log_2(cell_size),
-            pad: Vec2::new((cell_size / 2) as f32, (cell_size / 2) as f32),
             cells: (0..(ncells_side * ncells_side))
                 .map(|_| RwLock::new(Cell::default()))
                 .collect(),
         }
-    }
-
-    pub fn safe_bounds(&self) -> (Vec2, Vec2) {
-        (self.pad, vec2(self.side_len, self.side_len) - (self.pad * 2.0))
     }
 
     pub fn insert(&self, pos: Vec2, entity: Entity) {
@@ -53,8 +43,8 @@ impl DenseGrid {
 
     #[inline]
     pub fn flat_ind(&self, pos: Vec2) -> usize {
-        let x = ((pos.x + self.pad.x) as u32) >> self.log2_cell;
-        let y = ((pos.y + self.pad.y) as u32) >> self.log2_cell;
+        let x = (pos.x as u32) >> self.log2_cell;
+        let y = (pos.y as u32) >> self.log2_cell;
         ((y << self.log2_side) | x) as usize
     }
 
@@ -83,12 +73,11 @@ impl DenseGrid {
     }
 
     pub fn cell_range(&self, pos: Vec2, radius: f32) -> impl Iterator<Item = u32> {
-        let (tr_x, tr_y) = (pos + self.pad + radius).as_uvec2().into();
-        let (bl_x, bl_y) = (pos + self.pad - radius).as_uvec2().into();
-        let x1 = bl_x >> self.log2_cell;
-        let y1 = bl_y >> self.log2_cell;
-        let x2 = tr_x >> self.log2_cell;
-        let y2 = tr_y >> self.log2_cell;
+        let x1 = ((pos.x - radius) as u32) >> self.log2_cell;
+        let y1 = ((pos.y - radius) as u32) >> self.log2_cell;
+        let x2 = ((pos.x + radius) as u32) >> self.log2_cell;
+        let y2 = ((pos.y + radius) as u32) >> self.log2_cell;
+
         let shift = self.log2_side;
 
         (x1..=x2).cartesian_product(y1..=y2).map(move |(x, y)| (y << shift) | x)
