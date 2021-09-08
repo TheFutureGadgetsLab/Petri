@@ -1,4 +1,5 @@
 use glam::{vec2, Vec2};
+use itertools::Itertools;
 use legion::Entity;
 use parking_lot::RwLock;
 
@@ -45,7 +46,9 @@ impl DenseGrid {
     }
 
     pub fn insert(&self, pos: Vec2, entity: Entity) {
-        self.cells[self.flat_ind(pos)].write().push((pos, entity));
+        if let Some(cell) = self.cells.get(self.flat_ind(pos)) {
+            cell.write().push((pos, entity));
+        }
     }
 
     #[inline]
@@ -60,21 +63,14 @@ impl DenseGrid {
     }
 
     pub fn query(&self, pos: Vec2, radius: f32, ignore: Entity) -> Vec<Entity> {
-        let tr = pos + self.pad + radius;
-        let bl = pos + self.pad - radius;
-        let x1 = ((bl.x) as u32) >> self.log2_cell;
-        let y1 = ((bl.y) as u32) >> self.log2_cell;
-        let x2 = ((tr.x) as u32) >> self.log2_cell;
-        let y2 = ((tr.y) as u32) >> self.log2_cell;
-
         let radius2 = radius.powi(2);
         let mut hits = Vec::with_capacity(4);
-        for y in y1..=y2 {
-            let s = y << self.log2_side;
-            for x in x1..=x2 {
+
+        for ind in self.cell_range(pos, radius) {
+            if let Some(cell) = self.cells.get(ind as usize) {
                 // We know this is at a read only stage. Safe to disregard lock
-                let cell = unsafe { self.cells[(s | x) as usize].data_ptr().as_ref().unwrap() };
-                hits.extend(cell.iter().filter_map(|(other, id)| {
+                let unlocked = unsafe { cell.data_ptr().as_ref().unwrap() };
+                hits.extend(unlocked.iter().filter_map(|(other, id)| {
                     match (*id != ignore) & (pos.distance_squared(*other) < radius2) {
                         true => Some(*id),
                         false => None,
@@ -84,5 +80,17 @@ impl DenseGrid {
         }
 
         hits
+    }
+
+    pub fn cell_range(&self, pos: Vec2, radius: f32) -> impl Iterator<Item = u32> {
+        let (tr_x, tr_y) = (pos + self.pad + radius).as_uvec2().into();
+        let (bl_x, bl_y) = (pos + self.pad - radius).as_uvec2().into();
+        let x1 = bl_x >> self.log2_cell;
+        let y1 = bl_y >> self.log2_cell;
+        let x2 = tr_x >> self.log2_cell;
+        let y2 = tr_y >> self.log2_cell;
+        let shift = self.log2_side;
+
+        (x1..=x2).cartesian_product(y1..=y2).map(move |(x, y)| (y << shift) | x)
     }
 }
