@@ -1,11 +1,9 @@
 // I hate all of this
 
-use std::{
-    fmt,
-    time::{Duration, Instant},
-};
+use std::{fmt, time::Duration};
 
 use hdrhistogram::Histogram;
+use quanta::{Clock, Instant};
 
 #[allow(dead_code)]
 pub enum Resolution {
@@ -19,6 +17,7 @@ pub struct Timer {
     pub res_str: String,
     res: Resolution,
     timer: Histogram<u64>,
+    pub clock: Clock,
 }
 
 impl Timer {
@@ -33,6 +32,7 @@ impl Timer {
             timer: Histogram::new(2).unwrap(),
             res,
             res_str: res_str.into(),
+            clock: Clock::new(),
         }
     }
 
@@ -61,11 +61,7 @@ impl fmt::Display for Timer {
 
 impl Default for Timer {
     fn default() -> Self {
-        Self {
-            timer: Histogram::new(3).unwrap(),
-            res: Resolution::Milli,
-            res_str: "(ms)".into(),
-        }
+        Timer::new(Resolution::Micro)
     }
 }
 
@@ -77,7 +73,7 @@ pub struct DropTimer<'a> {
 impl<'a> DropTimer<'a> {
     pub fn new(target: &'a mut Timer) -> Self {
         Self {
-            start: Instant::now(),
+            start: target.clock.now(),
             target: target,
         }
     }
@@ -85,7 +81,7 @@ impl<'a> DropTimer<'a> {
 
 impl<'a> Drop for DropTimer<'a> {
     fn drop(&mut self) {
-        self.target.update(Instant::now() - self.start);
+        self.target.update(self.target.clock.now() - self.start);
     }
 }
 
