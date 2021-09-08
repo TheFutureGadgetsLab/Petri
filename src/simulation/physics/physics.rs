@@ -1,4 +1,5 @@
 use legion::*;
+use legion::storage::Component;
 
 use super::{
     collision_structures::{Collision, CollisionSet},
@@ -25,7 +26,6 @@ impl PhysicsPipeline {
 
         self.update_positions(world, resources);
         let cols = self.detect_collisions(world);
-        self.resolve_collisions(world, &cols);
     }
 
     fn update_positions(&mut self, world: &mut World, resources: &Resources) {
@@ -35,7 +35,9 @@ impl PhysicsPipeline {
 
         self.grid.clear();
         <(Entity, &mut RigidCircle)>::query().par_for_each_mut(world, |(entity, circ)| {
-            circ.pos += circ.vel;
+            circ.vel = circ.to_vel;
+            circ.pos = circ.to_pos + circ.vel;
+
             if (circ.pos.x - circ.radius) <= bounds.0.x || (circ.pos.x + circ.radius) >= bounds.1.x {
                 circ.pos.x = circ.pos.x.clamp(bounds.0.x + circ.radius, bounds.1.x - circ.radius);
                 circ.vel.x = -circ.vel.x;
@@ -45,68 +47,41 @@ impl PhysicsPipeline {
                 circ.vel.y = -circ.vel.y;
             }
 
+            circ.to_vel = circ.vel;
+            circ.to_pos = circ.pos;
             self.grid.insert(circ.pos, *entity);
         });
     }
 
-    fn detect_collisions(&self, world: &World) -> CollisionSet {
+    fn detect_collisions(&self, world: &mut World) {
         time_func!(physics, col_detect);
 
-        let cols: CollisionSet = CollisionSet::default();
-        <(Entity, &RigidCircle)>::query().par_for_each(world, |(ent, circ)| {
-            let around = self.grid.query(circ.pos, 2.0 * circ.radius, *ent);
-
-            around.iter().for_each(|e| {
-                cols.insert(Collision::new(*ent, *e));
+        let mut q = <(Entity, &mut RigidCircle)>::query().filter(component::<RigidCircle>());
+        unsafe {
+            q.par_for_each_unchecked(world, |(ent, c)| {
+                let around = self.grid.query(c.pos, 2.0 * c.radius, *ent);
+                around.iter().for_each(|e| {
+                    elastic_collision(c, self.unsafe_component(world, *e));
+                });
             });
-        });
-
-        cols
+        }
     }
 
-    fn resolve_collisions(&self, world: &mut World, cols: &CollisionSet) {
-        time_func!(physics, col_resolve);
-
-        cols.iter().for_each(|col| {
-            let mut a = unsafe {
-                world
-                    .entry_ref(col.a)
-                    .unwrap()
-                    .into_component_unchecked::<RigidCircle>()
-                    .unwrap()
-            };
-            let mut b = unsafe {
-                world
-                    .entry_ref(col.b)
-                    .unwrap()
-                    .into_component_unchecked::<RigidCircle>()
-                    .unwrap()
-            };
-
-            elastic_collision(&mut a, &mut b);
-        });
+    fn unsafe_component<'a, T: Component> (&self, world: &'a World, entity: Entity) -> &'a mut T {
+        unsafe {
+            world.entry_ref(entity).unwrap().into_component_unchecked::<T>().unwrap()
+        }
     }
 }
 
 /// Elastic collision between two circles.
 /// Updates RigidCircles in place
-fn elastic_collision(a: &mut RigidCircle, b: &mut RigidCircle) -> bool {
+fn elastic_collision(a: &mut RigidCircle, b: &RigidCircle) {
     let del = b.pos - a.pos;
     let dist = del.length();
-
-    // No Collision
-    if dist > (a.radius + b.radius) {
-        return false;
-    }
-
     let norm = del.length_squared();
     let vdel = b.vel - a.vel;
 
-    a.vel -= ((-vdel).dot(-del) / norm) * (-del);
-    b.vel -= ((vdel).dot(del) / norm) * (del);
-
-    a.pos -= del / dist * (a.radius * 2.0 - dist) * 0.5;
-    b.pos += del / dist * (b.radius * 2.0 - dist) * 0.5;
-
-    true
+    a.to_vel -= ((-vdel).dot(-del) / norm) * (-del);
+    a.to_pos -= del / dist * (a.radius * 2.0 - dist) * 0.5;
 }
