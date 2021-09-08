@@ -1,5 +1,4 @@
-use legion::*;
-use legion::storage::Component;
+use legion::{storage::Component, *};
 
 use super::{
     collision_structures::{Collision, CollisionSet},
@@ -67,9 +66,13 @@ impl PhysicsPipeline {
         }
     }
 
-    fn unsafe_component<'a, T: Component> (&self, world: &'a World, entity: Entity) -> &'a mut T {
+    fn unsafe_component<'a, T: Component>(&self, world: &'a World, entity: Entity) -> &'a mut T {
         unsafe {
-            world.entry_ref(entity).unwrap().into_component_unchecked::<T>().unwrap()
+            world
+                .entry_ref(entity)
+                .unwrap()
+                .into_component_unchecked::<T>()
+                .unwrap()
         }
     }
 }
