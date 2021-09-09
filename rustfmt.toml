@@ -1,0 +1,8 @@
+brace_style = "SameLineWhere"
+condense_wildcard_suffixes = true
+fn_args_layout = "Tall"
+hard_tabs = false
+imports_indent = "Block"
+imports_granularity = "Crate"
+group_imports = "StdExternalCrate"
+max_width = 120
