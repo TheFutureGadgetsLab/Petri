@@ -1,8 +1,6 @@
 use legion::{storage::Component, *};
 
-use super::{
-    spatial_grid::DenseGrid,
-};
+use super::spatial_grid::DenseGrid;
 use crate::{
     simulation::{Config, RigidCircle},
     timing::timer::time_func,
