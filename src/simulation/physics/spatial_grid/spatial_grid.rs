@@ -1,7 +1,8 @@
-use glam::Vec2;
 use itertools::Itertools;
 use legion::Entity;
 use parking_lot::RwLock;
+
+use crate::vec2::Vec2;
 
 type Cell = Vec<(Vec2, Entity)>;
 
@@ -61,7 +62,7 @@ impl DenseGrid {
                 // We know this is at a read only stage. Safe to disregard lock
                 let unlocked = unsafe { cell.data_ptr().as_ref().unwrap() };
                 hits.extend(unlocked.iter().filter_map(|(other, id)| {
-                    match (*id != ignore) & (pos.distance_squared(*other) < radius2) {
+                    match (*id != ignore) & ((pos - *other).len_sq() < radius2) {
                         true => Some(*id),
                         false => None,
                     }

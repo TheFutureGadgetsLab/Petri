@@ -12,7 +12,6 @@ fps_counter = "2.0.0"
 rayon = "1.5.1"
 wgpu-subscriber = "0.1.0"
 rand = "0.8.4"
-glam = { version = "0.18.0" }
 legion = "0.4.0"
 shaderc = "0.7.3"
 futures = "0.3.17"

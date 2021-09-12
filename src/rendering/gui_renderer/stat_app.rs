@@ -27,7 +27,7 @@ impl StatApp {
                 cam.window_size.x, cam.window_size.y
             ));
             ui.label(format!("Zoom Factor: ({:.2})", cam.zoom));
-            ui.label(format!("Mouse Position: ({})", cam.screen2world(display.mouse.pos)));
+            ui.label(format!("Mouse Position: ({:?})", cam.screen2world(display.mouse.pos)));
         });
     }
 }

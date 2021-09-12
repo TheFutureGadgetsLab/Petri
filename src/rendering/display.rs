@@ -2,7 +2,6 @@
 // https://github.com/sotrh/learn-wgpu/tree/master/code/showcase/framework
 
 use futures::executor::block_on;
-use glam::{vec2, Vec2};
 use wgpu::{SurfaceError, SurfaceFrame, TextureView};
 use winit::{
     event::{ElementState, Event, MouseButton, WindowEvent},
@@ -11,6 +10,7 @@ use winit::{
 };
 
 use super::sim_renderer::camera::Camera;
+use crate::vec2::Vec2;
 
 #[derive(PartialEq, Eq, Clone, Copy, Default)]
 pub struct InputState {
@@ -85,8 +85,8 @@ impl Display {
             queue,
             cam: Camera::new(INITIAL_SIZE.into()),
             mouse: Mouse {
-                pos: Vec2::ZERO,
-                delta: Vec2::ZERO,
+                pos: Vec2::zeros(),
+                delta: Vec2::zeros(),
                 buttons: [InputState::default(); 3],
             },
         }
@@ -124,7 +124,7 @@ impl Display {
                     self.mouse.buttons[butt_idx] = bstate;
                 }
                 WindowEvent::CursorMoved { position, .. } => {
-                    let pos = vec2(position.x as f32, position.y as f32);
+                    let pos = Vec2::new(position.x as f32, position.y as f32);
                     self.mouse.delta = pos - self.mouse.pos;
                     self.mouse.pos = pos;
                 }

@@ -35,14 +35,13 @@ impl PhysicsPipeline {
             circ.pos = circ.to_pos + circ.vel;
 
             if (circ.pos.x - circ.radius) <= bounds.0.x || (circ.pos.x + circ.radius) >= bounds.1.x {
-                circ.pos.x = circ.pos.x.clamp(bounds.0.x + circ.radius, bounds.1.x - circ.radius);
                 circ.vel.x = -circ.vel.x;
             }
             if (circ.pos.y - circ.radius) <= bounds.0.y || (circ.pos.y + circ.radius) > bounds.1.y {
-                circ.pos.y = circ.pos.y.clamp(bounds.0.y + circ.radius, bounds.1.y - circ.radius);
                 circ.vel.y = -circ.vel.y;
             }
 
+            circ.pos.clamp(bounds.0 + circ.radius, bounds.1 - circ.radius);
             circ.to_vel = circ.vel;
             circ.to_pos = circ.pos;
             self.grid.insert(circ.pos, *entity);
@@ -78,7 +77,7 @@ impl PhysicsPipeline {
 /// Updates RigidCircles in place
 fn elastic_collision(a: &mut RigidCircle, b: &RigidCircle) {
     let del = b.pos - a.pos;
-    let dist = del.length();
+    let dist = del.len();
     let norm = dist.powi(2);
     let vdel = b.vel - a.vel;
 

@@ -1,4 +1,4 @@
-use glam::{vec2, Vec2};
+use crate::vec2::Vec2;
 
 #[derive(Clone, Copy)]
 pub struct Config {
@@ -10,9 +10,9 @@ pub struct Config {
 impl Config {
     pub fn default() -> Config {
         Config {
-            n_cells: 100_000,
+            n_cells: 600_000,
             cell_radius: 2.0,
-            bounds: (vec2(0.0, 0.0), vec2(8192.0, 8192.0)),
+            bounds: (Vec2::new(0.0, 0.0), Vec2::new(8192.0, 8192.0)),
         }
     }
 }

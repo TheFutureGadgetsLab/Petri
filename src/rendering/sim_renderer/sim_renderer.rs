@@ -1,5 +1,4 @@
 use bytemuck;
-use glam::vec2;
 use shaderc::CompileOptions;
 use wgpu::{ShaderModuleDescriptor, TextureView};
 use winit::event::VirtualKeyCode;
@@ -9,6 +8,7 @@ use crate::{
     rendering::{Display, PetriEventHandler},
     simulation::Simulation,
     timing::timer::time_func,
+    vec2::Vec2,
 };
 
 #[repr(C)]
@@ -217,7 +217,7 @@ impl PetriEventHandler for SimRenderer {
         _pos: &winit::dpi::PhysicalPosition<f64>,
     ) {
         if display.mouse.buttons[0].held {
-            display.cam.translate_by(display.mouse.delta * vec2(1.0, -1.0));
+            display.cam.translate_by(display.mouse.delta * Vec2::new(1.0, -1.0));
         }
     }
 

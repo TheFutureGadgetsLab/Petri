@@ -1,6 +1,7 @@
 pub mod rendering;
 pub mod simulation;
 pub mod timing;
+pub mod vec2;
 
 use winit::{
     event::Event::*,
