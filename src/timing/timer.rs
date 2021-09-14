@@ -74,7 +74,7 @@ impl<'a> DropTimer<'a> {
     pub fn new(target: &'a mut Timer) -> Self {
         Self {
             start: target.clock.now(),
-            target: target,
+            target,
         }
     }
 }

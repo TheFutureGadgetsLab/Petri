@@ -1,10 +1,8 @@
 use itertools::Itertools;
 use legion::Entity;
-use parking_lot::RwLock;
 
+use super::cell::Cell;
 use crate::vec2::Vec2;
-
-type Cell = Vec<(Vec2, Entity)>;
 
 const U32_SIZE: u32 = (std::mem::size_of::<u32>() as u32) * 8;
 
@@ -19,7 +17,7 @@ pub struct DenseGrid {
     /// log2(cell_size)
     log2_cell: u32,
 
-    cells: Vec<RwLock<Cell>>,
+    cells: Vec<Cell>,
 }
 
 impl DenseGrid {
@@ -30,16 +28,14 @@ impl DenseGrid {
         Self {
             log2_side: log_2(ncells_side),
             log2_cell: log_2(cell_size),
-            cells: (0..(ncells_side * ncells_side))
-                .map(|_| RwLock::new(Cell::default()))
-                .collect(),
+            cells: (0..(ncells_side * ncells_side)).map(|_| Cell::default()).collect(),
         }
     }
 
     pub fn insert(&self, pos: Vec2, entity: Entity) {
-        if let Some(cell) = self.cells.get(self.flat_ind(pos)) {
-            cell.write().push((pos, entity));
-        }
+        let ind = self.flat_ind(pos);
+        let cell = self.cells.get(ind).unwrap();
+        cell.insert(pos, entity);
     }
 
     #[inline]
@@ -50,7 +46,7 @@ impl DenseGrid {
     }
 
     pub fn clear(&mut self) {
-        self.cells.iter_mut().for_each(|cell| cell.write().clear());
+        self.cells.iter_mut().for_each(|cell| cell.clear());
     }
 
     pub fn query(&self, pos: Vec2, radius: f32, ignore: Entity) -> Vec<Entity> {
@@ -60,7 +56,7 @@ impl DenseGrid {
         for ind in self.cell_range(pos, radius) {
             if let Some(cell) = self.cells.get(ind as usize) {
                 // We know this is at a read only stage. Safe to disregard lock
-                let unlocked = unsafe { cell.data_ptr().as_ref().unwrap() };
+                let unlocked = cell.unlock_unsafe();
                 hits.extend(unlocked.iter().filter_map(|(other, id)| {
                     match (*id != ignore) & ((pos - *other).len_sq() < radius2) {
                         true => Some(*id),
