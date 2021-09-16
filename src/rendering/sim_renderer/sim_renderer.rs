@@ -153,7 +153,7 @@ impl SimRenderer {
     }
 
     pub fn render(&mut self, display: &Display, simulation: &Simulation, view: &TextureView) {
-        time_func!(sim_render, render);
+        time_func!("render.step");
         let cam_uniform = CameraUniform::from(&display.cam);
         display
             .queue

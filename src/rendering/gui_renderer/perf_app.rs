@@ -1,47 +1,55 @@
-use crate::{rendering::Display, simulation::Simulation, timing::TIMING_DATABASE};
+use crate::{
+    rendering::Display,
+    simulation::{Simulation, Time},
+    timing::{timer::Timer, TIMING_DATABASE},
+};
 
-#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 pub struct PerfApp;
 
 impl PerfApp {
-    pub fn update(&mut self, ctx: &egui::CtxRef, _display: &Display, _simulation: &Simulation) {
+    pub fn update(&mut self, ctx: &egui::CtxRef, _display: &Display, simulation: &Simulation) {
+        // Reset timer at 10th tick to ignore startup lag
+        if simulation.resources.get::<Time>().unwrap().tick == 10 {
+            for v in TIMING_DATABASE.write().values_mut() {
+                v.timer.reset();
+            }
+        }
+
         egui::SidePanel::right("Performance Info").show(ctx, |ui| {
             ui.style_mut().wrap = Some(false);
-            ui.heading("Performance");
-            self.physics(ui);
-            self.sim_render(ui);
+            self.draw(ui);
         });
     }
 
-    fn physics(&self, ui: &mut egui::Ui) {
+    fn draw(&self, ui: &mut egui::Ui) {
         let database = TIMING_DATABASE.read();
+        // Map to (system, stage, timer)
+        let mut kv: Vec<(&str, &str, &Timer)> = database
+            .iter()
+            .map(|(name, timer)| {
+                let splits: Vec<&str> = name.split(".").collect();
+                (*splits.get(0).unwrap(), *splits.get(1).unwrap(), timer)
+            })
+            .collect();
 
-        ui.separator();
-        ui.heading("Physics");
+        // sort by system, then duration (longest first)
+        kv.sort_by(|(an, _, at), (bn, _, bt)| {
+            if an == bn {
+                return bt.timer.mean().partial_cmp(&at.timer.mean()).unwrap();
+            }
+            an.cmp(bn)
+        });
 
-        ui.label(format!("Full Step {}", database.physics.step.res_str));
-        ui.label(format!("\t{}", database.physics.step));
+        let mut prev_heading = "";
+        for (name, stage, timer) in kv.iter() {
+            if name != &prev_heading {
+                ui.heading(name.to_string());
+                ui.separator();
+                prev_heading = name;
+            }
 
-        ui.label(format!("Pos Update {}", database.physics.pos_update.res_str));
-        ui.label(format!("\t{}", database.physics.pos_update));
-
-        ui.label(format!("Col Detection {}", database.physics.col_detect.res_str));
-        ui.label(format!("\t{}", database.physics.col_detect));
-    }
-
-    fn sim_render(&self, ui: &mut egui::Ui) {
-        let database = TIMING_DATABASE.read();
-
-        ui.separator();
-        ui.heading("Sim Render");
-
-        ui.label(format!(
-            "Vertex Update {}",
-            database.sim_render.vertex_buffer_update.res_str
-        ));
-        ui.label(format!("\t{}", database.sim_render.vertex_buffer_update));
-
-        ui.label(format!("Render {}", database.sim_render.render.res_str));
-        ui.label(format!("\t{}", database.sim_render.render));
+            ui.label(format!("{} {}", stage, timer.res_str));
+            ui.label(format!("\t{}", timer));
+        }
     }
 }

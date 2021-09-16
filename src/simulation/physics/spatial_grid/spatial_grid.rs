@@ -1,5 +1,6 @@
 use itertools::Itertools;
 use legion::Entity;
+use rayon::prelude::*;
 
 use super::cell::Cell;
 use crate::vec2::Vec2;
@@ -46,23 +47,21 @@ impl DenseGrid {
     }
 
     pub fn clear(&mut self) {
-        self.cells.iter_mut().for_each(|cell| cell.clear());
+        self.cells.par_iter().for_each(|cell| cell.clear());
     }
 
     pub fn query(&self, pos: Vec2, radius: f32, ignore: Entity) -> Vec<Entity> {
         let radius2 = radius.powi(2);
-        let mut hits = Vec::with_capacity(4);
+        let mut hits = Vec::with_capacity(2);
 
         for ind in self.cell_range(pos, radius) {
             if let Some(cell) = self.cells.get(ind as usize) {
                 // We know this is at a read only stage. Safe to disregard lock
-                let unlocked = cell.unlock_unsafe();
-                hits.extend(unlocked.iter().filter_map(|(other, id)| {
-                    match (*id != ignore) & ((pos - *other).len_sq() < radius2) {
-                        true => Some(*id),
-                        false => None,
+                for (other, id) in cell.unlock_unsafe() {
+                    if (*id != ignore) & ((pos - *other).len_sq() < radius2) {
+                        hits.push(*id);
                     }
-                }));
+                }
             }
         }
 

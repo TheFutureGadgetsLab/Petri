@@ -18,14 +18,14 @@ impl PhysicsPipeline {
     }
 
     pub fn step(&mut self, world: &mut World, resources: &mut Resources) {
-        time_func!(physics, step);
+        time_func!("physics.step");
 
         self.update_positions(world, resources);
         self.detect_collisions(world);
     }
 
     fn update_positions(&mut self, world: &mut World, resources: &Resources) {
-        time_func!(physics, pos_update);
+        time_func!("physics.pos_update");
 
         let bounds = resources.get::<Config>().unwrap().bounds;
 
@@ -49,7 +49,7 @@ impl PhysicsPipeline {
     }
 
     fn detect_collisions(&self, world: &mut World) {
-        time_func!(physics, col_detect);
+        time_func!("physics.col_detect");
 
         let mut q = <(Entity, &mut RigidCircle)>::query().filter(component::<RigidCircle>());
         unsafe {

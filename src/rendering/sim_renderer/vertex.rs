@@ -48,7 +48,7 @@ impl VertexBuffer {
     }
 
     pub fn update(&mut self, display: &Display, simulation: &Simulation) -> u32 {
-        time_func!(sim_render, vertex_buffer_update);
+        time_func!("render.vertex_update");
 
         let vertices: Vec<Vertex> = <(&RigidCircle, &Color)>::query()
             .iter(&simulation.world)

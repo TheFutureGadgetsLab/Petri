@@ -23,8 +23,4 @@ impl Cell {
     pub fn unlock_unsafe(&self) -> &Vec<(Vec2, Entity)> {
         unsafe { self.ents.data_ptr().as_ref().unwrap() }
     }
-
-    pub fn unlock_unsafe_mut(&self) -> &mut Vec<(Vec2, Entity)> {
-        unsafe { self.ents.data_ptr().as_mut().unwrap() }
-    }
 }

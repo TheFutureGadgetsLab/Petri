@@ -1,9 +1,15 @@
 // I hate all of this
 
-use std::{fmt, time::Duration};
+use std::{collections::HashMap, fmt, time::Duration};
 
 use hdrhistogram::Histogram;
-use quanta::{Clock, Instant};
+use lazy_static::lazy_static;
+use parking_lot::RwLock;
+use quanta::Instant;
+
+lazy_static! {
+    pub static ref TIMING_DATABASE: RwLock<HashMap<String, Timer>> = RwLock::new(HashMap::default());
+}
 
 #[allow(dead_code)]
 pub enum Resolution {
@@ -16,8 +22,7 @@ pub enum Resolution {
 pub struct Timer {
     pub res_str: String,
     res: Resolution,
-    timer: Histogram<u64>,
-    pub clock: Clock,
+    pub timer: Histogram<u64>,
 }
 
 impl Timer {
@@ -32,7 +37,6 @@ impl Timer {
             timer: Histogram::new(2).unwrap(),
             res,
             res_str: res_str.into(),
-            clock: Clock::new(),
         }
     }
 
@@ -65,31 +69,34 @@ impl Default for Timer {
     }
 }
 
-pub struct DropTimer<'a> {
+pub struct DropTimer {
     start: Instant,
-    target: &'a mut Timer,
+    target: String,
 }
 
-impl<'a> DropTimer<'a> {
-    pub fn new(target: &'a mut Timer) -> Self {
+impl DropTimer {
+    pub fn new(target: String) -> Self {
         Self {
-            start: target.clock.now(),
+            start: Instant::now(),
             target,
         }
     }
 }
 
-impl<'a> Drop for DropTimer<'a> {
+impl Drop for DropTimer {
     fn drop(&mut self) {
-        self.target.update(self.target.clock.now() - self.start);
+        TIMING_DATABASE
+            .write()
+            .entry(self.target.clone())
+            .or_default()
+            .update(Instant::now() - self.start);
     }
 }
 
 macro_rules! time_func {
-    ($module:ident,$stage:ident) => {
-        use crate::timing::{DropTimer, TIMING_DATABASE};
-        let mut __timer_data = unsafe { TIMING_DATABASE.data_ptr().as_mut().unwrap() };
-        let __drop_timer = DropTimer::new(&mut __timer_data.$module.$stage);
+    ($name:expr) => {
+        use crate::timing::DropTimer;
+        let __drop_timer = DropTimer::new($name.into());
     };
 }
 pub(crate) use time_func;
