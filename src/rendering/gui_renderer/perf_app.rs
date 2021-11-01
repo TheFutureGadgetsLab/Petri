@@ -27,7 +27,7 @@ impl PerfApp {
         let mut kv: Vec<(&str, &str, &Timer)> = database
             .iter()
             .map(|(name, timer)| {
-                let splits: Vec<&str> = name.split(".").collect();
+                let splits: Vec<&str> = name.split('.').collect();
                 (*splits.get(0).unwrap(), *splits.get(1).unwrap(), timer)
             })
             .collect();

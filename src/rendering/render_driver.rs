@@ -36,10 +36,10 @@ impl RenderDriver {
     }
 
     pub fn render(&mut self, simulation: &Simulation) {
-        let (_output_frame, output_view) = self.display.get_frame().unwrap();
-
-        self.sim_renderer.render(&self.display, simulation, &output_view);
-        self.gui_renderer.render(&self.display, simulation, &output_view);
+        let (frame, view) = self.display.get_frame().unwrap();
+        self.sim_renderer.render(&self.display, simulation, &view);
+        self.gui_renderer.render(&self.display, simulation, &view);
+        frame.present();
     }
 
     pub fn request_render(&mut self) {

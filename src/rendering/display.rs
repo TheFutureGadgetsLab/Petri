@@ -2,7 +2,7 @@
 // https://github.com/sotrh/learn-wgpu/tree/master/code/showcase/framework
 
 use futures::executor::block_on;
-use wgpu::{SurfaceError, SurfaceFrame, TextureView};
+use wgpu::{SurfaceError, SurfaceTexture, TextureView};
 use winit::{
     event::{ElementState, Event, MouseButton, WindowEvent},
     event_loop::EventLoop,
@@ -57,12 +57,13 @@ impl Display {
         let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
             power_preference: wgpu::PowerPreference::HighPerformance,
             compatible_surface: Some(&surface),
+            force_fallback_adapter: false,
         }))
         .unwrap();
         let (device, queue) = block_on(adapter.request_device(
             &wgpu::DeviceDescriptor {
                 label: None,
-                features: wgpu::Features::NON_FILL_POLYGON_MODE,
+                features: wgpu::Features::POLYGON_MODE_POINT,
                 limits: wgpu::Limits::default(),
             },
             None,
@@ -139,18 +140,17 @@ impl Display {
         self.surface.configure(&self.device, &self.surface_config);
     }
 
-    pub fn get_frame(&self) -> Result<(SurfaceFrame, TextureView), SurfaceError> {
-        let output_frame = match self.surface.get_current_frame() {
+    pub fn get_frame(&self) -> Result<(SurfaceTexture, TextureView), SurfaceError> {
+        let frame = match self.surface.get_current_texture() {
             Ok(frame) => frame,
-            Err(e) => {
-                return Err(e);
+            Err(_) => {
+                self.surface.configure(&self.device, &self.surface_config);
+                self.surface
+                    .get_current_texture()
+                    .expect("Failed to acquire next surface texture!")
             }
         };
-        let output_view = output_frame
-            .output
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
-
-        Ok((output_frame, output_view))
+        let view = frame.texture.create_view(&wgpu::TextureViewDescriptor::default());
+        Ok((frame, view))
     }
 }
