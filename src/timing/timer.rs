@@ -4,7 +4,7 @@ use std::{collections::HashMap, fmt, time::Duration};
 
 use hdrhistogram::Histogram;
 use lazy_static::lazy_static;
-use parking_lot::RwLock;
+use spin::RwLock;
 use quanta::Instant;
 
 lazy_static! {
