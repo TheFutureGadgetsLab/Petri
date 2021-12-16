@@ -1,13 +1,12 @@
 [package]
 name = "petri"
 version = "0.1.0"
-edition = "2018"
-resolver = "2"
+edition = "2021"
 
 [dependencies]
-winit = "0.25.0"
-wgpu = { version = "0.11.0", features = [ "spirv" ] }
-bytemuck = { version = "1.7.2", features = [ "derive" ] }
+winit = "0.26.0"
+wgpu = { version = "0.11.1", features = [ "spirv" ] }
+bytemuck = { version = "1.7.3", features = [ "derive" ] }
 fps_counter = "2.0.0"
 rayon = "1.5.1"
 wgpu-subscriber = "0.1.0"
@@ -17,12 +16,12 @@ shaderc = "0.7.3"
 futures = "0.3.17"
 egui = "0.15.0"
 egui_wgpu_backend = "0.14.0"
-egui_winit_platform = "0.11.0"
+egui_winit_platform = "0.12.0"
 hdrhistogram = "7.4.0"
 lazy_static = "1.4.0"
-spin = { version = "0.9.2", features = ["rwlock"]}
+spin = { version = "0.9.2", features = ["rwlock", "default"]}
 quanta = "0.9.3"
-itertools = "0.10.1"
+itertools = "0.10.3"
 
 [profile.dev.package."*"]
 opt-level = 3
