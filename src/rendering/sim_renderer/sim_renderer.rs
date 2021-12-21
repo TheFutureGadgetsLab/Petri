@@ -1,7 +1,7 @@
 use bytemuck;
-use shaderc::CompileOptions;
 use wgpu::{ShaderModuleDescriptor, TextureView};
 use winit::event::VirtualKeyCode;
+use naga;
 
 use super::{camera::Camera, Vertex, VertexBuffer};
 use crate::{
@@ -69,36 +69,23 @@ impl SimRenderer {
                 resource: wgpu::BindingResource::Buffer(uniforms_ubo.as_entire_buffer_binding()),
             }],
         });
-        let mut options = CompileOptions::new().unwrap();
-        options.set_optimization_level(shaderc::OptimizationLevel::Performance);
-
-        let mut compiler = shaderc::Compiler::new().unwrap();
-        let vert_comp = compiler
-            .compile_into_spirv(
-                include_str!("shaders/particles.vert"),
-                shaderc::ShaderKind::Vertex,
-                "shaders/particles.vert",
-                "main",
-                Some(&options),
-            )
-            .unwrap();
-        let frag_comp = compiler
-            .compile_into_spirv(
-                include_str!("shaders/particles.frag"),
-                shaderc::ShaderKind::Fragment,
-                "shaders/particles.frag",
-                "main",
-                Some(&options),
-            )
-            .unwrap();
-
+        
         let shader_frag = &display.device.create_shader_module(&ShaderModuleDescriptor {
-            label: Some("Fragment shader"),
-            source: wgpu::util::make_spirv(frag_comp.as_binary_u8()),
+            label: Some("Fragment Shader"),
+            source: wgpu::ShaderSource::Glsl {
+                shader: std::borrow::Cow::Borrowed(include_str!("./shaders/particles.frag")),
+                stage: naga::ShaderStage::Fragment,
+                defines: Default::default(),
+            }
         });
+        
         let shader_vert = &display.device.create_shader_module(&ShaderModuleDescriptor {
-            label: Some("Vertex shader"),
-            source: wgpu::util::make_spirv(vert_comp.as_binary_u8()),
+            label: Some("Vertex Shader"),
+            source: wgpu::ShaderSource::Glsl {
+                shader: std::borrow::Cow::Borrowed(include_str!("./shaders/particles.vert")),
+                stage: naga::ShaderStage::Vertex,
+                defines: Default::default(),
+            }
         });
 
         // Create render pipeline
@@ -110,6 +97,7 @@ impl SimRenderer {
         let render_pipeline = display.device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("Render Pipeline"),
             layout: Some(&render_pipeline_layout),
+            multiview: None,
             vertex: wgpu::VertexState {
                 module: shader_vert,
                 entry_point: "main",
@@ -135,8 +123,7 @@ impl SimRenderer {
                 cull_mode: None,
                 // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
                 polygon_mode: wgpu::PolygonMode::Point,
-                // Requires Features::DEPTH_CLAMPING
-                clamp_depth: false,
+                unclipped_depth: false,
                 // Requires Features::CONSERVATIVE_RASTERIZATION
                 conservative: false,
             },

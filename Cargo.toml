@@ -5,17 +5,17 @@ edition = "2021"
 
 [dependencies]
 winit = "0.26.0"
-wgpu = { version = "0.11.1", features = [ "spirv" ] }
+wgpu = { version = "0.12.0", features = ["glsl"] }
+naga = "0.8.0"
 bytemuck = { version = "1.7.3", features = [ "derive" ] }
 fps_counter = "2.0.0"
 rayon = "1.5.1"
 wgpu-subscriber = "0.1.0"
 rand = "0.8.4"
 legion = "0.4.0"
-shaderc = "0.7.3"
-futures = "0.3.17"
+futures = "0.3.19"
 egui = "0.15.0"
-egui_wgpu_backend = "0.14.0"
+egui_wgpu_backend = "0.15.0"
 egui_winit_platform = "0.12.0"
 hdrhistogram = "7.4.0"
 lazy_static = "1.4.0"
@@ -25,3 +25,6 @@ itertools = "0.10.3"
 
 [profile.dev.package."*"]
 opt-level = 3
+
+[profile.release]
+lto = "fat"
