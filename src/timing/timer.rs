@@ -4,8 +4,8 @@ use std::{collections::HashMap, fmt, time::Duration};
 
 use hdrhistogram::Histogram;
 use lazy_static::lazy_static;
-use spin::RwLock;
 use quanta::Instant;
+use spin::RwLock;
 
 lazy_static! {
     pub static ref TIMING_DATABASE: RwLock<HashMap<String, Timer>> = RwLock::new(HashMap::default());

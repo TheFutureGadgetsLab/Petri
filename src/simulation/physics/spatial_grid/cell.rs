@@ -1,7 +1,6 @@
 use legion::Entity;
 use spin::RwLock;
-
-use crate::vec2::Vec2;
+use ultraviolet::Vec2;
 
 #[derive(Default)]
 pub struct Cell {

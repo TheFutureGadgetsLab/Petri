@@ -1,14 +1,14 @@
 use bytemuck;
+use naga;
+use ultraviolet::Vec2;
 use wgpu::{ShaderModuleDescriptor, TextureView};
 use winit::event::VirtualKeyCode;
-use naga;
 
 use super::{camera::Camera, Vertex, VertexBuffer};
 use crate::{
     rendering::{Display, PetriEventHandler},
     simulation::Simulation,
     timing::timer::time_func,
-    vec2::Vec2,
 };
 
 #[repr(C)]
@@ -69,23 +69,23 @@ impl SimRenderer {
                 resource: wgpu::BindingResource::Buffer(uniforms_ubo.as_entire_buffer_binding()),
             }],
         });
-        
+
         let shader_frag = &display.device.create_shader_module(&ShaderModuleDescriptor {
             label: Some("Fragment Shader"),
             source: wgpu::ShaderSource::Glsl {
                 shader: std::borrow::Cow::Borrowed(include_str!("./shaders/particles.frag")),
                 stage: naga::ShaderStage::Fragment,
                 defines: Default::default(),
-            }
+            },
         });
-        
+
         let shader_vert = &display.device.create_shader_module(&ShaderModuleDescriptor {
             label: Some("Vertex Shader"),
             source: wgpu::ShaderSource::Glsl {
                 shader: std::borrow::Cow::Borrowed(include_str!("./shaders/particles.vert")),
                 stage: naga::ShaderStage::Vertex,
                 defines: Default::default(),
-            }
+            },
         });
 
         // Create render pipeline

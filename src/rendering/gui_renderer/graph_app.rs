@@ -1,6 +1,7 @@
 use egui::{epaint::Color32, plot::Plot, Frame};
+use ultraviolet::Vec2;
 
-use crate::{rendering::Display, simulation::Simulation, vec2::Vec2};
+use crate::{rendering::Display, simulation::Simulation};
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 pub struct GridApp {
@@ -17,7 +18,7 @@ impl GridApp {
     pub fn update(&mut self, ctx: &egui::CtxRef, display: &Display, _simulation: &Simulation) {
         let cam = &display.cam;
 
-        let (minx, miny) = cam.screen2world(Vec2::zeros()).into();
+        let (minx, miny) = cam.screen2world(Vec2::zero()).into();
         let (maxx, maxy) = cam
             .screen2world(Vec2::new(
                 display.surface_config.width as _,

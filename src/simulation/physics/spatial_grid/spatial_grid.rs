@@ -1,9 +1,9 @@
 use itertools::Itertools;
 use legion::Entity;
 use rayon::prelude::*;
+use ultraviolet::Vec2;
 
 use super::cell::Cell;
-use crate::vec2::Vec2;
 
 const U32_SIZE: u32 = (std::mem::size_of::<u32>() as u32) * 8;
 
@@ -58,7 +58,7 @@ impl DenseGrid {
             if let Some(cell) = self.cells.get(ind as usize) {
                 // We know this is at a read only stage. Safe to disregard lock
                 for (other, id) in cell.unlock_unsafe() {
-                    if (*id != ignore) & ((pos - *other).len_sq() < radius2) {
+                    if (*id != ignore) & ((pos - *other).mag_sq() < radius2) {
                         hits.push(*id);
                     }
                 }

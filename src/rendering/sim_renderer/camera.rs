@@ -1,4 +1,4 @@
-use crate::vec2::Vec2;
+use ultraviolet::Vec2;
 
 pub struct Camera {
     pub window_size: Vec2,
@@ -12,7 +12,7 @@ impl Camera {
     pub fn new(window_size: Vec2) -> Self {
         Camera {
             window_size,
-            translation: Vec2::zeros(),
+            translation: Vec2::zero(),
             zoom: 1.0,
         }
     }

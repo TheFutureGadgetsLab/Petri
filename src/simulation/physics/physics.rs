@@ -1,4 +1,5 @@
 use legion::{storage::Component, *};
+use ultraviolet::Vec2;
 
 use super::spatial_grid::DenseGrid;
 use crate::{
@@ -41,7 +42,10 @@ impl PhysicsPipeline {
                 circ.vel.y = -circ.vel.y;
             }
 
-            circ.pos.clamp(bounds.0 + circ.radius, bounds.1 - circ.radius);
+            circ.pos.clamp(
+                bounds.0 + Vec2::broadcast(circ.radius),
+                bounds.1 - Vec2::broadcast(circ.radius),
+            );
             circ.to_vel = circ.vel;
             circ.to_pos = circ.pos;
             self.grid.insert(circ.pos, *entity);
@@ -77,7 +81,7 @@ impl PhysicsPipeline {
 /// Updates RigidCircles in place
 fn elastic_collision(a: &mut RigidCircle, b: &RigidCircle) {
     let del = b.pos - a.pos;
-    let dist = del.len();
+    let dist = del.mag();
     let norm = dist.powi(2);
     let vdel = b.vel - a.vel;
 
