@@ -3,6 +3,7 @@ use mimalloc::MiMalloc;
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
 
+pub mod config;
 pub mod rendering;
 pub mod simulation;
 pub mod timing;
@@ -12,15 +13,12 @@ use winit::{
     event_loop::{ControlFlow, EventLoop},
 };
 
-use crate::{
-    rendering::RenderDriver,
-    simulation::{read_config, Config, Simulation},
-};
+use crate::{config::build_config, rendering::RenderDriver, simulation::Simulation};
 
 fn main() {
     wgpu_subscriber::initialize_default_subscriber(None);
 
-    let config: Config = read_config();
+    let config = build_config();
 
     let mut simulation = Simulation::new(config);
 

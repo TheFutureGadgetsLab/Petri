@@ -1,6 +1,7 @@
 use legion::*;
 
-use super::{components, config::Config, time::Time, PhysicsPipeline};
+use super::{components, time::Time, PhysicsPipeline};
+use crate::config::Config;
 
 pub struct Simulation {
     pub world: World,

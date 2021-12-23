@@ -1,4 +1,4 @@
-use std::fs::File;
+use std::{env, fs::File};
 
 use ron::de::from_reader;
 use serde::{Deserialize, Serialize};
@@ -11,9 +11,16 @@ pub struct Config {
     pub bounds: (Vec2, Vec2),
 }
 
-pub fn read_config() -> Config {
-    let input_path = format!("{}/configs/600k.ron", env!("CARGO_MANIFEST_DIR"));
-    let f = File::open(&input_path).expect("Failed opening file");
+pub fn build_config() -> Config {
+    let args: Vec<String> = env::args().collect();
+
+    if args.len() < 2 {
+        println!("Please provide a config file");
+        println!("Usage: {} <config.ron>", args[0]);
+        std::process::exit(1);
+    }
+
+    let f = File::open(&args[1]).expect("Failed opening file");
     let config: Config = match from_reader(f) {
         Ok(x) => x,
         Err(e) => {

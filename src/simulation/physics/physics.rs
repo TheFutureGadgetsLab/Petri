@@ -2,10 +2,7 @@ use legion::{storage::Component, *};
 use ultraviolet::Vec2;
 
 use super::spatial_grid::DenseGrid;
-use crate::{
-    simulation::{Config, RigidCircle},
-    timing::timer::time_func,
-};
+use crate::{config::Config, simulation::RigidCircle, timing::timer::time_func};
 
 pub struct PhysicsPipeline {
     grid: DenseGrid,

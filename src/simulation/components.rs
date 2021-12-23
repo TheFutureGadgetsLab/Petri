@@ -1,7 +1,8 @@
 use rand::prelude::*;
 use ultraviolet::Vec2;
 
-use super::Config;
+use crate::config::Config;
+
 #[derive(Clone, Copy)]
 pub struct RigidCircle {
     pub pos: Vec2,
