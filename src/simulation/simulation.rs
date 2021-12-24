@@ -46,7 +46,7 @@ impl Simulation {
                 return false;
             }
         }
-        self.resources.get_mut::<Time>().unwrap().tick();
+
         self.physics.step(&mut self.world, &mut self.resources);
 
         true
