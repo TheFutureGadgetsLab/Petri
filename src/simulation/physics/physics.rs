@@ -1,8 +1,11 @@
 use legion::{storage::Component, *};
 use ultraviolet::Vec2;
 
-use super::spatial_grid::DenseGrid;
-use crate::{config::Config, simulation::RigidCircle, timing::timer::time_func};
+use crate::{
+    config::Config,
+    simulation::{physics::DenseGrid, RigidCircle},
+    timing::timer::time_func,
+};
 
 pub struct PhysicsPipeline {
     grid: DenseGrid,
@@ -32,10 +35,10 @@ impl PhysicsPipeline {
             circ.vel = circ.to_vel;
             circ.pos = circ.to_pos + circ.vel;
 
-            if (circ.pos.x - circ.radius) <= bounds.0.x || (circ.pos.x + circ.radius) >= bounds.1.x {
+            if ((circ.pos.x - circ.radius) <= bounds.0.x) || ((circ.pos.x + circ.radius) >= bounds.1.x) {
                 circ.vel.x = -circ.vel.x;
             }
-            if (circ.pos.y - circ.radius) <= bounds.0.y || (circ.pos.y + circ.radius) > bounds.1.y {
+            if ((circ.pos.y - circ.radius) <= bounds.0.y) || ((circ.pos.y + circ.radius) > bounds.1.y) {
                 circ.vel.y = -circ.vel.y;
             }
 
@@ -63,6 +66,7 @@ impl PhysicsPipeline {
         }
     }
 
+    #[allow(clippy::mut_from_ref)]
     fn unsafe_component<'a, T: Component>(&self, world: &'a World, entity: Entity) -> &'a mut T {
         unsafe {
             world

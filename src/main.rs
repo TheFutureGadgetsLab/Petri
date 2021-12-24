@@ -1,3 +1,4 @@
+#![feature(int_log)]
 use mimalloc::MiMalloc;
 
 #[global_allocator]
@@ -36,7 +37,9 @@ fn main() {
             RedrawRequested(..) => renderer.render(&simulation),
             // Updating simulation and queuing a redraw
             MainEventsCleared => {
-                simulation.update();
+                if !simulation.update() { // Exit if simulation should stop
+                    *control_flow = ControlFlow::Exit;
+                }
                 renderer.request_render()
             }
             // Handle changes to wndow

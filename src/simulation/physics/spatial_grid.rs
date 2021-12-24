@@ -1,16 +1,8 @@
 use itertools::Itertools;
 use legion::Entity;
 use rayon::prelude::*;
+use spin::RwLock;
 use ultraviolet::Vec2;
-
-use super::cell::Cell;
-
-const U32_SIZE: u32 = (std::mem::size_of::<u32>() as u32) * 8;
-
-fn log_2(x: u32) -> u32 {
-    debug_assert!(x > 0);
-    U32_SIZE - x.leading_zeros() - 1
-}
 
 pub struct DenseGrid {
     /// log2(ncells_side)
@@ -27,8 +19,8 @@ impl DenseGrid {
         assert!(cell_size.is_power_of_two());
         let ncells_side = side_len / cell_size;
         Self {
-            log2_side: log_2(ncells_side),
-            log2_cell: log_2(cell_size),
+            log2_side: ncells_side.log2(),
+            log2_cell: cell_size.log2(),
             cells: (0..(ncells_side * ncells_side)).map(|_| Cell::default()).collect(),
         }
     }
@@ -58,7 +50,7 @@ impl DenseGrid {
             if let Some(cell) = self.cells.get(ind as usize) {
                 // We know this is at a read only stage. Safe to disregard lock
                 for (other, id) in cell.unlock_unsafe() {
-                    if (*id != ignore) & ((pos - *other).mag_sq() < radius2) {
+                    if (*id != ignore) && ((pos - *other).mag_sq() < radius2) {
                         hits.push(*id);
                     }
                 }
@@ -77,5 +69,24 @@ impl DenseGrid {
         let shift = self.log2_side;
 
         (x1..=x2).cartesian_product(y1..=y2).map(move |(x, y)| (y << shift) | x)
+    }
+}
+
+#[derive(Default)]
+pub struct Cell {
+    ents: RwLock<Vec<(Vec2, Entity)>>,
+}
+
+impl Cell {
+    pub fn insert(&self, pos: Vec2, entity: Entity) {
+        self.ents.write().push((pos, entity));
+    }
+
+    pub fn clear(&self) {
+        self.ents.write().clear();
+    }
+
+    pub fn unlock_unsafe(&self) -> &Vec<(Vec2, Entity)> {
+        unsafe { self.ents.as_mut_ptr().as_ref().unwrap() }
     }
 }

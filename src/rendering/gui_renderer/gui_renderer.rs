@@ -5,9 +5,11 @@ use egui_wgpu_backend::{RenderPass, ScreenDescriptor};
 use egui_winit_platform::{Platform, PlatformDescriptor};
 use wgpu::TextureView;
 
-use super::{GridApp, PerfApp, StatApp};
 use crate::{
-    rendering::{Display, PetriEventHandler},
+    rendering::{
+        gui_renderer::{GridApp, PerfApp, StatApp},
+        Display, PetriEventHandler,
+    },
     simulation::Simulation,
 };
 

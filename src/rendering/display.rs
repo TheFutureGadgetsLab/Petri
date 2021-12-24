@@ -10,7 +10,7 @@ use winit::{
     window::Window,
 };
 
-use super::sim_renderer::camera::Camera;
+use crate::rendering::sim_renderer::camera::Camera;
 
 #[derive(PartialEq, Eq, Clone, Copy, Default)]
 pub struct InputState {
@@ -38,7 +38,7 @@ pub struct Display {
     pub mouse: Mouse,
 }
 
-const INITIAL_SIZE: [f32; 2] = [1920.0, 1080.0];
+const INITIAL_SIZE: Vec2 = Vec2 { x: 1920.0, y: 1080.0 };
 
 impl Display {
     pub fn new(event_loop: &EventLoop<()>) -> Self {
@@ -47,12 +47,12 @@ impl Display {
             .with_resizable(true)
             .with_transparent(false)
             .with_title("Petri")
-            .with_inner_size(winit::dpi::PhysicalSize::new(INITIAL_SIZE[0], INITIAL_SIZE[1]))
+            .with_inner_size(winit::dpi::PhysicalSize::new(INITIAL_SIZE.x, INITIAL_SIZE.y))
             .build(event_loop)
             .unwrap();
 
         let size = window.inner_size();
-        let instance = wgpu::Instance::new(wgpu::Backends::PRIMARY);
+        let instance = wgpu::Instance::new(wgpu::Backends::VULKAN);
         let surface = unsafe { instance.create_surface(&window) };
         let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
             power_preference: wgpu::PowerPreference::HighPerformance,
@@ -84,7 +84,7 @@ impl Display {
             window,
             device,
             queue,
-            cam: Camera::new(INITIAL_SIZE.into()),
+            cam: Camera::new(INITIAL_SIZE),
             mouse: Mouse {
                 pos: Vec2::zero(),
                 delta: Vec2::zero(),

@@ -4,9 +4,8 @@ use ultraviolet::Vec2;
 use wgpu::{ShaderModuleDescriptor, TextureView};
 use winit::event::VirtualKeyCode;
 
-use super::{camera::Camera, Vertex, VertexBuffer};
 use crate::{
-    rendering::{Display, PetriEventHandler},
+    rendering::{camera::Camera, Display, PetriEventHandler, Vertex, VertexBuffer},
     simulation::Simulation,
     timing::timer::time_func,
 };

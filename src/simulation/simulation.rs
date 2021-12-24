@@ -1,7 +1,9 @@
 use legion::*;
 
-use super::{components, time::Time, PhysicsPipeline};
-use crate::config::Config;
+use crate::{
+    config::Config,
+    simulation::{components, time::Time, PhysicsPipeline},
+};
 
 pub struct Simulation {
     pub world: World,
@@ -33,8 +35,20 @@ impl Simulation {
         }
     }
 
-    pub fn update(&mut self) {
+    /// Returns false if the simulation should stop
+    pub fn update(&mut self) -> bool {
+        {
+            let mut timer = self.resources.get_mut::<Time>().unwrap();
+            let config = self.resources.get::<Config>().unwrap();
+
+            timer.tick();
+            if (config.max_ticks > 0) && (timer.tick > config.max_ticks) {
+                return false;
+            }
+        }
         self.resources.get_mut::<Time>().unwrap().tick();
         self.physics.step(&mut self.world, &mut self.resources);
+
+        true
     }
 }

@@ -29,3 +29,6 @@ ultraviolet = { version = "0.8.1", features = ["serde", "mint", "int"]}
 
 [profile.dev.package."*"]
 opt-level = 3
+
+[profile.release]
+lto = "fat"
