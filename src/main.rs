@@ -37,7 +37,8 @@ fn main() {
             RedrawRequested(..) => renderer.render(&simulation),
             // Updating simulation and queuing a redraw
             MainEventsCleared => {
-                if !simulation.update() { // Exit if simulation should stop
+                if !simulation.update() {
+                    // Exit if simulation should stop
                     *control_flow = ControlFlow::Exit;
                 }
                 renderer.request_render()

@@ -5,28 +5,10 @@ use wgpu::{ShaderModuleDescriptor, TextureView};
 use winit::event::VirtualKeyCode;
 
 use crate::{
-    rendering::{camera::Camera, Display, PetriEventHandler, Vertex, VertexBuffer},
+    rendering::{camera::CameraUniform, Display, PetriEventHandler, Vertex, VertexBuffer},
     simulation::Simulation,
     timing::timer::time_func,
 };
-
-#[repr(C)]
-#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-struct CameraUniform {
-    u_translation: [f32; 2],
-    u_window_size: [f32; 2],
-    u_zoom: [f32; 2],
-}
-
-impl From<&Camera> for CameraUniform {
-    fn from(cam: &Camera) -> Self {
-        CameraUniform {
-            u_translation: cam.translation.into(),
-            u_window_size: cam.window_size.into(),
-            u_zoom: [cam.zoom; 2],
-        }
-    }
-}
 
 pub struct SimRenderer {
     uniforms_ubo: wgpu::Buffer,

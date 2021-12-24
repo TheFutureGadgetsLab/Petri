@@ -34,3 +34,21 @@ impl Camera {
         self.pos() + ((p - (self.window_size / 2.0)) * Vec2::new(1.0, -1.0)) / self.zoom
     }
 }
+
+#[repr(C)]
+#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+pub struct CameraUniform {
+    u_translation: [f32; 2],
+    u_window_size: [f32; 2],
+    u_zoom: [f32; 2],
+}
+
+impl From<&Camera> for CameraUniform {
+    fn from(cam: &Camera) -> Self {
+        CameraUniform {
+            u_translation: cam.translation.into(),
+            u_window_size: cam.window_size.into(),
+            u_zoom: [cam.zoom; 2],
+        }
+    }
+}
