@@ -1,7 +1,9 @@
+use std::collections::HashMap;
+
 use crate::{
     rendering::Display,
     simulation::{Simulation, Time},
-    timing::{timer::Timer, TIMING_DATABASE},
+    timing::TIMING_DATABASE,
 };
 
 pub struct PerfApp;
@@ -24,32 +26,49 @@ impl PerfApp {
     fn draw(&self, ui: &mut egui::Ui) {
         let database = TIMING_DATABASE.read();
         // Map to (system, stage, timer)
-        let mut kv: Vec<(&str, &str, &Timer)> = database
-            .iter()
-            .map(|(name, timer)| {
-                let splits: Vec<&str> = name.split('.').collect();
-                (*splits.get(0).unwrap(), *splits.get(1).unwrap(), timer)
-            })
-            .collect();
 
-        // sort by system, then duration (longest first)
-        kv.sort_by(|(an, _, at), (bn, _, bt)| {
-            if an == bn {
-                return bt.timer.mean().partial_cmp(&at.timer.mean()).unwrap();
-            }
-            an.cmp(bn)
-        });
+        let mut map = HashMap::new();
+        for (string, timers) in database.iter() {
+            let splits: Vec<&str> = string.split('.').collect();
+            let system = splits[0];
+            let stage = splits[1];
 
-        let mut prev_heading = "";
-        for (name, stage, timer) in kv.iter() {
-            if name != &prev_heading {
-                ui.heading(name.to_string());
+            map.entry(system).or_insert_with(Vec::default).push((stage, timers));
+        }
+
+        // collect into vector of [(system, (stage, timer)), ..]
+        let mut vec = Vec::new();
+        for (system, stages) in map.iter() {
+            vec.push((*system, stages.clone()));
+        }
+
+        // sort by system
+        vec.sort_by(|a, b| a.0.cmp(b.0));
+
+        for (i, (sys, stages)) in vec.clone().iter_mut().enumerate() {
+            // sort stages by timer mean
+            stages.sort_by(|a, b| b.1.mean().partial_cmp(&a.1.mean()).unwrap());
+            egui::Grid::new(format!("{:} Grid", sys))
+                .striped(true)
+                .num_columns(4)
+                .show(ui, |ui| {
+                    ui.heading(sys);
+                    ui.heading("Mean");
+                    ui.heading("Min");
+                    ui.heading("Max");
+                    ui.end_row();
+                    for (stage, timer) in stages.iter() {
+                        ui.label(stage);
+                        ui.label(format!("{:.2}", timer.timer.mean()));
+                        ui.label(format!("{:.2}", timer.timer.min()));
+                        ui.label(format!("{:.2}", timer.timer.max()));
+                        ui.end_row();
+                    }
+                });
+
+            if i != vec.len() - 1 {
                 ui.separator();
-                prev_heading = name;
             }
-
-            ui.label(format!("{} {}", stage, timer.res_str));
-            ui.label(format!("\t{}", timer));
         }
     }
 }

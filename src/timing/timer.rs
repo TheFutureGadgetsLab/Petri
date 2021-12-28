@@ -49,6 +49,18 @@ impl Timer {
         };
         self.timer.record(delta).unwrap();
     }
+
+    pub fn min(&self) -> u64 {
+        self.timer.min()
+    }
+
+    pub fn max(&self) -> u64 {
+        self.timer.max()
+    }
+
+    pub fn mean(&self) -> f64 {
+        self.timer.mean()
+    }
 }
 
 impl fmt::Display for Timer {
@@ -56,9 +68,9 @@ impl fmt::Display for Timer {
         write!(
             f,
             "\tmin: {} | mean: {:.2} | max: {}",
-            self.timer.min(),
-            self.timer.mean(),
-            self.timer.max(),
+            self.min(),
+            self.mean(),
+            self.max(),
         )
     }
 }

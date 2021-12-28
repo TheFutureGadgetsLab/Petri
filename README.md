@@ -1,9 +1,15 @@
 ![](particles.gif)
 
 # Petri
-wip particle life sim in Rust
+WIP particle life simulation in Rust
 
-do
+# Requirements
+LLD for linking
+```Bash
+sudo apt install lld
 ```
-cargo run --release
+
+## Running
+```Bash
+cargo run --release -- ./configs/default.ron
 ```
