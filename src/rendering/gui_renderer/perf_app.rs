@@ -52,13 +52,13 @@ impl PerfApp {
                 .striped(true)
                 .num_columns(4)
                 .show(ui, |ui| {
-                    ui.heading(sys);
+                    ui.heading(*sys);
                     ui.heading("Mean");
                     ui.heading("Min");
                     ui.heading("Max");
                     ui.end_row();
                     for (stage, timer) in stages.iter() {
-                        ui.label(stage);
+                        ui.label(*stage);
                         ui.label(format!("{:.2}", timer.timer.mean()));
                         ui.label(format!("{:.2}", timer.timer.min()));
                         ui.label(format!("{:.2}", timer.timer.max()));

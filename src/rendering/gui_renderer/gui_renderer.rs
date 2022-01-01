@@ -78,7 +78,7 @@ impl GUIRenderer {
             scale_factor: display.window.scale_factor() as f32,
         };
         self.rpass
-            .update_texture(&display.device, &display.queue, &self.platform.context().texture());
+            .update_texture(&display.device, &display.queue, &self.platform.context().font_image());
         self.rpass.update_user_textures(&display.device, &display.queue);
         self.rpass
             .update_buffers(&display.device, &display.queue, &paint_jobs, &screen_descriptor);

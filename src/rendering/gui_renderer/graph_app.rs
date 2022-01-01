@@ -2,7 +2,7 @@ use egui::{
     self,
     epaint::Color32,
     plot::{Line, Plot, Value, Values},
-    Frame,
+    Frame, InnerResponse, Ui,
 };
 use ultraviolet::Vec2;
 
@@ -21,8 +21,6 @@ impl Default for GridApp {
 
 impl GridApp {
     pub fn update(&mut self, ctx: &egui::CtxRef, display: &Display, simulation: &Simulation) {
-        let sim_grid = self.get_sim_grid(ctx, display, simulation);
-
         egui::CentralPanel::default()
             .frame(
                 Frame::dark_canvas(&ctx.style())
@@ -30,11 +28,11 @@ impl GridApp {
                     .margin([0.0, 0.0]),
             )
             .show(ctx, |ui| {
-                ui.add(sim_grid);
+                self.show_sim_grid(ui, display, simulation);
             });
     }
 
-    pub fn get_sim_grid(&self, _ctx: &egui::CtxRef, display: &Display, simulation: &Simulation) -> Plot {
+    pub fn show_sim_grid(&self, ui: &mut Ui, display: &Display, simulation: &Simulation) -> InnerResponse<()> {
         let cam = &display.cam;
 
         let (minx, miny) = cam.screen2world(Vec2::zero()).into();
@@ -58,13 +56,15 @@ impl GridApp {
 
         Plot::new("SimGrid")
             .show_background(false)
-            .allow_zoom(false)
-            .allow_drag(false)
+            .allow_zoom(true)
+            .allow_drag(true)
             .data_aspect(1.0)
             .include_x(minx)
             .include_x(maxx)
             .include_y(miny)
             .include_y(maxy)
-            .line(bounding_box)
+            .show(ui, |plot_ui| {
+                plot_ui.line(bounding_box);
+            })
     }
 }
