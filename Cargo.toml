@@ -5,7 +5,7 @@ edition = "2018"
 resolver = "2"
 
 [dependencies]
-winit = "0.25.0"
+winit = "0.26.1"
 wgpu = { version = "0.10.1", features = [ "spirv" ] }
 bytemuck = { version = "1.7.2", features = [ "derive" ] }
 fps_counter = "2.0.0"
