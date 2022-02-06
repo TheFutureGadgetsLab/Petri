@@ -1,90 +1,84 @@
-mod mesh;
-use bevy::{
-    prelude::*,
-    render::{mesh::Indices, render_resource::PrimitiveTopology},
-    sprite::Mesh2dHandle,
-};
-use mesh::{ColoredMesh2d, ColoredMesh2dPlugin};
+mod render;
 
-/// This example shows how to manually render 2d items using "mid level render apis" with a custom pipeline for 2d meshes
-/// It doesn't use the [`Material2d`] abstraction, but changes the vertex buffer to include vertex color
-/// Check out the "mesh2d" example for simpler / higher level 2d meshes
+use bevy::{
+    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
+    math::Quat,
+    prelude::*,
+    render::camera::Camera,
+};
+use rand::Rng;
+use render::CellBundle;
+
+const CAMERA_SPEED: f32 = 1000.0;
+
+/// This example is for performance testing purposes.
+/// See <https://github.com/bevyengine/bevy/pull/1492>
 fn main() {
     App::new()
+        .add_plugin(LogDiagnosticsPlugin::default())
+        .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugins(DefaultPlugins)
-        .add_plugin(ColoredMesh2dPlugin)
-        .add_startup_system(star)
-        .run();
+        .add_plugin(render::CellRenderPlugin)
+        .add_startup_system(setup)
+        .add_system(move_camera.after("Tick"))
+        .run()
 }
 
-fn star(
-    mut commands: Commands,
-    // We will add a new Mesh for the star being created
-    mut meshes: ResMut<Assets<Mesh>>,
-) {
-    // Let's define the mesh for the object we want to draw: a nice star.
-    // We will specify here what kind of topology is used to define the mesh,
-    // that is, how triangles are built from the vertices. We will use a
-    // triangle list, meaning that each vertex of the triangle has to be
-    // specified.
-    let mut star = Mesh::new(PrimitiveTopology::TriangleList);
+fn setup(mut commands: Commands, assets: Res<AssetServer>) {
+    let mut rng = rand::thread_rng();
 
-    // Vertices need to have a position attribute. We will use the following
-    // vertices (I hope you can spot the star in the schema).
-    //
-    //        1
-    //
-    //     10   2
-    // 9      0      3
-    //     8     4
-    //        6
-    //   7        5
-    //
-    // These vertices are specificed in 3D space.
-    let mut v_pos = vec![[0.0, 0.0, 0.0]];
-    for i in 0..10 {
-        // Angle of each vertex is 1/10 of TAU, plus PI/2 for positioning vertex 0
-        let a = std::f32::consts::FRAC_PI_2 - i as f32 * std::f32::consts::TAU / 10.0;
-        // Radius of internal vertices (2, 4, 6, 8, 10) is 100, it's 200 for external
-        let r = (1 - i % 2) as f32 * 100.0 + 100.0;
-        // Add the vertex coordinates
-        v_pos.push([r * a.cos(), r * a.sin(), 0.0]);
-    }
-    // Set the position attribute
-    star.set_attribute(Mesh::ATTRIBUTE_POSITION, v_pos);
-    // And a RGB color attribute as well
-    let mut v_color = vec![[0.0, 0.0, 0.0, 1.0]];
-    v_color.extend_from_slice(&[[1.0, 1.0, 0.0, 1.0]; 10]);
-    star.set_attribute(Mesh::ATTRIBUTE_COLOR, v_color);
+    let tile_size = Vec2::splat(64.0);
+    let map_size = Vec2::splat(320.0);
 
-    // Now, we specify the indices of the vertex that are going to compose the
-    // triangles in our star. Vertices in triangles have to be specified in CCW
-    // winding (that will be the front face, colored). Since we are using
-    // triangle list, we will specify each triangle as 3 vertices
-    //   First triangle: 0, 2, 1
-    //   Second triangle: 0, 3, 2
-    //   Third triangle: 0, 4, 3
-    //   etc
-    //   Last triangle: 0, 1, 10
-    let mut indices = vec![0, 1, 10];
-    for i in 2..=10 {
-        indices.extend_from_slice(&[0, i, i - 1]);
-    }
-    star.set_indices(Some(Indices::U32(indices)));
+    let half_x = (map_size.x / 2.0) as i32;
+    let half_y = (map_size.y / 2.0) as i32;
 
-    // We can now spawn the entities for the star and the camera
-    commands.spawn_bundle((
-        // We use a marker component to identify the custom colored meshes
-        ColoredMesh2d::default(),
-        // The `Handle<Mesh>` needs to be wrapped in a `Mesh2dHandle` to use 2d rendering instead of 3d
-        Mesh2dHandle(meshes.add(star)),
-        // These other components are needed for 2d meshes to be rendered
-        Transform::default(),
-        GlobalTransform::default(),
-        Visibility::default(),
-        ComputedVisibility::default(),
-    ));
+    let sprite_handle = assets.load("branding/icon.png");
+
+    // Spawns the camera
     commands
-        // And use an orthographic projection
-        .spawn_bundle(OrthographicCameraBundle::new_2d());
+        .spawn()
+        .insert_bundle(OrthographicCameraBundle::new_2d())
+        .insert(Transform::from_xyz(0.0, 0.0, 1000.0));
+
+    // Builds and spawns the sprites
+    let mut sprites = vec![];
+    for y in -half_y..half_y {
+        for x in -half_x..half_x {
+            let position = Vec2::new(x as f32, y as f32);
+            let translation = (position * tile_size).extend(rng.gen::<f32>());
+            let rotation = Quat::from_rotation_z(rng.gen::<f32>());
+            let scale = Vec3::splat(rng.gen::<f32>() * 2.0);
+
+            sprites.push(SpriteBundle {
+                texture: sprite_handle.clone(),
+                transform: Transform {
+                    translation,
+                    rotation,
+                    scale,
+                },
+                sprite: Sprite {
+                    custom_size: Some(tile_size),
+                    ..Default::default()
+                },
+                ..Default::default()
+            });
+        }
+    }
+    commands.spawn_batch(sprites);
+}
+
+// System for rotating and translating the camera
+fn move_camera(time: Res<Time>, mut camera_query: Query<&mut Transform, With<Camera>>) {
+    let mut camera_transform = camera_query.single_mut();
+    camera_transform.rotate(Quat::from_rotation_z(time.delta_seconds() * 0.5));
+    *camera_transform = *camera_transform * Transform::from_translation(Vec3::X * CAMERA_SPEED * time.delta_seconds());
+}
+
+struct PrintingTimer(Timer);
+
+impl Default for PrintingTimer {
+    fn default() -> Self {
+        Self(Timer::from_seconds(1.0, true))
+    }
 }
