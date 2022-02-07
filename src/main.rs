@@ -1,4 +1,5 @@
-mod render;
+mod cell_render;
+mod components;
 
 use bevy::{
     diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
@@ -6,8 +7,8 @@ use bevy::{
     prelude::*,
     render::camera::Camera,
 };
+use components::{CellBundle, ColorComp};
 use rand::Rng;
-use render::{CellBundle, ColorComp};
 
 const CAMERA_SPEED: f32 = 1000.0;
 
@@ -16,7 +17,7 @@ fn main() {
         .add_plugin(LogDiagnosticsPlugin::default())
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugins(DefaultPlugins)
-        .add_plugin(render::CellRenderPlugin)
+        .add_plugin(cell_render::CellRenderPlugin)
         .add_startup_system(setup)
         .add_system(move_camera)
         .run()
@@ -26,7 +27,7 @@ fn setup(mut commands: Commands) {
     let mut rng = rand::thread_rng();
 
     let tile_size = Vec2::splat(64.0);
-    let map_size = Vec2::splat(320.0);
+    let map_size = Vec2::splat(320.0 * 4.0);
 
     let half_x = (map_size.x / 2.0) as i32;
     let half_y = (map_size.y / 2.0) as i32;
@@ -53,12 +54,7 @@ fn setup(mut commands: Commands) {
                     rotation,
                     scale,
                 },
-                color: ColorComp {
-                    red: rng.gen::<f32>(),
-                    green: rng.gen::<f32>(),
-                    blue: rng.gen::<f32>(),
-                    alpha: 1.0,
-                },
+                color: ColorComp::new_rand(&mut rng),
                 ..Default::default()
             });
         }

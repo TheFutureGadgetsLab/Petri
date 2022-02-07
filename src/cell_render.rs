@@ -21,6 +21,8 @@ use bevy::{
 use shaderc::{CompileOptions, ShaderKind};
 use wgpu::{BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor, MultisampleState, PrimitiveState};
 
+use crate::components::{CellMarker, ColorComp};
+
 pub const SHADER_VERT_HANDLE: HandleUntyped = HandleUntyped::weak_from_u64(Shader::TYPE_UUID, 3032357527543835453);
 pub const SHADER_VERT_SRC: &str = include_str!("../assets/shaders/particle.vert");
 
@@ -143,32 +145,6 @@ impl SpecializedPipeline for CellPipeline {
     }
 }
 
-#[derive(Component, Default)]
-pub struct CellMarker;
-
-#[derive(Component, Default)]
-pub struct ColorComp {
-    pub red: f32,
-    pub green: f32,
-    pub blue: f32,
-    pub alpha: f32,
-}
-#[derive(Bundle, Default)]
-pub struct CellBundle {
-    pub marker: CellMarker,
-    pub transform: Transform,
-    pub global_transform: GlobalTransform,
-    pub color: ColorComp,
-}
-
-#[repr(C)]
-#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable, Default)]
-pub struct VertexCell {
-    position: [f32; 3],
-    color: [f32; 4],
-    size: f32,
-}
-
 fn extract_cells(mut render_world: ResMut<RenderWorld>, query: Query<(&Transform, &ColorComp), With<CellMarker>>) {
     let mut cellbuf = render_world.get_resource_mut::<CellPipeline>().unwrap();
     cellbuf.vertices.clear();
@@ -176,7 +152,7 @@ fn extract_cells(mut render_world: ResMut<RenderWorld>, query: Query<(&Transform
     query.for_each(|(trans, color)| {
         cellbuf.vertices.push(VertexCell {
             position: trans.translation.into(),
-            color: [color.red, color.green, color.blue, color.alpha],
+            color: color.val,
             size: trans.scale.x,
         });
     });
@@ -270,9 +246,6 @@ impl Draw<Transparent2d> for DrawCells {
     }
 }
 
-#[derive(Component)]
-struct DummyDrawSentinel;
-
 fn compile_shader(shader_kind: shaderc::ShaderKind, source_text: &str) -> Vec<u8> {
     let mut options = CompileOptions::new().unwrap();
     options.set_optimization_level(shaderc::OptimizationLevel::Performance);
@@ -291,3 +264,14 @@ fn compile_shader(shader_kind: shaderc::ShaderKind, source_text: &str) -> Vec<u8
 
     source
 }
+
+#[repr(C)]
+#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable, Default)]
+pub struct VertexCell {
+    position: [f32; 3],
+    color: [f32; 4],
+    size: f32,
+}
+
+#[derive(Component)]
+struct DummyDrawSentinel;
