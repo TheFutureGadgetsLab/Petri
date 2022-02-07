@@ -7,7 +7,6 @@ use bevy::{
         prelude::*,
         system::{lifetimeless::*, SystemState},
     },
-    math::prelude::*,
     prelude::*,
     reflect::TypeUuid,
     render::{
@@ -23,10 +22,10 @@ use shaderc::{CompileOptions, ShaderKind};
 use wgpu::{BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor, MultisampleState, PrimitiveState};
 
 pub const SHADER_VERT_HANDLE: HandleUntyped = HandleUntyped::weak_from_u64(Shader::TYPE_UUID, 3032357527543835453);
-pub const SHADER_VERT_SRC: &str = include_str!("tri.vert");
+pub const SHADER_VERT_SRC: &str = include_str!("../assets/shaders/particle.vert");
 
 pub const SHADER_FRAG_HANDLE: HandleUntyped = HandleUntyped::weak_from_u64(Shader::TYPE_UUID, 3032357527543835452);
-pub const SHADER_FRAG_SRC: &str = include_str!("tri.frag");
+pub const SHADER_FRAG_SRC: &str = include_str!("../assets/shaders/particle.frag");
 
 pub struct CellRenderPlugin;
 
@@ -132,11 +131,11 @@ impl SpecializedPipeline for CellPipeline {
                 alpha_to_coverage_enabled: false,
             },
             primitive: PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList,
+                topology: wgpu::PrimitiveTopology::PointList,
                 strip_index_format: None,
                 front_face: wgpu::FrontFace::Ccw,
                 cull_mode: None,
-                polygon_mode: wgpu::PolygonMode::Fill,
+                polygon_mode: wgpu::PolygonMode::Point,
                 unclipped_depth: true,
                 conservative: false,
             },
@@ -147,11 +146,19 @@ impl SpecializedPipeline for CellPipeline {
 #[derive(Component, Default)]
 pub struct CellMarker;
 
+#[derive(Component, Default)]
+pub struct ColorComp {
+    pub red: f32,
+    pub green: f32,
+    pub blue: f32,
+    pub alpha: f32,
+}
 #[derive(Bundle, Default)]
 pub struct CellBundle {
     pub marker: CellMarker,
     pub transform: Transform,
     pub global_transform: GlobalTransform,
+    pub color: ColorComp,
 }
 
 #[repr(C)]
@@ -162,14 +169,14 @@ pub struct VertexCell {
     size: f32,
 }
 
-fn extract_cells(mut render_world: ResMut<RenderWorld>, query: Query<&Transform, With<CellMarker>>) {
+fn extract_cells(mut render_world: ResMut<RenderWorld>, query: Query<(&Transform, &ColorComp), With<CellMarker>>) {
     let mut cellbuf = render_world.get_resource_mut::<CellPipeline>().unwrap();
     cellbuf.vertices.clear();
 
-    query.for_each(|trans| {
+    query.for_each(|(trans, color)| {
         cellbuf.vertices.push(VertexCell {
             position: trans.translation.into(),
-            color: Vec4::new(0.0, 0.0, 1.0, 1.0).into(),
+            color: [color.red, color.green, color.blue, color.alpha],
             size: trans.scale.x,
         });
     });
@@ -181,6 +188,10 @@ fn prepare_cells(
     mut commands: Commands,
     mut pipeline: ResMut<CellPipeline>,
 ) {
+    if pipeline.vertices.is_empty() {
+        return;
+    }
+
     pipeline.vertices.write_buffer(&render_device, &render_queue);
     commands.spawn_bundle((DummyDrawSentinel,));
 }
@@ -195,7 +206,7 @@ fn queue_particles(
     mut pipeline_cache: ResMut<RenderPipelineCache>,
     cell_batches: Query<(Entity, &DummyDrawSentinel)>,
 ) {
-    if view_uniforms.uniforms.is_empty() {
+    if view_uniforms.uniforms.is_empty() || cell_pipeline.vertices.is_empty() {
         return;
     }
 

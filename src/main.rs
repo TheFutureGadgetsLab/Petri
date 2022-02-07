@@ -7,7 +7,7 @@ use bevy::{
     render::camera::Camera,
 };
 use rand::Rng;
-use render::CellBundle;
+use render::{CellBundle, ColorComp};
 
 const CAMERA_SPEED: f32 = 1000.0;
 
@@ -37,26 +37,34 @@ fn setup(mut commands: Commands) {
         .insert_bundle(OrthographicCameraBundle::new_2d())
         .insert(Transform::from_xyz(0.0, 0.0, 1000.0));
 
-    // Builds and spawns the sprites
-    let mut sprites = vec![];
+    let mut cells = vec![];
+    let mut count = 0;
     for y in -half_y..half_y {
         for x in -half_x..half_x {
+            count += 1;
             let position = Vec2::new(x as f32, y as f32);
             let translation = (position * tile_size).extend(rng.gen::<f32>());
             let rotation = Quat::from_rotation_z(rng.gen::<f32>());
-            let scale = Vec3::splat(rng.gen::<f32>() * 2.0);
+            let scale = Vec3::splat(rng.gen::<f32>() * 40.0);
 
-            sprites.push(CellBundle {
+            cells.push(CellBundle {
                 transform: Transform {
                     translation,
                     rotation,
                     scale,
                 },
+                color: ColorComp {
+                    red: rng.gen::<f32>(),
+                    green: rng.gen::<f32>(),
+                    blue: rng.gen::<f32>(),
+                    alpha: 1.0,
+                },
                 ..Default::default()
             });
         }
     }
-    commands.spawn_batch(sprites);
+    commands.spawn_batch(cells);
+    info!("Spawned {} cells", count);
 }
 
 // System for rotating and translating the camera

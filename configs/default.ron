@@ -1,9 +1,0 @@
-Config(
-    n_cells: 600_000,
-    cell_radius: 2.0,
-    bounds: (
-        (x: 0.0,    y: 0.0), 
-        (x: 8192.0, y: 8129.0), 
-    ),
-    max_ticks: 0, // 0 = infinite
-) 
