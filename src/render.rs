@@ -1,7 +1,8 @@
 use bevy::{
     app::prelude::*,
     asset::{Assets, HandleUntyped},
-    core_pipeline::Transparent3d,
+    core::FloatOrd,
+    core_pipeline::Transparent2d,
     ecs::{
         prelude::*,
         system::{lifetimeless::*, SystemState},
@@ -18,19 +19,21 @@ use bevy::{
         RenderApp, RenderStage, RenderWorld,
     },
 };
-use shaderc::CompileOptions;
+use shaderc::{CompileOptions, ShaderKind};
 use wgpu::{BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor, MultisampleState, PrimitiveState};
 
 pub const SHADER_VERT_HANDLE: HandleUntyped = HandleUntyped::weak_from_u64(Shader::TYPE_UUID, 3032357527543835453);
+pub const SHADER_VERT_SRC: &str = include_str!("tri.vert");
+
 pub const SHADER_FRAG_HANDLE: HandleUntyped = HandleUntyped::weak_from_u64(Shader::TYPE_UUID, 3032357527543835452);
+pub const SHADER_FRAG_SRC: &str = include_str!("tri.frag");
 
 pub struct CellRenderPlugin;
 
 impl Plugin for CellRenderPlugin {
     fn build(&self, app: &mut App) {
-        let (vert_source, frag_source) = compile_shaders();
-        let shader_vert = Shader::from_spirv(vert_source);
-        let shader_frag = Shader::from_spirv(frag_source);
+        let shader_vert = Shader::from_spirv(compile_shader(ShaderKind::Vertex, SHADER_VERT_SRC));
+        let shader_frag = Shader::from_spirv(compile_shader(ShaderKind::Fragment, SHADER_FRAG_SRC));
 
         app.world
             .get_resource_mut::<Assets<Shader>>()
@@ -47,13 +50,12 @@ impl Plugin for CellRenderPlugin {
             .add_system_to_stage(RenderStage::Prepare, prepare_cells)
             .add_system_to_stage(RenderStage::Queue, queue_particles)
             .init_resource::<CellPipeline>()
-            .init_resource::<CellGPUBuf>()
             .init_resource::<SpecializedPipelines<CellPipeline>>();
 
         let draw_cell = DrawCells::new(&mut render_app.world);
         render_app
             .world
-            .get_resource::<DrawFunctions<Transparent3d>>()
+            .get_resource::<DrawFunctions<Transparent2d>>()
             .unwrap()
             .write()
             .add(draw_cell);
@@ -62,6 +64,8 @@ impl Plugin for CellRenderPlugin {
 
 struct CellPipeline {
     view_layout: BindGroupLayout,
+    view_bind_group: Option<BindGroup>,
+    vertices: BufferVec<VertexCell>,
 }
 
 impl FromWorld for CellPipeline {
@@ -83,7 +87,11 @@ impl FromWorld for CellPipeline {
             label: None,
         });
 
-        Self { view_layout }
+        Self {
+            view_layout,
+            view_bind_group: None,
+            vertices: BufferVec::default(),
+        }
     }
 }
 
@@ -102,7 +110,7 @@ impl SpecializedPipeline for CellPipeline {
                 buffers: vec![VertexBufferLayout {
                     array_stride: std::mem::size_of::<VertexCell>() as u64,
                     step_mode: VertexStepMode::Vertex,
-                    attributes: wgpu::vertex_attr_array![0 => Float32x2, 1 => Float32x4, 2 => Float32].to_vec(),
+                    attributes: wgpu::vertex_attr_array![0 => Float32x3, 1 => Float32x4, 2 => Float32].to_vec(),
                 }],
                 shader_defs: vec![],
             },
@@ -116,30 +124,19 @@ impl SpecializedPipeline for CellPipeline {
                     write_mask: wgpu::ColorWrites::ALL,
                 }],
             }),
-            depth_stencil: Some(DepthStencilState {
-                format: TextureFormat::Depth32Float,
-                depth_write_enabled: false,
-                depth_compare: CompareFunction::Never,
-                stencil: StencilState {
-                    front: StencilFaceState::IGNORE,
-                    back: StencilFaceState::IGNORE,
-                    read_mask: 0,
-                    write_mask: 0,
-                },
-                bias: DepthBiasState {
-                    constant: 0,
-                    slope_scale: 0.0,
-                    clamp: 0.0,
-                },
-            }),
+            depth_stencil: None,
             layout: Some(vec![self.view_layout.clone()]),
-            multisample: MultisampleState::default(),
+            multisample: MultisampleState {
+                count: 4,
+                mask: !0,
+                alpha_to_coverage_enabled: false,
+            },
             primitive: PrimitiveState {
-                topology: wgpu::PrimitiveTopology::PointList,
+                topology: wgpu::PrimitiveTopology::TriangleList,
                 strip_index_format: None,
                 front_face: wgpu::FrontFace::Ccw,
                 cull_mode: None,
-                polygon_mode: wgpu::PolygonMode::Point,
+                polygon_mode: wgpu::PolygonMode::Fill,
                 unclipped_depth: true,
                 conservative: false,
             },
@@ -166,88 +163,72 @@ pub struct VertexCell {
 }
 
 fn extract_cells(mut render_world: ResMut<RenderWorld>, query: Query<&Transform, With<CellMarker>>) {
-    let mut cellbuf = render_world.get_resource_mut::<CellGPUBuf>().unwrap();
+    let mut cellbuf = render_world.get_resource_mut::<CellPipeline>().unwrap();
     cellbuf.vertices.clear();
 
-    for cell in query.iter() {
+    query.for_each(|trans| {
         cellbuf.vertices.push(VertexCell {
-            position: cell.translation.into(),
+            position: trans.translation.into(),
             color: Vec4::new(0.0, 0.0, 1.0, 1.0).into(),
-            size: cell.scale.x,
+            size: trans.scale.x,
         });
-    }
-}
-
-struct CellGPUBuf {
-    view_bind_group: Option<BindGroup>,
-
-    vertices: BufferVec<VertexCell>,
-}
-
-impl Default for CellGPUBuf {
-    fn default() -> Self {
-        CellGPUBuf {
-            view_bind_group: None,
-            vertices: BufferVec::default(),
-        }
-    }
+    });
 }
 
 fn prepare_cells(
     render_device: Res<RenderDevice>,
     render_queue: Res<RenderQueue>,
     mut commands: Commands,
-    mut cellbuf: ResMut<CellGPUBuf>,
+    mut pipeline: ResMut<CellPipeline>,
 ) {
-    cellbuf.vertices.write_buffer(&render_device, &render_queue);
+    pipeline.vertices.write_buffer(&render_device, &render_queue);
     commands.spawn_bundle((DummyDrawSentinel,));
 }
 
-#[allow(clippy::too_many_arguments)]
 fn queue_particles(
-    draw_functions: Res<DrawFunctions<Transparent3d>>,
-    mut views: Query<&mut RenderPhase<Transparent3d>>,
+    draw_functions: Res<DrawFunctions<Transparent2d>>,
+    mut views: Query<&mut RenderPhase<Transparent2d>>,
     render_device: Res<RenderDevice>,
-    mut cellbuf: ResMut<CellGPUBuf>,
     view_uniforms: Res<ViewUniforms>,
-    particle_pipeline: Res<CellPipeline>,
+    mut cell_pipeline: ResMut<CellPipeline>,
     mut pipelines: ResMut<SpecializedPipelines<CellPipeline>>,
     mut pipeline_cache: ResMut<RenderPipelineCache>,
-    particle_batches: Query<(Entity, &DummyDrawSentinel)>,
+    cell_batches: Query<(Entity, &DummyDrawSentinel)>,
 ) {
     if view_uniforms.uniforms.is_empty() {
-        error!("View uniforms is empty!");
         return;
     }
 
+    let layout = cell_pipeline.view_layout.clone();
     if let Some(view_bindings) = view_uniforms.uniforms.binding() {
-        cellbuf.view_bind_group.get_or_insert_with(|| {
+        cell_pipeline.view_bind_group.get_or_insert_with(|| {
             render_device.create_bind_group(&BindGroupDescriptor {
                 entries: &[BindGroupEntry {
                     binding: 0,
                     resource: view_bindings,
                 }],
                 label: Some("particle_view_bind_group".into()),
-                layout: &particle_pipeline.view_layout,
+                layout: &layout,
             })
         });
     }
 
     let draw_particle_function = draw_functions.read().get_id::<DrawCells>().unwrap();
     for mut transparent_phase in views.iter_mut() {
-        let (entity, _) = particle_batches.get_single().unwrap();
-        transparent_phase.add(Transparent3d {
-            distance: 0.0,
-            pipeline: pipelines.specialize(&mut pipeline_cache, &particle_pipeline, CellPipelineKey),
-            entity,
+        let (entity, _) = cell_batches.get_single().unwrap();
+        transparent_phase.add(Transparent2d {
+            sort_key: FloatOrd(0.0),
+            entity: entity,
+            pipeline: pipelines.specialize(&mut pipeline_cache, &cell_pipeline, CellPipelineKey),
             draw_function: draw_particle_function,
+            batch_range: None,
         });
     }
 }
 
 struct DrawCells {
     params: SystemState<(
-        SRes<CellGPUBuf>,
+        SRes<CellPipeline>,
         SRes<RenderPipelineCache>,
         SQuery<Read<ViewUniformOffset>>,
     )>,
@@ -261,14 +242,13 @@ impl DrawCells {
     }
 }
 
-impl Draw<Transparent3d> for DrawCells {
-    fn draw<'w>(&mut self, world: &'w World, pass: &mut TrackedRenderPass<'w>, view: Entity, item: &Transparent3d) {
-        let (cellbuf, pipelines, views) = self.params.get(world);
-        let n = cellbuf.vertices.len() as u32;
-        info!("Drawing {} vertices", n);
+impl Draw<Transparent2d> for DrawCells {
+    fn draw<'w>(&mut self, world: &'w World, pass: &mut TrackedRenderPass<'w>, view: Entity, item: &Transparent2d) {
+        let (cell_pipeline, pipelines, views) = self.params.get(world);
+        let n = cell_pipeline.vertices.len() as u32;
 
         let view_uniform = views.get(view).unwrap();
-        let cellbuf = cellbuf.into_inner();
+        let cellbuf = cell_pipeline.into_inner();
 
         if let Some(pipeline) = pipelines.into_inner().get(item.pipeline) {
             pass.set_render_pipeline(pipeline);
@@ -282,47 +262,21 @@ impl Draw<Transparent3d> for DrawCells {
 #[derive(Component)]
 struct DummyDrawSentinel;
 
-fn compile_shaders() -> (Vec<u8>, Vec<u8>) {
-    info!("Compiling shaders");
-
+fn compile_shader(shader_kind: shaderc::ShaderKind, source_text: &str) -> Vec<u8> {
     let mut options = CompileOptions::new().unwrap();
     options.set_optimization_level(shaderc::OptimizationLevel::Performance);
 
     let mut compiler = shaderc::Compiler::new().unwrap();
-    let vert_comp = compiler.compile_into_spirv(
-        include_str!("particle.vert"),
-        shaderc::ShaderKind::Vertex,
-        "particle.vert",
-        "main",
-        Some(&options),
-    );
-    let vert_comp = match vert_comp {
+    let comp = compiler.compile_into_spirv(source_text, shader_kind, "shader", "main", Some(&options));
+    let comp = match comp {
         Ok(vert_comp) => vert_comp,
         Err(error) => {
-            error!("Failed to compile Vertex shader");
+            error!("Failed to compile shader");
             println!("{}", error.to_string());
             panic!();
         }
     };
-    let frag_comp = compiler.compile_into_spirv(
-        include_str!("particle.frag"),
-        shaderc::ShaderKind::Fragment,
-        "particle.frag",
-        "main",
-        Some(&options),
-    );
-    let frag_comp = match frag_comp {
-        Ok(frag_comp) => frag_comp,
-        Err(error) => {
-            error!("Failed to compile Fragment shader");
-            println!("{}", error.to_string());
-            panic!();
-        }
-    };
+    let source = comp.as_binary_u8().to_vec();
 
-    let vert_source = vert_comp.as_binary_u8().to_vec();
-    let frag_source = frag_comp.as_binary_u8().to_vec();
-
-    info!("Compiled shaders");
-    (vert_source, frag_source)
+    source
 }

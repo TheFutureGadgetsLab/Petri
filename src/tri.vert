@@ -1,4 +1,10 @@
-#version 450 core
+#version 450
+
+const vec2 positions[3] = vec2[3](
+    vec2(0.0, 0.5),
+    vec2(-0.5, -0.5),
+    vec2(0.5, -0.5)
+);
 
 layout(set = 0, binding = 0) uniform CameraViewProj {
     mat4 ViewProj;
@@ -20,12 +26,6 @@ layout (location = 1) out vec4 out_color;
 layout (location = 2) out float out_size;
 
 void main() {
-    vec4 proj = ViewProj * vec4(in_pos, 1.0);
-
-    out_pos   = proj.xy;
-    out_size  = in_size;
-    out_color = in_color;
-
-    gl_Position  = proj; 
-    gl_PointSize = in_size;
+    gl_Position = vec4(positions[gl_VertexIndex], 0.0, 1.0);
 }
+

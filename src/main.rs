@@ -11,8 +11,6 @@ use render::CellBundle;
 
 const CAMERA_SPEED: f32 = 1000.0;
 
-/// This example is for performance testing purposes.
-/// See <https://github.com/bevyengine/bevy/pull/1492>
 fn main() {
     App::new()
         .add_plugin(LogDiagnosticsPlugin::default())
@@ -20,11 +18,11 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(render::CellRenderPlugin)
         .add_startup_system(setup)
-        .add_system(move_camera.after("Tick"))
+        .add_system(move_camera)
         .run()
 }
 
-fn setup(mut commands: Commands, assets: Res<AssetServer>) {
+fn setup(mut commands: Commands) {
     let mut rng = rand::thread_rng();
 
     let tile_size = Vec2::splat(64.0);
@@ -32,8 +30,6 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
 
     let half_x = (map_size.x / 2.0) as i32;
     let half_y = (map_size.y / 2.0) as i32;
-
-    let sprite_handle = assets.load("branding/icon.png");
 
     // Spawns the camera
     commands
@@ -50,16 +46,11 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
             let rotation = Quat::from_rotation_z(rng.gen::<f32>());
             let scale = Vec3::splat(rng.gen::<f32>() * 2.0);
 
-            sprites.push(SpriteBundle {
-                texture: sprite_handle.clone(),
+            sprites.push(CellBundle {
                 transform: Transform {
                     translation,
                     rotation,
                     scale,
-                },
-                sprite: Sprite {
-                    custom_size: Some(tile_size),
-                    ..Default::default()
                 },
                 ..Default::default()
             });
