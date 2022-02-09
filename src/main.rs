@@ -1,33 +1,31 @@
-mod cell_render;
 mod components;
+mod rendering;
 
-use bevy::{
-    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
-    math::Quat,
-    prelude::*,
-    render::camera::Camera,
-};
+use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, math::Quat, prelude::*, render::camera::Camera};
 use components::{CellBundle, ColorComp};
 use rand::Rng;
+
+use crate::rendering::{CellRenderPlugin, GuiRenderPlugins};
 
 const CAMERA_SPEED: f32 = 1000.0;
 
 fn main() {
     App::new()
-        .add_plugin(LogDiagnosticsPlugin::default())
-        .add_plugin(FrameTimeDiagnosticsPlugin::default())
+        .insert_resource(ClearColor(Color::rgb(0.0, 0.0, 0.0)))
         .add_plugins(DefaultPlugins)
-        .add_plugin(cell_render::CellRenderPlugin)
+        .add_plugins(GuiRenderPlugins)
+        .add_plugin(CellRenderPlugin)
+        .add_plugin(FrameTimeDiagnosticsPlugin)
         .add_startup_system(setup)
         .add_system(move_camera)
-        .run()
+        .run();
 }
 
 fn setup(mut commands: Commands) {
     let mut rng = rand::thread_rng();
 
     let tile_size = Vec2::splat(64.0);
-    let map_size = Vec2::splat(320.0 * 4.0);
+    let map_size = Vec2::splat(320.0);
 
     let half_x = (map_size.x / 2.0) as i32;
     let half_y = (map_size.y / 2.0) as i32;
@@ -68,12 +66,4 @@ fn move_camera(time: Res<Time>, mut camera_query: Query<&mut Transform, With<Cam
     let mut camera_transform = camera_query.single_mut();
     camera_transform.rotate(Quat::from_rotation_z(time.delta_seconds() * 0.5));
     *camera_transform = *camera_transform * Transform::from_translation(Vec3::X * CAMERA_SPEED * time.delta_seconds());
-}
-
-struct PrintingTimer(Timer);
-
-impl Default for PrintingTimer {
-    fn default() -> Self {
-        Self(Timer::from_seconds(1.0, true))
-    }
 }

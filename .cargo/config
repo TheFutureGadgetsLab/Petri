@@ -1,2 +1,2 @@
 [build]
-rustflags = ["-C", "target-cpu=native", "-C", "link-arg=-fuse-ld=lld", "-Z", "tune-cpu=native"]
+rustflags = ["-C", "target-cpu=native", "-C", "link-arg=-fuse-ld=lld"]

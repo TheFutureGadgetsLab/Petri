@@ -24,10 +24,10 @@ use wgpu::{BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor, Multi
 use crate::components::{CellMarker, ColorComp};
 
 pub const SHADER_VERT_HANDLE: HandleUntyped = HandleUntyped::weak_from_u64(Shader::TYPE_UUID, 3032357527543835453);
-pub const SHADER_VERT_SRC: &str = include_str!("../assets/shaders/particle.vert");
+pub const SHADER_VERT_SRC: &str = include_str!("../../assets/shaders/particle.vert");
 
 pub const SHADER_FRAG_HANDLE: HandleUntyped = HandleUntyped::weak_from_u64(Shader::TYPE_UUID, 3032357527543835452);
-pub const SHADER_FRAG_SRC: &str = include_str!("../assets/shaders/particle.frag");
+pub const SHADER_FRAG_SRC: &str = include_str!("../../assets/shaders/particle.frag");
 
 pub struct CellRenderPlugin;
 
@@ -194,7 +194,7 @@ fn queue_particles(
                     binding: 0,
                     resource: view_bindings,
                 }],
-                label: Some("particle_view_bind_group".into()),
+                label: Some("particle_view_bind_group"),
                 layout: &layout,
             })
         });
@@ -205,7 +205,7 @@ fn queue_particles(
         let (entity, _) = cell_batches.get_single().unwrap();
         transparent_phase.add(Transparent2d {
             sort_key: FloatOrd(0.0),
-            entity: entity,
+            entity,
             pipeline: pipelines.specialize(&mut pipeline_cache, &cell_pipeline, CellPipelineKey),
             draw_function: draw_particle_function,
             batch_range: None,
@@ -256,7 +256,7 @@ fn compile_shader(shader_kind: shaderc::ShaderKind, source_text: &str) -> Vec<u8
         Ok(vert_comp) => vert_comp,
         Err(error) => {
             error!("Failed to compile shader");
-            println!("{}", error.to_string());
+            println!("{}", error);
             panic!();
         }
     };
