@@ -18,10 +18,9 @@ layout (location = 2) in float v_size;
 layout (location = 0) out vec4 f_color;
 
 void main() {
-    //vec2 pcoord = gl_FragCoord.xy / vec2(width, height);
-    //vec2 vcoord = (vec2(v_pos.x, -v_pos.y) * 0.5) + 0.5;
-    //vec2 pdiff = 2.0 * ((pcoord - vcoord) / (vec2(v_size) / vec2(width, height)));
-    //float alpha = clamp(1.0 - dot(pdiff, pdiff), 0.0, 1.0 / v_size) * v_size;
-    //f_color = vec4(vec3(v_color.rgb), alpha);
-    f_color = vec4(v_color, 1.0);
+    vec2 pcoord = gl_FragCoord.xy / vec2(width, height);
+    vec2 vcoord = (vec2(v_pos.x, -v_pos.y) * 0.5) + 0.5;
+    vec2 pdiff = 2.0 * ((pcoord - vcoord) / (vec2(v_size) / vec2(width, height)));
+    float alpha = clamp(1.0 - dot(pdiff, pdiff), 0.0, 1.0 / v_size) * v_size;
+    f_color = vec4(vec3(v_color.rgb), alpha);
 }
