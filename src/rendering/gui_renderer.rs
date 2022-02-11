@@ -1,5 +1,7 @@
-use bevy::app::{PluginGroup, PluginGroupBuilder};
-use bevy::prelude::*;
+use bevy::{
+    app::{PluginGroup, PluginGroupBuilder},
+    prelude::*,
+};
 use bevy_egui::{egui, EguiContext, EguiPlugin, EguiSettings};
 
 const BEVY_TEXTURE_ID: u64 = 0;

@@ -26,6 +26,12 @@ void main() {
     out_size  = in_size;
     out_color = in_color;
 
+    // This is definitely wrong
+    // If you rotate the camera it will oscillate the scale
+    float m00 = ViewProj[0][0];
+    float m01 = ViewProj[1][1];
+    float scalingFactor = 10000.0 * sqrt(m00 * m00 + m01 * m01);
+
     gl_Position  = proj; 
-    gl_PointSize = in_size;
+    gl_PointSize = in_size * scalingFactor;
 }
