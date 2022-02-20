@@ -20,18 +20,16 @@ layout (location = 1) out vec3 out_color;
 layout (location = 2) out float out_size;
 
 void main() {
-    vec4 proj = ViewProj * vec4(in_pos, 1.0);
+    vec4 in_pos = vec4(in_pos, 1.0);
+    vec4 proj   = ViewProj * in_pos;
 
-    // This is definitely wrong
-    // If you rotate the camera it will oscillate the scale
-    float m00 = ViewProj[0][0];
-    float m01 = ViewProj[1][1];
-
-    float scalingFactor = 10000.0 * sqrt(m00 * m00 + m01 * m01);
+    vec4 v = ViewProj*(in_pos + vec4(in_size, in_size, 0.0, 0.0));
+    float radius = width * length(v - proj);
 
     out_pos   = proj.xy;
-    out_size  = in_size * scalingFactor;
+    out_size  = radius;
     out_color = in_color;
+
     gl_Position  = proj; 
-    gl_PointSize = out_size;
+    gl_PointSize = radius;
 }

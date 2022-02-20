@@ -1,8 +1,14 @@
+#[global_allocator]
+static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
+
 mod components;
 mod rendering;
 mod sim;
 
-use bevy::prelude::*;
+use bevy::{
+    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
+    prelude::*,
+};
 
 use crate::{
     rendering::{CellRenderPlugin, GuiRenderPlugins},
@@ -16,5 +22,7 @@ fn main() {
         .add_plugins(GuiRenderPlugins)
         .add_plugin(SimPlugin)
         .add_plugin(CellRenderPlugin)
+        .add_plugin(LogDiagnosticsPlugin::default())
+        .add_plugin(FrameTimeDiagnosticsPlugin)
         .run();
 }
