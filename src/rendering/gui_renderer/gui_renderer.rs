@@ -1,9 +1,7 @@
-use std::{iter, time::Instant};
-
-use egui::FontDefinitions;
-use egui_wgpu_backend::{RenderPass, ScreenDescriptor};
-use egui_winit_platform::{Platform, PlatformDescriptor};
+use egui_wgpu::renderer::{Renderer, ScreenDescriptor};
+use egui_winit::State;
 use wgpu::TextureView;
+use winit::event_loop::EventLoop;
 
 use crate::{
     rendering::{
@@ -14,35 +12,27 @@ use crate::{
 };
 
 pub struct GUIRenderer {
-    platform: Platform,
-    rpass: RenderPass,
-    start_time: Instant,
-    previous_frame_time: Option<f32>,
+    state: State,
+    context: egui::Context,
+    rpass: Renderer,
     debug: StatApp,
     grid: GridApp,
     perf: PerfApp,
 }
 
 impl GUIRenderer {
-    pub fn new(display: &Display, _simulation: &mut Simulation) -> Self {
-        let size = display.window.inner_size();
-        // We use the egui_winit_platform crate as the platform.
-        let platform = Platform::new(PlatformDescriptor {
-            physical_width: size.width as u32,
-            physical_height: size.height as u32,
-            scale_factor: display.window.scale_factor(),
-            font_definitions: FontDefinitions::default(),
-            style: Default::default(),
-        });
+    pub fn new(display: &Display, _simulation: &mut Simulation, event_loop: &EventLoop<()>) -> Self {
+        let state = egui_winit::State::new(&event_loop);
+        let context = egui::Context::default();
+        context.set_pixels_per_point(display.window.scale_factor() as f32);
 
         // We use the egui_wgpu_backend crate as the render backend.
-        let egui_rpass = RenderPass::new(&display.device, display.surface_config.format, 1);
+        let egui_rpass = Renderer::new(&display.device, display.surface_config.format, None, 1);
 
         Self {
-            platform,
+            context,
+            state,
             rpass: egui_rpass,
-            start_time: Instant::now(),
-            previous_frame_time: None,
             debug: StatApp,
             grid: GridApp::default(),
             perf: PerfApp,
@@ -50,46 +40,60 @@ impl GUIRenderer {
     }
 
     pub fn render(&mut self, display: &Display, simulation: &Simulation, view: &TextureView) {
-        self.platform.update_time(self.start_time.elapsed().as_secs_f64());
+        let input = self.state.take_egui_input(&display.window);
+        self.context.begin_frame(input);
 
-        // Begin to draw the UI frame.
-        let egui_start = Instant::now();
-        self.platform.begin_frame();
-
-        self.grid.update(&self.platform.context(), display, simulation);
-        self.debug.update(&self.platform.context(), display, simulation);
-        self.perf.update(&self.platform.context(), display, simulation);
+        self.grid.update(&self.context, display, simulation);
+        self.debug.update(&self.context, display, simulation);
+        self.perf.update(&self.context, display, simulation);
 
         // End the UI frame. We could now handle the output and draw the UI with the backend.
-        let (_output, paint_commands) = self.platform.end_frame(Some(&display.window));
-        let paint_jobs = self.platform.context().tessellate(paint_commands);
+        let output = self.context.end_frame();
+        let paint_jobs = self.context.tessellate(output.shapes);
 
-        let frame_time = (Instant::now() - egui_start).as_secs_f64() as f32;
-        self.previous_frame_time = Some(frame_time);
-
-        let mut encoder = display
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("encoder") });
+        let mut encoder = display.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("GUI Encoder"),
+        });
 
         // Upload all resources for the GPU.
         let screen_descriptor = ScreenDescriptor {
-            physical_width: display.surface_config.width,
-            physical_height: display.surface_config.height,
-            scale_factor: display.window.scale_factor() as f32,
+            size_in_pixels: [display.surface_config.width, display.surface_config.height],
+            pixels_per_point: display.window.scale_factor() as f32,
         };
-        self.rpass
-            .update_texture(&display.device, &display.queue, &self.platform.context().font_image());
-        self.rpass.update_user_textures(&display.device, &display.queue);
-        self.rpass
-            .update_buffers(&display.device, &display.queue, &paint_jobs, &screen_descriptor);
 
-        // Record all render passes.
-        self.rpass
-            .execute(&mut encoder, view, &paint_jobs, &screen_descriptor, None)
-            .unwrap();
+        for (id, image_delta) in &output.textures_delta.set {
+            self.rpass
+                .update_texture(&display.device, &display.queue, *id, image_delta);
+        }
+        for id in &output.textures_delta.free {
+            self.rpass.free_texture(id);
+        }
+        self.rpass.update_buffers(
+            &display.device,
+            &display.queue,
+            &mut encoder,
+            &paint_jobs,
+            &screen_descriptor,
+        );
+        {
+            // Set up render pass and associate the render pipeline we made
+            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("Render Pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &view,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Load,
+                        store: true,
+                    },
+                })],
+                depth_stencil_attachment: None,
+            });
 
-        // Submit the commands.
-        display.queue.submit(iter::once(encoder.finish()));
+            self.rpass.render(&mut render_pass, &paint_jobs, &screen_descriptor);
+        }
+
+        display.queue.submit(std::iter::once(encoder.finish()));
     }
 }
 
@@ -98,8 +102,8 @@ impl PetriEventHandler for GUIRenderer {
         &mut self,
         _display: &mut Display,
         _simulation: &mut Simulation,
-        event: &winit::event::Event<T>,
+        _event: &winit::event::Event<T>,
     ) {
-        self.platform.handle_event(event)
+        // self.state.on_event(&self.context, event);
     }
 }

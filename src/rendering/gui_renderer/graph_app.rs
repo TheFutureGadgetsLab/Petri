@@ -1,7 +1,8 @@
 use egui::{
     self,
     epaint::Color32,
-    plot::{Line, Plot, Value, Values},
+    plot::{Line, Plot, PlotPoints},
+    style::Margin,
     Frame, InnerResponse, Ui,
 };
 use ultraviolet::Vec2;
@@ -20,12 +21,12 @@ impl Default for GridApp {
 }
 
 impl GridApp {
-    pub fn update(&mut self, ctx: &egui::CtxRef, display: &Display, simulation: &Simulation) {
+    pub fn update(&mut self, ctx: &egui::Context, display: &Display, simulation: &Simulation) {
         egui::CentralPanel::default()
             .frame(
                 Frame::dark_canvas(&ctx.style())
                     .fill(Color32::TRANSPARENT)
-                    .margin([0.0, 0.0]),
+                    .inner_margin(Margin::same(0.0)),
             )
             .show(ctx, |ui| {
                 self.show_sim_grid(ui, display, simulation);
@@ -44,15 +45,15 @@ impl GridApp {
             .into();
 
         let config = simulation.resources.get::<Config>().unwrap();
-        let path = [
-            Value::new(config.bounds.0.x, config.bounds.0.y), // (xmin, ymin)
-            Value::new(config.bounds.1.x, config.bounds.0.y), // (xmax, ymin)
-            Value::new(config.bounds.1.x, config.bounds.1.y), // (xmax, ymax)
-            Value::new(config.bounds.0.x, config.bounds.1.y), // (xmin, ymax)
-            Value::new(config.bounds.0.x, config.bounds.0.y), // (xmin, ymin)
+        let path = vec![
+            [config.bounds.0.x as f64, config.bounds.0.y as f64], // (xmin, ymin)
+            [config.bounds.1.x as f64, config.bounds.0.y as f64], // (xmax, ymin)
+            [config.bounds.1.x as f64, config.bounds.1.y as f64], // (xmax, ymax)
+            [config.bounds.0.x as f64, config.bounds.1.y as f64], // (xmin, ymax)
+            [config.bounds.0.x as f64, config.bounds.0.y as f64], // (xmin, ymin)
         ];
 
-        let bounding_box = Line::new(Values::from_values(path.into())).color(Color32::RED);
+        let bounding_box = Line::new(PlotPoints::from(path)).color(Color32::RED);
 
         Plot::new("SimGrid")
             .show_background(false)

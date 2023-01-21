@@ -10,7 +10,7 @@ use crate::{
 pub struct StatApp;
 
 impl StatApp {
-    pub fn update(&mut self, ctx: &egui::CtxRef, display: &Display, simulation: &Simulation) {
+    pub fn update(&mut self, ctx: &egui::Context, display: &Display, simulation: &Simulation) {
         let time = simulation.resources.get::<Time>().unwrap();
         let config = simulation.resources.get::<Config>().unwrap();
         let cam = &display.cam;

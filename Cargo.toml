@@ -7,12 +7,12 @@ edition = "2021"
 ####################
 # GUI
 ####################
-winit = "0.26.1"
-wgpu = { version = "0.12.0", features = ["glsl"] }
-naga = "0.8.3"
-egui = "0.16.1"
-egui_wgpu_backend = "0.16.0"
-egui_winit_platform = "0.13.0"
+winit = "0.27.5"
+wgpu = { version = "0.14.2", features = ["glsl"] }
+naga = "0.10.0"
+egui = "0.20.1"
+egui-wgpu = "0.20.0"
+egui-winit = "0.20.1"
 
 ####################
 # Simulation

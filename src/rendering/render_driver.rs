@@ -20,7 +20,7 @@ impl RenderDriver {
         let display = Display::new(event_loop);
 
         let sim_renderer = SimRenderer::new(&display, simulation);
-        let gui_renderer = GUIRenderer::new(&display, simulation);
+        let gui_renderer = GUIRenderer::new(&display, simulation, event_loop);
 
         Self {
             display,

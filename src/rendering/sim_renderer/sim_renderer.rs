@@ -51,7 +51,7 @@ impl SimRenderer {
             }],
         });
 
-        let shader_frag = &display.device.create_shader_module(&ShaderModuleDescriptor {
+        let shader_frag = &display.device.create_shader_module(ShaderModuleDescriptor {
             label: Some("Fragment Shader"),
             source: wgpu::ShaderSource::Glsl {
                 shader: std::borrow::Cow::Borrowed(include_str!("./shaders/particles.frag")),
@@ -60,7 +60,7 @@ impl SimRenderer {
             },
         });
 
-        let shader_vert = &display.device.create_shader_module(&ShaderModuleDescriptor {
+        let shader_vert = &display.device.create_shader_module(ShaderModuleDescriptor {
             label: Some("Vertex Shader"),
             source: wgpu::ShaderSource::Glsl {
                 shader: std::borrow::Cow::Borrowed(include_str!("./shaders/particles.vert")),
@@ -91,11 +91,11 @@ impl SimRenderer {
             fragment: Some(wgpu::FragmentState {
                 module: shader_frag,
                 entry_point: "main",
-                targets: &[wgpu::ColorTargetState {
+                targets: &[Some(wgpu::ColorTargetState {
                     format: display.surface_config.format,
                     blend: Some(wgpu::BlendState::ALPHA_BLENDING),
                     write_mask: wgpu::ColorWrites::ALL,
-                }],
+                })],
             }),
             primitive: wgpu::PrimitiveState {
                 topology: wgpu::PrimitiveTopology::PointList,
@@ -137,7 +137,7 @@ impl SimRenderer {
             // Set up render pass and associate the render pipeline we made
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Render Pass"),
-                color_attachments: &[wgpu::RenderPassColorAttachment {
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view,
                     resolve_target: None,
                     ops: wgpu::Operations {
@@ -149,7 +149,7 @@ impl SimRenderer {
                         }),
                         store: true,
                     },
-                }],
+                })],
                 depth_stencil_attachment: None,
             });
             render_pass.set_pipeline(&self.render_pipeline);
