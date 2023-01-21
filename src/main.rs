@@ -1,4 +1,3 @@
-#![feature(int_log)]
 use mimalloc::MiMalloc;
 
 #[global_allocator]

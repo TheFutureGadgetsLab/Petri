@@ -19,8 +19,8 @@ impl DenseGrid {
         assert!(cell_size.is_power_of_two());
         let ncells_side = side_len / cell_size;
         Self {
-            log2_side: ncells_side.log2(),
-            log2_cell: cell_size.log2(),
+            log2_side: ncells_side.ilog2(),
+            log2_cell: cell_size.ilog2(),
             cells: (0..(ncells_side * ncells_side)).map(|_| Cell::default()).collect(),
         }
     }
