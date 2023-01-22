@@ -1,6 +1,4 @@
-// I hate all of this
-
-use std::{collections::HashMap, fmt, time::Duration};
+use std::{collections::HashMap, time::Duration};
 
 use hdrhistogram::Histogram;
 use lazy_static::lazy_static;
@@ -11,73 +9,59 @@ lazy_static! {
     pub static ref TIMING_DATABASE: RwLock<HashMap<String, Timer>> = RwLock::new(HashMap::default());
 }
 
-#[allow(dead_code)]
-pub enum Resolution {
-    Second,
-    Milli,
-    Micro,
-    Nano,
-}
-
 pub struct Timer {
-    pub res_str: String,
-    res: Resolution,
-    pub timer: Histogram<u64>,
+    hist: Histogram<u64>,
 }
 
 impl Timer {
-    pub fn new(res: Resolution) -> Self {
-        let res_str = match res {
-            Resolution::Second => "(s)",
-            Resolution::Milli => "(ms)",
-            Resolution::Micro => "(us)",
-            Resolution::Nano => "(ns)",
-        };
+    pub fn new() -> Self {
         Self {
-            timer: Histogram::new(2).unwrap(),
-            res,
-            res_str: res_str.into(),
+            hist: Histogram::new(2).unwrap(),
         }
     }
 
     pub fn update(&mut self, delta: Duration) {
-        let delta = match self.res {
-            Resolution::Second => delta.as_secs(),
-            Resolution::Milli => delta.as_millis() as u64,
-            Resolution::Micro => delta.as_micros() as u64,
-            Resolution::Nano => delta.as_nanos() as u64,
+        let delta = delta.as_nanos() as u64;
+        self.hist.record(delta).unwrap();
+    }
+
+    pub fn min(&self) -> (u64, String) {
+        self.time_to_readable(self.hist.min())
+    }
+
+    pub fn max(&self) -> (u64, String) {
+        self.time_to_readable(self.hist.max())
+    }
+
+    pub fn mean(&self) -> (u64, String) {
+        self.time_to_readable(self.hist.mean() as u64)
+    }
+
+    pub fn raw_imean(&self) -> u64 {
+        self.hist.mean() as u64
+    }
+
+    pub fn reset(&mut self) {
+        self.hist.reset();
+    }
+
+    fn time_to_readable(&self, nano_seconds: u64) -> (u64, String) {
+        let (time, unit) = if nano_seconds >= 1_000_000_000 {
+            (nano_seconds / 1_000_000_000, "s")
+        } else if nano_seconds >= 1_000_000 {
+            (nano_seconds / 1_000_000, "ms")
+        } else if nano_seconds >= 1_000 {
+            (nano_seconds / 1_000, "us")
+        } else {
+            (nano_seconds, "ns")
         };
-        self.timer.record(delta).unwrap();
-    }
-
-    pub fn min(&self) -> u64 {
-        self.timer.min()
-    }
-
-    pub fn max(&self) -> u64 {
-        self.timer.max()
-    }
-
-    pub fn mean(&self) -> f64 {
-        self.timer.mean()
-    }
-}
-
-impl fmt::Display for Timer {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "\tmin: {} | mean: {:.2} | max: {}",
-            self.min(),
-            self.mean(),
-            self.max(),
-        )
+        (time, String::from(unit))
     }
 }
 
 impl Default for Timer {
     fn default() -> Self {
-        Timer::new(Resolution::Micro)
+        Timer::new()
     }
 }
 

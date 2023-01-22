@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{
     rendering::Display,
     simulation::{Simulation, Time},
-    timing::TIMING_DATABASE,
+    timing::{timer::Timer, TIMING_DATABASE},
 };
 
 pub struct PerfApp;
@@ -13,7 +13,7 @@ impl PerfApp {
         // Reset timer at 10th tick to ignore startup lag
         if simulation.resources.get::<Time>().unwrap().tick == 100 {
             for v in TIMING_DATABASE.write().values_mut() {
-                v.timer.reset();
+                v.reset();
             }
         }
 
@@ -46,8 +46,8 @@ impl PerfApp {
         vec.sort_by(|a, b| a.0.cmp(b.0));
 
         for (i, (sys, stages)) in vec.clone().iter_mut().enumerate() {
-            // sort stages by timer mean
-            stages.sort_by(|a, b| b.1.mean().partial_cmp(&a.1.mean()).unwrap());
+            stages.sort_by_key(|(_, timer)| timer.raw_imean());
+            stages.reverse();
             egui::Grid::new(format!("{:} Grid", sys))
                 .striped(true)
                 .num_columns(4)
@@ -58,10 +58,7 @@ impl PerfApp {
                     ui.heading("Max");
                     ui.end_row();
                     for (stage, timer) in stages.iter() {
-                        ui.label(*stage);
-                        ui.label(format!("{:.2}", timer.timer.mean()));
-                        ui.label(format!("{:.2}", timer.timer.min()));
-                        ui.label(format!("{:.2}", timer.timer.max()));
+                        draw_system(ui, stage, timer);
                         ui.end_row();
                     }
                 });
@@ -71,4 +68,15 @@ impl PerfApp {
             }
         }
     }
+}
+
+// Function to draw the performance info for one system
+fn draw_system(ui: &mut egui::Ui, stage: &str, timer: &Timer) {
+    let (mean, mean_str) = timer.mean();
+    let (min, min_str) = timer.min();
+    let (max, max_str) = timer.max();
+    ui.label(stage);
+    ui.label(format!("{} ({})", mean, mean_str));
+    ui.label(format!("{} ({})", min, min_str));
+    ui.label(format!("{} ({})", max, max_str));
 }
