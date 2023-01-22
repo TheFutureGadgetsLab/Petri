@@ -25,7 +25,7 @@ pub fn build_config() -> Config {
     let config: Config = match from_reader(f) {
         Ok(x) => x,
         Err(e) => {
-            println!("Failed to load config: {}", e);
+            println!("Failed to load config: {e}");
 
             std::process::exit(1);
         }

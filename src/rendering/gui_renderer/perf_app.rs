@@ -48,7 +48,7 @@ impl PerfApp {
         for (i, (sys, stages)) in vec.clone().iter_mut().enumerate() {
             stages.sort_by_key(|(_, timer)| timer.raw_imean());
             stages.reverse();
-            egui::Grid::new(format!("{:} Grid", sys))
+            egui::Grid::new(format!("{sys:} Grid"))
                 .striped(true)
                 .num_columns(4)
                 .show(ui, |ui| {
@@ -76,7 +76,7 @@ fn draw_system(ui: &mut egui::Ui, stage: &str, timer: &Timer) {
     let (min, min_str) = timer.min();
     let (max, max_str) = timer.max();
     ui.label(stage);
-    ui.label(format!("{} ({})", mean, mean_str));
-    ui.label(format!("{} ({})", min, min_str));
-    ui.label(format!("{} ({})", max, max_str));
+    ui.label(format!("{mean} ({mean_str})"));
+    ui.label(format!("{min} ({min_str})"));
+    ui.label(format!("{max} ({max_str})"));
 }

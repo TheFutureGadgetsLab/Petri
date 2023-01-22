@@ -22,7 +22,7 @@ pub struct GUIRenderer {
 
 impl GUIRenderer {
     pub fn new(display: &Display, _simulation: &mut Simulation, event_loop: &EventLoop<()>) -> Self {
-        let state = egui_winit::State::new(&event_loop);
+        let state = egui_winit::State::new(event_loop);
         let context = egui::Context::default();
         context.set_pixels_per_point(display.window.scale_factor() as f32);
 
@@ -80,7 +80,7 @@ impl GUIRenderer {
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Render Pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &view,
+                    view,
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Load,
