@@ -35,7 +35,7 @@ impl RenderDriver {
         self.display.handle_event(event);
     }
 
-    pub fn render(&mut self, simulation: &Simulation) {
+    pub fn render(&mut self, simulation: &mut Simulation) {
         let (frame, view) = self.display.get_frame().unwrap();
         self.sim_renderer.render(&self.display, simulation, &view);
         self.gui_renderer.render(&self.display, simulation, &view);

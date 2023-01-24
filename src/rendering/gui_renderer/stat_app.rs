@@ -11,8 +11,8 @@ pub struct StatApp;
 
 impl StatApp {
     pub fn update(&mut self, ctx: &egui::Context, display: &Display, simulation: &Simulation) {
-        let time = simulation.resources.get::<Time>().unwrap();
-        let config = simulation.resources.get::<Config>().unwrap();
+        let time = simulation.world.get_resource::<Time>().unwrap();
+        let config = simulation.world.get_resource::<Config>().unwrap();
         let cam = &display.cam;
 
         egui::SidePanel::left("Debug Info").show(ctx, |ui| {
@@ -31,7 +31,7 @@ impl StatApp {
                     ui.end_row();
 
                     ui.label("Entities:");
-                    ui.label(format!("{:}", simulation.world.len()));
+                    ui.label(format!("{:}", simulation.world.entities().len()));
                     ui.end_row();
                 });
 

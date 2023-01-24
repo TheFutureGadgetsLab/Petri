@@ -11,7 +11,7 @@ pub struct PerfApp;
 impl PerfApp {
     pub fn update(&mut self, ctx: &egui::Context, _display: &Display, simulation: &Simulation) {
         // Reset timer at 10th tick to ignore startup lag
-        if simulation.resources.get::<Time>().unwrap().tick == 100 {
+        if simulation.world.get_resource::<Time>().unwrap().tick == 100 {
             for v in TIMING_DATABASE.write().values_mut() {
                 v.reset();
             }

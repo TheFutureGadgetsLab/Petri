@@ -1,7 +1,9 @@
 use std::time::{Duration, Instant};
 
+use bevy_ecs::prelude::*;
 use fps_counter::FPSCounter;
 
+#[derive(Resource)]
 pub struct Time {
     pub tick: u128,
     pub start_time: Instant,

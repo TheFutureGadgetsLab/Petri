@@ -1,5 +1,3 @@
-use legion::*;
-
 use crate::{
     rendering::Display,
     simulation::{Color, RigidCircle, Simulation},
@@ -47,10 +45,11 @@ impl VertexBuffer {
         }
     }
 
-    pub fn update(&mut self, display: &Display, simulation: &Simulation) -> u32 {
+    pub fn update(&mut self, display: &Display, simulation: &mut Simulation) -> u32 {
         time_func!("render.vertex_update");
 
-        let vertices: Vec<Vertex> = <(&RigidCircle, &Color)>::query()
+        let mut query = simulation.world.query::<(&RigidCircle, &Color)>();
+        let vertices: Vec<Vertex> = query
             .iter(&simulation.world)
             .map(|(circ, color)| Vertex::new(circ, &color.val))
             .collect();

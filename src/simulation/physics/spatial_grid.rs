@@ -1,9 +1,10 @@
+use bevy_ecs::prelude::*;
 use itertools::Itertools;
-use legion::Entity;
 use rayon::prelude::*;
 use spin::RwLock;
 use ultraviolet::Vec2;
 
+#[derive(Resource)]
 pub struct DenseGrid {
     /// log2(ncells_side)
     log2_side: u32,
@@ -87,6 +88,6 @@ impl Cell {
     }
 
     pub fn unlock_unsafe(&self) -> &Vec<(Vec2, Entity)> {
-        unsafe { self.ents.as_mut_ptr().as_ref().unwrap() }
+        unsafe { return &*self.ents.as_mut_ptr() }
     }
 }

@@ -1,6 +1,6 @@
-use legion::{storage::Component, *};
-use ultraviolet::Vec2;
+use bevy_ecs::prelude::*;
 
+use super::position_update::{update_positions, PositionUpdate};
 use crate::{
     config::Config,
     simulation::{physics::DenseGrid, RigidCircle},
@@ -8,84 +8,81 @@ use crate::{
 };
 
 pub struct PhysicsPipeline {
-    grid: DenseGrid,
+    system: Schedule,
 }
 
 impl PhysicsPipeline {
-    pub fn new(_world: &mut World, config: &Config) -> Self {
+    pub fn new(world: &mut World, config: &Config) -> Self {
         let grid = DenseGrid::new((config.cell_radius * 32.0) as u32, (config.bounds.1.x) as u32);
 
-        Self { grid }
+        let mut system = Schedule::from_world(world);
+        system.add_stage(PositionUpdate, SystemStage::parallel());
+        system.add_system_to_stage(PositionUpdate, update_positions);
+
+        world.insert_resource(grid);
+
+        Self { system }
     }
 
-    pub fn step(&mut self, world: &mut World, resources: &mut Resources) {
+    pub fn step(&mut self, world: &mut World) {
         time_func!("physics.step");
 
-        self.update_positions(world, resources);
+        self.update_positions(world);
         self.detect_collisions(world);
     }
 
-    fn update_positions(&mut self, world: &mut World, resources: &Resources) {
+    fn update_positions(&mut self, world: &mut World) {
         time_func!("physics.pos_update");
-
-        let bounds = resources.get::<Config>().unwrap().bounds;
-
-        self.grid.clear();
-        <(Entity, &mut RigidCircle)>::query().par_for_each_mut(world, |(entity, circ)| {
-            circ.vel = circ.to_vel;
-            circ.pos = circ.to_pos + circ.vel;
-
-            if ((circ.pos.x - circ.radius) <= bounds.0.x) || ((circ.pos.x + circ.radius) >= bounds.1.x) {
-                circ.vel.x = -circ.vel.x;
-            }
-            if ((circ.pos.y - circ.radius) <= bounds.0.y) || ((circ.pos.y + circ.radius) > bounds.1.y) {
-                circ.vel.y = -circ.vel.y;
-            }
-
-            circ.pos.clamp(
-                bounds.0 + Vec2::broadcast(circ.radius),
-                bounds.1 - Vec2::broadcast(circ.radius),
-            );
-            circ.to_vel = circ.vel;
-            circ.to_pos = circ.pos;
-            self.grid.insert(circ.pos, *entity);
-        });
+        self.system
+            .get_stage_mut::<SystemStage>(PositionUpdate)
+            .unwrap()
+            .run(world);
     }
 
     fn detect_collisions(&self, world: &mut World) {
         time_func!("physics.col_detect");
-
-        let mut q = <(Entity, &mut RigidCircle)>::query().filter(component::<RigidCircle>());
-        unsafe {
-            q.par_for_each_unchecked(world, |(ent, c)| {
-                let around = self.grid.query(c.pos, 2.0 * c.radius, *ent);
-                around.iter().for_each(|e| {
-                    elastic_collision(c, self.unsafe_component(world, *e));
-                });
-            });
-        }
-    }
-
-    #[allow(clippy::mut_from_ref)]
-    fn unsafe_component<'a, T: Component>(&self, world: &'a World, entity: Entity) -> &'a mut T {
-        unsafe {
-            world
-                .entry_ref(entity)
-                .unwrap()
-                .into_component_unchecked::<T>()
-                .unwrap()
-        }
     }
 }
 
-/// Elastic collision between two circles.
-/// Updates RigidCircles in place
-fn elastic_collision(a: &mut RigidCircle, b: &RigidCircle) {
-    let del = b.pos - a.pos;
-    let dist = del.mag();
-    let norm = dist.powi(2);
-    let vdel = b.vel - a.vel;
+fn collision_resolution(mut query: Query<Entity, With<RigidCircle>>, grid: Res<DenseGrid>) {
+    query.par_for_each_mut(1024, |entity| {
+        let circ = query.get_component_mut::<RigidCircle>(entity).unwrap();
+        let around = grid.query(circ.pos, 2.0 * circ.radius, entity);
+        around.iter().for_each(|e| {
+            let res = .get_component::<RigidCircle>(*e).unwrap();
+            elastic_collision(&mut circ, &res);
+        });
+    })
+}
 
-    a.to_vel += ((vdel).dot(del) / norm) * del;
-    a.to_pos -= del / dist * (a.radius * 2.0 - dist) * 0.5;
+fn elastic_collision(c1: &mut RigidCircle, c2: &RigidCircle) {
+    let mut normal = c2.pos - c1.pos;
+    let dist_sq = normal.mag_sq();
+    let radius_sum = c1.radius + c2.radius;
+    if dist_sq > radius_sum * radius_sum {
+        return;
+    }
+
+    normal.normalize();
+    let relative_velocity = c2.vel - c1.vel;
+    let velocity_along_normal = relative_velocity.dot(normal);
+
+    // Check if the circles are moving towards each other
+    if velocity_along_normal > 0.0 {
+        return;
+    }
+
+    // Calculate the impulse scalar
+    let e = 1.0; // coefficient of restitution
+    let j = -(1.0 + e) * velocity_along_normal;
+    // let j = j / (1.0 / c1.mass + 1.0 / c2.mass);
+    let j = j / 2.0;
+
+    // Apply the impulse
+    let impulse = j * normal;
+    // c1.to_vel += impulse / c1.mass;
+    c1.to_vel -= impulse;
+
+    // Update the positions
+    c1.to_pos = c1.pos + c1.to_vel;
 }

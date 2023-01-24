@@ -28,7 +28,7 @@ fn main() {
 
         match event {
             // Rendering
-            RedrawRequested(..) => renderer.render(&simulation),
+            RedrawRequested(..) => renderer.render(&mut simulation),
             // Updating simulation and queuing a redraw
             MainEventsCleared => {
                 if !simulation.update() {

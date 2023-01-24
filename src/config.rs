@@ -1,10 +1,11 @@
 use std::{env, fs::File};
 
+use bevy_ecs::prelude::*;
 use ron::de::from_reader;
 use serde::{Deserialize, Serialize};
 use ultraviolet::Vec2;
 
-#[derive(Debug, Deserialize, Serialize, Clone, Copy)]
+#[derive(Debug, Deserialize, Serialize, Clone, Copy, Resource)]
 pub struct Config {
     pub n_cells: u32,
     pub cell_radius: f32,

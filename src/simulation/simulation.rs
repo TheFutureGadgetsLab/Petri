@@ -1,4 +1,4 @@
-use legion::*;
+use bevy_ecs::prelude::*;
 
 use crate::{
     config::Config,
@@ -7,20 +7,18 @@ use crate::{
 
 pub struct Simulation {
     pub world: World,
-    pub resources: Resources,
     pub physics: PhysicsPipeline,
 }
 
 impl Simulation {
     pub fn new(config: Config) -> Simulation {
         let mut world = World::default();
-        let mut resources = Resources::default();
 
-        resources.insert(Time::default());
-        resources.insert(config);
+        world.insert_resource(Time::default());
+        world.insert_resource(config);
 
         for _i in 0..config.n_cells {
-            world.push((
+            world.spawn((
                 components::RigidCircle::new_rand(&config),
                 components::Color::new_rand(),
             ));
@@ -28,26 +26,23 @@ impl Simulation {
 
         let physics = PhysicsPipeline::new(&mut world, &config);
 
-        Simulation {
-            world,
-            resources,
-            physics,
-        }
+        Simulation { world, physics }
     }
 
     /// Returns false if the simulation should stop
     pub fn update(&mut self) -> bool {
         {
-            let mut timer = self.resources.get_mut::<Time>().unwrap();
-            let config = self.resources.get::<Config>().unwrap();
-
+            let mut timer = self.world.get_resource_mut::<Time>().unwrap();
             timer.tick();
-            if (config.max_ticks > 0) && (timer.tick > config.max_ticks) {
-                return false;
-            }
+        }
+        let timer = self.world.get_resource::<Time>().unwrap();
+        let config = self.world.get_resource::<Config>().unwrap();
+
+        if (config.max_ticks > 0) && (timer.tick > config.max_ticks) {
+            return false;
         }
 
-        self.physics.step(&mut self.world, &mut self.resources);
+        self.physics.step(&mut self.world);
 
         true
     }

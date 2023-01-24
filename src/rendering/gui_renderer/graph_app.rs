@@ -44,7 +44,7 @@ impl GridApp {
             ))
             .into();
 
-        let config = simulation.resources.get::<Config>().unwrap();
+        let config = simulation.world.get_resource::<Config>().unwrap();
         let path = vec![
             [config.bounds.0.x as f64, config.bounds.0.y as f64], // (xmin, ymin)
             [config.bounds.1.x as f64, config.bounds.0.y as f64], // (xmax, ymin)

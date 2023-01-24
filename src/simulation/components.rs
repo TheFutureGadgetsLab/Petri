@@ -1,9 +1,10 @@
+use bevy_ecs::prelude::*;
 use rand::prelude::*;
 use ultraviolet::Vec2;
 
 use crate::config::Config;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Component)]
 pub struct RigidCircle {
     pub pos: Vec2,
     pub vel: Vec2,
@@ -12,7 +13,7 @@ pub struct RigidCircle {
     pub to_vel: Vec2,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Component)]
 pub struct Color {
     pub val: [f32; 4],
 }

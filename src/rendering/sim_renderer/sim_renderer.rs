@@ -120,7 +120,7 @@ impl SimRenderer {
         }
     }
 
-    pub fn render(&mut self, display: &Display, simulation: &Simulation, view: &TextureView) {
+    pub fn render(&mut self, display: &Display, simulation: &mut Simulation, view: &TextureView) {
         time_func!("render.step");
         let cam_uniform = CameraUniform::from(&display.cam);
         display
