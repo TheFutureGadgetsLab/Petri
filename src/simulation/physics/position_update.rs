@@ -33,6 +33,6 @@ pub fn update_positions(
             .clamp(bounds.0 + Vec2::broadcast(r), bounds.1 - Vec2::broadcast(r));
         circ.to_vel = circ.vel;
         circ.to_pos = circ.pos;
-        grid.insert(circ.pos, entity);
+        grid.insert(circ.into(), entity);
     });
 }

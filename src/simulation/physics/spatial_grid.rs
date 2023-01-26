@@ -4,6 +4,8 @@ use rayon::prelude::*;
 use spin::RwLock;
 use ultraviolet::Vec2;
 
+use crate::simulation::RigidCircle;
+
 #[derive(Resource)]
 pub struct DenseGrid {
     /// log2(ncells_side)
@@ -11,7 +13,7 @@ pub struct DenseGrid {
     /// log2(cell_size)
     log2_cell: u32,
 
-    cells: Vec<Cell>,
+    pub cells: Vec<Cell>,
 }
 
 impl DenseGrid {
@@ -26,16 +28,15 @@ impl DenseGrid {
         }
     }
 
-    pub fn insert(&self, pos: Vec2, entity: Entity) {
-        let ind = self.flat_ind(pos);
+    pub fn insert(&self, circ: Collider, entity: Entity) {
+        let ind = self.flat_ind(&circ);
         let cell = self.cells.get(ind).unwrap();
-        cell.insert(pos, entity);
+        cell.insert(&circ, entity);
     }
 
-    #[inline]
-    pub fn flat_ind(&self, pos: Vec2) -> usize {
-        let x = (pos.x as u32) >> self.log2_cell;
-        let y = (pos.y as u32) >> self.log2_cell;
+    pub fn flat_ind(&self, circ: &Collider) -> usize {
+        let x = (circ.pos.x as u32) >> self.log2_cell;
+        let y = (circ.pos.y as u32) >> self.log2_cell;
         ((y << self.log2_side) | x) as usize
     }
 
@@ -43,18 +44,20 @@ impl DenseGrid {
         self.cells.par_iter().for_each(|cell| cell.clear());
     }
 
-    pub fn query(&self, pos: Vec2, radius: f32, ignore: Entity) -> Vec<Entity> {
+    pub fn query(&self, pos: Vec2, radius: f32, ignore: Entity) -> Vec<&Collider> {
         let radius2 = radius.powi(2);
         let mut hits = Vec::with_capacity(2);
 
         for ind in self.cell_range(pos, radius) {
             if let Some(cell) = self.cells.get(ind as usize) {
                 // We know this is at a read only stage. Safe to disregard lock
-                for (other, id) in cell.unlock_unsafe() {
-                    if (*id != ignore) && ((pos - *other).mag_sq() < radius2) {
-                        hits.push(*id);
+                hits.extend(cell.unlock_unsafe().iter().filter_map(|(other, id)| {
+                    if (*id != ignore) && ((pos - other.pos).mag_sq() < radius2) {
+                        Some(other)
+                    } else {
+                        None
                     }
-                }
+                }));
             }
         }
 
@@ -75,19 +78,47 @@ impl DenseGrid {
 
 #[derive(Default)]
 pub struct Cell {
-    ents: RwLock<Vec<(Vec2, Entity)>>,
+    ents: RwLock<Vec<(Collider, Entity)>>,
 }
 
 impl Cell {
-    pub fn insert(&self, pos: Vec2, entity: Entity) {
-        self.ents.write().push((pos, entity));
+    pub fn insert(&self, circ: &Collider, entity: Entity) {
+        self.ents.write().push((*circ, entity));
     }
 
     pub fn clear(&self) {
         self.ents.write().clear();
     }
 
-    pub fn unlock_unsafe(&self) -> &Vec<(Vec2, Entity)> {
+    pub fn unlock_unsafe(&self) -> &Vec<(Collider, Entity)> {
         unsafe { return &*self.ents.as_mut_ptr() }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct Collider {
+    pub pos: Vec2,
+    pub vel: Vec2,
+    pub radius: f32,
+}
+
+// From Mut<RigidCircle> to Collider, requires lifetime
+impl From<&RigidCircle> for Collider {
+    fn from(circ: &RigidCircle) -> Self {
+        Self {
+            pos: circ.pos,
+            vel: circ.vel,
+            radius: circ.radius,
+        }
+    }
+}
+
+impl From<Mut<'_, RigidCircle>> for Collider {
+    fn from(circ: Mut<'_, RigidCircle>) -> Self {
+        Self {
+            pos: circ.pos,
+            vel: circ.vel,
+            radius: circ.radius,
+        }
     }
 }
