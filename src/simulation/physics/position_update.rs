@@ -18,8 +18,7 @@ pub fn update_positions(
     grid.clear();
 
     query.par_for_each_mut(1024, |(mut circ, entity)| {
-        circ.vel = circ.to_vel;
-        circ.pos = circ.to_pos + circ.vel;
+        circ.pos = circ.pos + circ.vel;
 
         if ((circ.pos.x - circ.radius) <= bounds.0.x) || ((circ.pos.x + circ.radius) >= bounds.1.x) {
             circ.vel.x = -circ.vel.x;
@@ -31,8 +30,6 @@ pub fn update_positions(
         let r = circ.radius;
         circ.pos
             .clamp(bounds.0 + Vec2::broadcast(r), bounds.1 - Vec2::broadcast(r));
-        circ.to_vel = circ.vel;
-        circ.to_pos = circ.pos;
-        grid.insert(circ.into(), entity);
+        grid.insert(&circ, entity);
     });
 }

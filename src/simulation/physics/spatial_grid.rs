@@ -28,13 +28,13 @@ impl DenseGrid {
         }
     }
 
-    pub fn insert(&self, circ: Collider, entity: Entity) {
-        let ind = self.flat_ind(&circ);
+    pub fn insert(&self, circ: &RigidCircle, entity: Entity) {
+        let ind = self.flat_ind(circ);
         let cell = self.cells.get(ind).unwrap();
-        cell.insert(&circ, entity);
+        cell.insert(circ, entity);
     }
 
-    pub fn flat_ind(&self, circ: &Collider) -> usize {
+    pub fn flat_ind(&self, circ: &RigidCircle) -> usize {
         let x = (circ.pos.x as u32) >> self.log2_cell;
         let y = (circ.pos.y as u32) >> self.log2_cell;
         ((y << self.log2_side) | x) as usize
@@ -44,9 +44,9 @@ impl DenseGrid {
         self.cells.par_iter().for_each(|cell| cell.clear());
     }
 
-    pub fn query(&self, pos: Vec2, radius: f32, ignore: Entity) -> Vec<&Collider> {
+    pub fn query(&self, pos: Vec2, radius: f32, ignore: Entity) -> Vec<&RigidCircle> {
         let radius2 = radius.powi(2);
-        let mut hits = Vec::with_capacity(2);
+        let mut hits = Vec::new();
 
         for ind in self.cell_range(pos, radius) {
             if let Some(cell) = self.cells.get(ind as usize) {
@@ -78,11 +78,11 @@ impl DenseGrid {
 
 #[derive(Default)]
 pub struct Cell {
-    ents: RwLock<Vec<(Collider, Entity)>>,
+    ents: RwLock<Vec<(RigidCircle, Entity)>>,
 }
 
 impl Cell {
-    pub fn insert(&self, circ: &Collider, entity: Entity) {
+    pub fn insert(&self, circ: &RigidCircle, entity: Entity) {
         self.ents.write().push((*circ, entity));
     }
 
@@ -90,35 +90,7 @@ impl Cell {
         self.ents.write().clear();
     }
 
-    pub fn unlock_unsafe(&self) -> &Vec<(Collider, Entity)> {
+    pub fn unlock_unsafe(&self) -> &Vec<(RigidCircle, Entity)> {
         unsafe { return &*self.ents.as_mut_ptr() }
-    }
-}
-
-#[derive(Clone, Copy)]
-pub struct Collider {
-    pub pos: Vec2,
-    pub vel: Vec2,
-    pub radius: f32,
-}
-
-// From Mut<RigidCircle> to Collider, requires lifetime
-impl From<&RigidCircle> for Collider {
-    fn from(circ: &RigidCircle) -> Self {
-        Self {
-            pos: circ.pos,
-            vel: circ.vel,
-            radius: circ.radius,
-        }
-    }
-}
-
-impl From<Mut<'_, RigidCircle>> for Collider {
-    fn from(circ: Mut<'_, RigidCircle>) -> Self {
-        Self {
-            pos: circ.pos,
-            vel: circ.vel,
-            radius: circ.radius,
-        }
     }
 }
