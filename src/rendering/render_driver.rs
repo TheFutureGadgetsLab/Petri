@@ -5,14 +5,16 @@ use winit::{
 };
 
 use crate::{
+    config::Config,
     rendering::{Display, GUIRenderer, SimRenderer},
-    simulation::Simulation,
+    simulation::{Simulation, Ticker},
 };
 
 pub struct RenderDriver {
     pub display: Display,
     pub sim_renderer: SimRenderer,
     pub gui_renderer: GUIRenderer,
+    pub ticker: Ticker,
 }
 
 impl RenderDriver {
@@ -26,6 +28,7 @@ impl RenderDriver {
             display,
             sim_renderer,
             gui_renderer,
+            ticker: Ticker::default(),
         }
     }
 
@@ -36,6 +39,8 @@ impl RenderDriver {
     }
 
     pub fn render(&mut self, simulation: &mut Simulation) {
+        self.ticker.tick();
+
         let (frame, view) = self.display.get_frame().unwrap();
         self.sim_renderer.render(&self.display, simulation, &view);
         self.gui_renderer.render(&self.display, simulation, &view);
@@ -57,6 +62,14 @@ impl RenderDriver {
             }
             _ => {}
         }
+    }
+
+    pub fn should_redraw(&self, config: &Config) -> bool {
+        let target_delta = 1.0 / (config.max_render_fps as f32);
+        if self.ticker.delta_time().as_secs_f32() > target_delta {
+            return true;
+        }
+        false
     }
 }
 

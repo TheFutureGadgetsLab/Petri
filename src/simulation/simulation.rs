@@ -2,7 +2,7 @@ use bevy_ecs::prelude::*;
 
 use crate::{
     config::Config,
-    simulation::{components, time::Time, PhysicsPipeline},
+    simulation::{components, time::Ticker, PhysicsPipeline},
 };
 
 pub struct Simulation {
@@ -14,7 +14,7 @@ impl Simulation {
     pub fn new(config: Config) -> Simulation {
         let mut world = World::default();
 
-        world.insert_resource(Time::default());
+        world.insert_resource(Ticker::default());
         world.insert_resource(config);
 
         for _i in 0..config.n_cells {
@@ -30,20 +30,31 @@ impl Simulation {
     }
 
     /// Returns false if the simulation should stop
-    pub fn update(&mut self) -> bool {
-        {
-            let mut timer = self.world.get_resource_mut::<Time>().unwrap();
-            timer.tick();
-        }
-        let timer = self.world.get_resource::<Time>().unwrap();
-        let config = self.world.get_resource::<Config>().unwrap();
-
-        if (config.max_ticks > 0) && (timer.tick > config.max_ticks) {
-            return false;
-        }
-
+    pub fn step(&mut self) {
+        self._tick_timer();
         self.physics.step(&mut self.world);
+    }
 
-        true
+    fn _tick_timer(&mut self) {
+        let mut timer = self.world.get_resource_mut::<Ticker>().unwrap();
+        timer.tick();
+    }
+
+    pub fn get_config(&self) -> &Config {
+        return self.world.get_resource::<Config>().unwrap();
+    }
+
+    pub fn get_config_mut(&mut self) -> Mut<Config> {
+        let config = self.world.get_resource_mut::<Config>().unwrap();
+        config
+    }
+
+    pub fn should_step(&self) -> bool {
+        let target_delta = 1.0 / (self.get_config().max_sim_tps as f32);
+        let timer = self.world.get_resource::<Ticker>().unwrap();
+        if timer.delta_time().as_secs_f32() > target_delta {
+            return true;
+        }
+        false
     }
 }

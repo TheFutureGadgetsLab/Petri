@@ -11,11 +11,7 @@ use winit::{
 use crate::{config::build_config, rendering::RenderDriver, simulation::Simulation};
 
 fn main() {
-    wgpu_subscriber::initialize_default_subscriber(None);
-
-    let config = build_config();
-
-    let mut simulation = Simulation::new(config);
+    let mut simulation = Simulation::new(build_config());
 
     let event_loop = EventLoop::new();
     let mut renderer = RenderDriver::new(&mut simulation, &event_loop);
@@ -29,13 +25,13 @@ fn main() {
         match event {
             // Rendering
             RedrawRequested(..) => renderer.render(&mut simulation),
-            // Updating simulation and queuing a redraw
             MainEventsCleared => {
-                if !simulation.update() {
-                    // Exit if simulation should stop
-                    *control_flow = ControlFlow::Exit;
+                if simulation.should_step() {
+                    simulation.step();
                 }
-                renderer.request_render()
+                if renderer.should_redraw(simulation.get_config()) {
+                    renderer.request_render()
+                }
             }
             // Handle changes to wndow
             WindowEvent { event, .. } => renderer.handle_window_event(&event, control_flow),

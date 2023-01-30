@@ -13,7 +13,7 @@ naga = "0.10.0"
 egui = "0.20.1"
 egui-wgpu = "0.20.0"
 egui-winit = "0.20.1"
-wgpu-subscriber = "0.1.0"
+num-format = "0.4.4"
 
 ####################
 # Simulation
@@ -24,7 +24,7 @@ rayon = "1.6.1"
 rand = "0.8.5"
 bevy_ecs = "0.9.1"
 bevy_tasks = "0.9.1"
-futures = "0.3.25"
+futures = "0.3.26"
 hdrhistogram = "7.5.2"
 lazy_static = "1.4.0"
 spin = { version = "0.9.4", features = ["rwlock", "default"]}

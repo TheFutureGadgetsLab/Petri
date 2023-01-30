@@ -196,11 +196,12 @@ impl PetriEventHandler for SimRenderer {
         input: &winit::event::KeyboardInput,
     ) {
         if input.virtual_keycode.is_some() {
+            let delta = 10.0;
             match input.virtual_keycode.unwrap() {
-                VirtualKeyCode::Left => display.cam.translate_by([1.0, 0.0].into()),
-                VirtualKeyCode::Right => display.cam.translate_by([-1.0, 0.0].into()),
-                VirtualKeyCode::Up => display.cam.translate_by([0.0, -1.0].into()),
-                VirtualKeyCode::Down => display.cam.translate_by([0.0, 1.0].into()),
+                VirtualKeyCode::Left => display.cam.translate_by([delta, 0.0].into()),
+                VirtualKeyCode::Right => display.cam.translate_by([-delta, 0.0].into()),
+                VirtualKeyCode::Up => display.cam.translate_by([0.0, -delta].into()),
+                VirtualKeyCode::Down => display.cam.translate_by([0.0, delta].into()),
                 _ => {}
             }
         }

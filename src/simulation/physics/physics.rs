@@ -48,7 +48,10 @@ impl PhysicsPipeline {
 
     fn build_grid(&mut self, world: &mut World) {
         time_func!("physics.grid_build");
-        self.scheduler.get_stage_mut::<SystemStage>(GridBuild).unwrap().run(world);
+        self.scheduler
+            .get_stage_mut::<SystemStage>(GridBuild)
+            .unwrap()
+            .run(world);
     }
 
     fn resolve_collisions(&mut self, world: &mut World) {

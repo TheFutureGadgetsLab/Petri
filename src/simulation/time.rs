@@ -1,10 +1,11 @@
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use bevy_ecs::prelude::*;
 use fps_counter::FPSCounter;
+use quanta::Instant;
 
 #[derive(Resource)]
-pub struct Time {
+pub struct Ticker {
     pub tick: u128,
     pub start_time: Instant,
     pub last_tick_time: Instant,
@@ -13,7 +14,7 @@ pub struct Time {
     tick_counter: FPSCounter,
 }
 
-impl Default for Time {
+impl Default for Ticker {
     fn default() -> Self {
         let now = Instant::now();
 
@@ -28,7 +29,7 @@ impl Default for Time {
 }
 
 #[allow(dead_code)]
-impl Time {
+impl Ticker {
     pub fn tick(&mut self) {
         self.tick += 1;
         self.tick_rate = self.tick_counter.tick();

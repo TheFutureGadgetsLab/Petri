@@ -10,7 +10,9 @@ pub struct Config {
     pub n_cells: u32,
     pub cell_radius: f32,
     pub bounds: (Vec2, Vec2),
-    pub max_ticks: u128, // 0 = infinite
+
+    pub max_render_fps: u64,
+    pub max_sim_tps: u64,
 }
 
 pub fn build_config() -> Config {

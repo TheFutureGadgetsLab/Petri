@@ -26,7 +26,6 @@ impl GUIRenderer {
         let context = egui::Context::default();
         context.set_pixels_per_point(display.window.scale_factor() as f32);
 
-        // We use the egui_wgpu_backend crate as the render backend.
         let egui_rpass = Renderer::new(&display.device, display.surface_config.format, None, 1);
 
         Self {

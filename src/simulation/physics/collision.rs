@@ -6,13 +6,10 @@ use crate::simulation::{physics::DenseGrid, RigidCircle};
 #[derive(StageLabel)]
 pub struct GridBuild;
 
-pub fn grid_build(
-    mut query: Query<(&RigidCircle, Entity)>,
-    mut grid: ResMut<DenseGrid>
-) {
+pub fn grid_build(mut query: Query<(&RigidCircle, Entity)>, mut grid: ResMut<DenseGrid>) {
     grid.clear();
     query.par_for_each_mut(1024, |(circ, entity)| {
-        grid.insert(&circ, entity);
+        grid.insert(circ, entity);
     })
 }
 
@@ -38,6 +35,5 @@ fn singular_resolution(c1: &RigidCircle, c2: &RigidCircle) -> Vec2 {
     if vel_along_norm > 0.0 {
         return impulse;
     }
-    let impulse = vel_along_norm * normal;
-    return impulse;
+    vel_along_norm * normal
 }

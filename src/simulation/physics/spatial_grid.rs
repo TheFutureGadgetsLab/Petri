@@ -9,9 +9,9 @@ use crate::simulation::RigidCircle;
 #[derive(Resource)]
 pub struct DenseGrid {
     /// log2(ncells_side)
-    log2_side: u32,
+    pub log2_side: u32,
     /// log2(cell_size)
-    log2_cell: u32,
+    pub log2_cell: u32,
 
     pub cells: Vec<Cell>,
 }
@@ -91,6 +91,6 @@ impl Cell {
     }
 
     pub fn unlock_unsafe(&self) -> &Vec<(RigidCircle, Entity)> {
-        unsafe { return &*self.ents.as_mut_ptr() }
+        unsafe { &*self.ents.as_mut_ptr() }
     }
 }

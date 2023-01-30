@@ -4,6 +4,6 @@ pub mod simulation;
 mod time;
 
 pub use components::*;
-pub use physics::PhysicsPipeline;
+pub use physics::{DenseGrid, PhysicsPipeline};
 pub use simulation::*;
-pub use time::Time;
+pub use time::Ticker;

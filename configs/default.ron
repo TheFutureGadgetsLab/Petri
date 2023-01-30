@@ -1,9 +1,11 @@
 Config(
-    n_cells: 600_000,
+    n_cells: 10_000,
     cell_radius: 2.0,
     bounds: (
         (x: 0.0,    y: 0.0), 
-        (x: 8192.0, y: 8129.0), 
+        (x: 1024.0, y: 1024.0), 
     ),
-    max_ticks: 0, // 0 = infinite
+
+    max_render_fps: 60,
+    max_sim_tps: 60,
 ) 
