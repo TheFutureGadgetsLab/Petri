@@ -2,7 +2,7 @@ use egui::{
     epaint::Color32,
     plot::{Line, Plot, PlotPoints, PlotUi},
     style::Margin,
-    Frame, Sense,
+    Frame,
 };
 use ultraviolet::Vec2;
 
