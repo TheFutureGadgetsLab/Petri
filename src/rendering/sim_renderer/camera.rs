@@ -36,7 +36,7 @@ impl Camera {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable, Default)]
 pub struct CameraUniform {
     u_translation: [f32; 2],
     u_window_size: [f32; 2],

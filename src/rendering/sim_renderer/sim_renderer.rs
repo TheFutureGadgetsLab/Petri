@@ -1,24 +1,20 @@
+use std::sync::Arc;
+
 use bytemuck;
+use egui_wgpu::Renderer;
 use naga;
-use ultraviolet::Vec2;
-use wgpu::{ShaderModuleDescriptor, TextureView};
-use winit::event::VirtualKeyCode;
+use wgpu::ShaderModuleDescriptor;
 
 use crate::{
-    rendering::{camera::CameraUniform, Display, PetriEventHandler, Vertex, VertexBuffer},
+    rendering::{camera::CameraUniform, Display, Vertex, VertexBuffer},
     simulation::Simulation,
     timing::timer::time_func,
 };
 
-pub struct SimRenderer {
-    uniforms_ubo: wgpu::Buffer,
-    bind_group: wgpu::BindGroup,
-    render_pipeline: wgpu::RenderPipeline,
-    vertex_buffer: VertexBuffer,
-}
+pub struct SimRenderer;
 
 impl SimRenderer {
-    pub fn new(display: &Display, _simulation: &mut Simulation) -> Self {
+    pub fn new(display: &Display, _simulation: &mut Simulation, renderer: &mut egui_wgpu::Renderer) -> Self {
         let uniforms_buffer_byte_size = std::mem::size_of::<CameraUniform>() as wgpu::BufferAddress;
         let uniforms_ubo = display.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Uniforms ubo"),
@@ -112,98 +108,77 @@ impl SimRenderer {
             multisample: wgpu::MultisampleState::default(),
         });
 
-        Self {
-            uniforms_ubo,
-            bind_group,
-            render_pipeline,
-            vertex_buffer: VertexBuffer::default(display),
-        }
+        let resources = SimRenderResources::new(render_pipeline, bind_group, uniforms_ubo, display);
+
+        renderer.paint_callback_resources.insert(resources);
+
+        Self {}
     }
 
-    pub fn render(&mut self, display: &Display, simulation: &mut Simulation, view: &TextureView) {
+    pub fn render(&mut self, display: &Display, simulation: &mut Simulation, ctx: &mut Renderer, ui: &mut egui::Ui) {
         time_func!("render.step");
         let cam_uniform = CameraUniform::from(&display.cam);
-        display
-            .queue
-            .write_buffer(&self.uniforms_ubo, 0, bytemuck::cast_slice(&[cam_uniform]));
 
-        let mut encoder = display.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("Render Encoder"),
-        });
+        let resources = ctx.paint_callback_resources.get_mut::<SimRenderResources>().unwrap();
 
-        let n_vertices = self.vertex_buffer.update(display, simulation);
+        resources.vertex_buffer.update(simulation);
+        resources.camera_uniform = cam_uniform;
 
-        {
-            // Set up render pass and associate the render pipeline we made
-            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Render Pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.0,
-                            g: 0.0,
-                            b: 0.0,
-                            a: 1.0,
-                        }),
-                        store: true,
-                    },
-                })],
-                depth_stencil_attachment: None,
+        let cb = egui_wgpu::CallbackFn::new()
+            .prepare(move |device, queue, _encoder, paint_callback_resources| {
+                let resources: &SimRenderResources = paint_callback_resources.get().unwrap();
+                resources.prepare(device, queue);
+                Vec::new()
+            })
+            .paint(move |_info, render_pass, paint_callback_resources| {
+                let resources: &SimRenderResources = paint_callback_resources.get().unwrap();
+                resources.paint(render_pass);
             });
-            render_pass.set_pipeline(&self.render_pipeline);
-            render_pass.set_vertex_buffer(0, self.vertex_buffer.buf.slice(..));
-            render_pass.set_bind_group(0, &self.bind_group, &[]);
-            render_pass.draw(0..n_vertices, 0..1);
-        }
 
-        // Submit will accept anything that implements IntoIter
-        // Submits the command buffer
-        display.queue.submit(std::iter::once(encoder.finish()));
+        let rect = ui.min_rect();
+        let callback = egui::PaintCallback {
+            rect,
+            callback: Arc::new(cb),
+        };
+
+        ui.painter().add(callback);
     }
 }
 
-impl PetriEventHandler for SimRenderer {
-    fn handle_resize(
-        &mut self,
-        display: &mut Display,
-        _simulation: &mut Simulation,
-        size: &winit::dpi::PhysicalSize<u32>,
-    ) {
-        display.cam.resize(size.width as _, size.height as _);
-    }
+struct SimRenderResources {
+    pipeline: wgpu::RenderPipeline,
+    bind_group: wgpu::BindGroup,
+    uniform_buffer: wgpu::Buffer,
 
-    fn handle_scroll(&mut self, display: &mut Display, _simulation: &mut Simulation, delta: &f32) {
-        display.cam.zoom *= 1.0 + delta.signum() * 0.1;
-    }
+    vertex_buffer: VertexBuffer,
+    camera_uniform: CameraUniform,
+}
 
-    fn handle_mouse_move(
-        &mut self,
-        display: &mut Display,
-        _simulation: &mut Simulation,
-        _pos: &winit::dpi::PhysicalPosition<f64>,
-    ) {
-        if display.mouse.buttons[0].held {
-            display.cam.translate_by(display.mouse.delta * Vec2::new(1.0, -1.0));
+impl SimRenderResources {
+    fn new(
+        pipeline: wgpu::RenderPipeline,
+        bind_group: wgpu::BindGroup,
+        uniform_buffer: wgpu::Buffer,
+        display: &Display,
+    ) -> Self {
+        Self {
+            pipeline,
+            bind_group,
+            uniform_buffer,
+            vertex_buffer: VertexBuffer::default(display),
+            camera_uniform: CameraUniform::default(),
         }
     }
 
-    fn handle_keyboard_input(
-        &mut self,
-        display: &mut Display,
-        _simulation: &mut Simulation,
-        input: &winit::event::KeyboardInput,
-    ) {
-        if input.virtual_keycode.is_some() {
-            let delta = 10.0;
-            match input.virtual_keycode.unwrap() {
-                VirtualKeyCode::Left => display.cam.translate_by([delta, 0.0].into()),
-                VirtualKeyCode::Right => display.cam.translate_by([-delta, 0.0].into()),
-                VirtualKeyCode::Up => display.cam.translate_by([0.0, -delta].into()),
-                VirtualKeyCode::Down => display.cam.translate_by([0.0, delta].into()),
-                _ => {}
-            }
-        }
+    fn prepare(&self, _device: &wgpu::Device, queue: &wgpu::Queue) {
+        self.vertex_buffer.write(queue);
+        queue.write_buffer(&self.uniform_buffer, 0, bytemuck::cast_slice(&[self.camera_uniform]));
+    }
+
+    fn paint<'rp>(&'rp self, render_pass: &mut wgpu::RenderPass<'rp>) {
+        render_pass.set_pipeline(&self.pipeline);
+        render_pass.set_vertex_buffer(0, self.vertex_buffer.buf.slice(..));
+        render_pass.set_bind_group(0, &self.bind_group, &[]);
+        render_pass.draw(0..(self.vertex_buffer.cur_verticies.len() as u32), 0..1);
     }
 }

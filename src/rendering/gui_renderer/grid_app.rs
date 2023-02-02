@@ -1,8 +1,6 @@
 use egui::{
     epaint::Color32,
     plot::{Line, Plot, PlotPoints, PlotUi},
-    style::Margin,
-    Frame,
 };
 use ultraviolet::Vec2;
 
@@ -24,18 +22,11 @@ impl Default for GridApp {
 }
 
 impl GridApp {
-    pub fn update(&mut self, ctx: &egui::Context, display: &Display, simulation: &Simulation) {
-        let panel = egui::CentralPanel::default().frame(
-            Frame::dark_canvas(&ctx.style())
-                .fill(Color32::TRANSPARENT)
-                .inner_margin(Margin::same(0.0)),
-        );
-        panel.show(ctx, |ui| {
-            let base_plot = self.build_base_plot(display);
-            base_plot.show(ui, |plot_ui| {
-                self.show_sim_grid(plot_ui, simulation);
-                self.show_spatial_grid(plot_ui, simulation);
-            });
+    pub fn update(&mut self, ui: &mut egui::Ui, display: &Display, simulation: &Simulation) {
+        let base_plot = self.build_base_plot(display);
+        base_plot.show(ui, |plot_ui| {
+            self.show_sim_grid(plot_ui, simulation);
+            self.show_spatial_grid(plot_ui, simulation);
         });
     }
 
@@ -75,9 +66,6 @@ impl GridApp {
             let line = Line::new(PlotPoints::from(path)).color(Color32::LIGHT_BLUE);
             plot_ui.line(line);
         }
-
-        // let hline = Line::new(vec![vec![0.1, 0.2]]);
-        // plot_ui.line(hline);
     }
 
     fn build_base_plot(&self, display: &Display) -> Plot {

@@ -24,6 +24,7 @@ impl Vertex {
 
 pub struct VertexBuffer {
     pub buf: wgpu::Buffer,
+    pub cur_verticies: Vec<Vertex>,
     pub size: usize,
 }
 
@@ -42,22 +43,21 @@ impl VertexBuffer {
         VertexBuffer {
             buf: vertex_buffer,
             size,
+            cur_verticies: Vec::with_capacity(size),
         }
     }
 
-    pub fn update(&mut self, display: &Display, simulation: &mut Simulation) -> u32 {
+    pub fn update(&mut self, simulation: &mut Simulation) {
         time_func!("render.vertex_update");
 
         let mut query = simulation.world.query::<(&RigidCircle, &Color)>();
-        let vertices: Vec<Vertex> = query
+        self.cur_verticies = query
             .iter(&simulation.world)
             .map(|(circ, color)| Vertex::new(circ, &color.val))
             .collect();
+    }
 
-        display
-            .queue
-            .write_buffer(&self.buf, 0, bytemuck::cast_slice(&vertices));
-
-        vertices.len() as u32
+    pub fn write(&self, queue: &wgpu::Queue) {
+        queue.write_buffer(&self.buf, 0, bytemuck::cast_slice(&self.cur_verticies));
     }
 }

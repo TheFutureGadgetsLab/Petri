@@ -9,7 +9,7 @@ use crate::{
 pub struct PerfApp;
 
 impl PerfApp {
-    pub fn update(&mut self, ctx: &egui::Context, _display: &Display, simulation: &Simulation) {
+    pub fn update(&mut self, ui: &mut egui::Ui, _display: &Display, simulation: &Simulation) {
         // Reset timer at 10th tick to ignore startup lag
         if simulation.world.get_resource::<Ticker>().unwrap().tick == 100 {
             for v in TIMING_DATABASE.write().values_mut() {
@@ -17,10 +17,8 @@ impl PerfApp {
             }
         }
 
-        egui::SidePanel::right("Performance Info").show(ctx, |ui| {
-            ui.style_mut().wrap = Some(false);
-            self.draw(ui);
-        });
+        ui.style_mut().wrap = Some(false);
+        self.draw(ui)
     }
 
     fn draw(&self, ui: &mut egui::Ui) {

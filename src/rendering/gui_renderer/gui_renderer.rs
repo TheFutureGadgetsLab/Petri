@@ -1,3 +1,4 @@
+use egui::{style::Margin, Color32, Frame};
 use egui_wgpu::renderer::{Renderer, ScreenDescriptor};
 use egui_winit::State;
 use wgpu::TextureView;
@@ -6,15 +7,16 @@ use winit::event_loop::EventLoop;
 use crate::{
     rendering::{
         gui_renderer::{GridApp, PerfApp, StatApp},
-        Display, PetriEventHandler,
+        sim_renderer::SimRenderer,
+        Display,
     },
     simulation::Simulation,
 };
 
 pub struct GUIRenderer {
     state: State,
-    context: egui::Context,
-    rpass: Renderer,
+    pub context: egui::Context,
+    pub rpass: Renderer,
     debug: StatApp,
     grid: GridApp,
     perf: PerfApp,
@@ -38,14 +40,35 @@ impl GUIRenderer {
         }
     }
 
-    pub fn render(&mut self, display: &Display, simulation: &Simulation, view: &TextureView) {
+    pub fn pre_render(&mut self, display: &Display) {
         let input = self.state.take_egui_input(&display.window);
         self.context.begin_frame(input);
+    }
 
-        self.grid.update(&self.context, display, simulation);
-        self.debug.update(&self.context, display, simulation);
-        self.perf.update(&self.context, display, simulation);
+    pub fn render(&mut self, display: &Display, simulation: &mut Simulation, sim_renderer: &mut SimRenderer) {
+        let lpanel = egui::SidePanel::left("Debug Info");
+        let rpanel = egui::SidePanel::right("Debug Info");
+        let cpanel = egui::CentralPanel::default().frame(
+            Frame::dark_canvas(&self.context.style())
+                .fill(Color32::TRANSPARENT)
+                .inner_margin(Margin::same(0.0)),
+        );
 
+        lpanel.show(&self.context, |ui| {
+            self.debug.update(ui, display, simulation);
+        });
+
+        rpanel.show(&self.context, |ui| {
+            self.perf.update(ui, display, simulation);
+        });
+
+        cpanel.show(&self.context, |ui| {
+            self.grid.update(ui, display, simulation);
+            sim_renderer.render(display, simulation, &mut self.rpass, ui)
+        });
+    }
+
+    pub fn post_render(&mut self, display: &Display, view: &TextureView) {
         // End the UI frame. We could now handle the output and draw the UI with the backend.
         let output = self.context.end_frame();
         let paint_jobs = self.context.tessellate(output.shapes);
@@ -82,7 +105,12 @@ impl GUIRenderer {
                     view,
                     resolve_target: None,
                     ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Load,
+                        load: wgpu::LoadOp::Clear(wgpu::Color {
+                            r: 0.0,
+                            g: 0.0,
+                            b: 0.0,
+                            a: 1.0,
+                        }),
                         store: true,
                     },
                 })],
@@ -93,16 +121,5 @@ impl GUIRenderer {
         }
 
         display.queue.submit(std::iter::once(encoder.finish()));
-    }
-}
-
-impl PetriEventHandler for GUIRenderer {
-    fn forward_event<T>(
-        &mut self,
-        _display: &mut Display,
-        _simulation: &mut Simulation,
-        _event: &winit::event::Event<T>,
-    ) {
-        // self.state.on_event(&self.context, event);
     }
 }

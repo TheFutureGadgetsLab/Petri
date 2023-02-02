@@ -1,6 +1,6 @@
+use ultraviolet::Vec2;
 use winit::{
-    dpi::{PhysicalPosition, PhysicalSize},
-    event::{Event, MouseScrollDelta, WindowEvent::*},
+    event::{Event, MouseScrollDelta, VirtualKeyCode, WindowEvent::*},
     event_loop::{ControlFlow, EventLoop},
 };
 
@@ -21,8 +21,8 @@ impl RenderDriver {
     pub fn new(simulation: &mut Simulation, event_loop: &EventLoop<()>) -> Self {
         let display = Display::new(event_loop);
 
-        let sim_renderer = SimRenderer::new(&display, simulation);
-        let gui_renderer = GUIRenderer::new(&display, simulation, event_loop);
+        let mut gui_renderer = GUIRenderer::new(&display, simulation, event_loop);
+        let sim_renderer = SimRenderer::new(&display, simulation, &mut gui_renderer.rpass);
 
         Self {
             display,
@@ -32,9 +32,34 @@ impl RenderDriver {
         }
     }
 
-    pub fn handle_event(&mut self, simulation: &mut Simulation, event: &Event<()>) {
-        self.sim_renderer.handle_event(&mut self.display, simulation, event);
-        self.gui_renderer.handle_event(&mut self.display, simulation, event);
+    pub fn handle_event(&mut self, _simulation: &mut Simulation, event: &Event<()>) {
+        let delta = 10.0;
+        match event {
+            Event::WindowEvent { event, .. } => match event {
+                KeyboardInput { input, .. } => match input.virtual_keycode.unwrap() {
+                    VirtualKeyCode::Left => self.display.cam.translate_by([delta, 0.0].into()),
+                    VirtualKeyCode::Right => self.display.cam.translate_by([-delta, 0.0].into()),
+                    VirtualKeyCode::Up => self.display.cam.translate_by([0.0, -delta].into()),
+                    VirtualKeyCode::Down => self.display.cam.translate_by([0.0, delta].into()),
+                    _ => {}
+                },
+                MouseWheel {
+                    delta: MouseScrollDelta::LineDelta(_, y),
+                    ..
+                } => {
+                    self.display.cam.zoom *= 1.0 + y.signum() * 0.1;
+                }
+                CursorMoved { .. } => {
+                    if self.display.mouse.buttons[0].held {
+                        self.display
+                            .cam
+                            .translate_by(self.display.mouse.delta * Vec2::new(1.0, -1.0));
+                    }
+                }
+                _ => {}
+            },
+            _ => {}
+        }
         self.display.handle_event(event);
     }
 
@@ -42,8 +67,15 @@ impl RenderDriver {
         self.ticker.tick();
 
         let (frame, view) = self.display.get_frame().unwrap();
-        self.sim_renderer.render(&self.display, simulation, &view);
-        self.gui_renderer.render(&self.display, simulation, &view);
+
+        self.gui_renderer.pre_render(&self.display);
+        self.gui_renderer
+            .render(&self.display, simulation, &mut self.sim_renderer);
+        self.gui_renderer.post_render(&self.display, &view);
+
+        // cpanel.show(&self.gui_renderer.context, |ui| {
+        // self.sim_renderer.render(ui, &self.display, simulation);
+        // });
         frame.present();
     }
 
@@ -70,49 +102,5 @@ impl RenderDriver {
             return true;
         }
         false
-    }
-}
-
-pub trait PetriEventHandler {
-    fn handle_event<T>(&mut self, display: &mut Display, simulation: &mut Simulation, event: &Event<T>) {
-        self.forward_event(display, simulation, event);
-        if let Event::WindowEvent { ref event, .. } = event {
-            match event {
-                Resized(size) => {
-                    self.handle_resize(display, simulation, size);
-                }
-                MouseWheel {
-                    delta: MouseScrollDelta::LineDelta(_, y),
-                    ..
-                } => {
-                    self.handle_scroll(display, simulation, y);
-                }
-                CursorMoved { position, .. } => {
-                    self.handle_mouse_move(display, simulation, position);
-                }
-                KeyboardInput { input, .. } => {
-                    self.handle_keyboard_input(display, simulation, input);
-                }
-                _ => {}
-            }
-        }
-    }
-
-    fn forward_event<T>(&mut self, _display: &mut Display, _simulation: &mut Simulation, _event: &Event<T>) {}
-    fn handle_resize(&mut self, _display: &mut Display, _simulation: &mut Simulation, _size: &PhysicalSize<u32>) {}
-    fn handle_scroll(&mut self, _display: &mut Display, _simulation: &mut Simulation, _delta: &f32) {}
-    fn handle_mouse_move(
-        &mut self,
-        _display: &mut Display,
-        _simulation: &mut Simulation,
-        _pos: &PhysicalPosition<f64>,
-    ) {
-    }
-    fn handle_keyboard_input(
-        &mut self,
-        _display: &mut Display,
-        _simulation: &mut Simulation,
-        _input: &winit::event::KeyboardInput,
-    ) {
     }
 }
