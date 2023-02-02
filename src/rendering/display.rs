@@ -139,6 +139,8 @@ impl Display {
         self.surface_config.width = width;
         self.surface_config.height = height;
         self.surface.configure(&self.device, &self.surface_config);
+
+        self.cam.resize(width as f32, height as f32);
     }
 
     pub fn get_frame(&self) -> Result<(SurfaceTexture, TextureView), SurfaceError> {

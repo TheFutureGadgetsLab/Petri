@@ -6,7 +6,7 @@ use winit::event_loop::EventLoop;
 
 use crate::{
     rendering::{
-        gui_renderer::{GridApp, PerfApp, StatApp},
+        gui_apps::{GridApp, PerfApp, StatApp},
         sim_renderer::SimRenderer,
         Display,
     },

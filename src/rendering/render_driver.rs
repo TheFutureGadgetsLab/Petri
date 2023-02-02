@@ -32,10 +32,52 @@ impl RenderDriver {
         }
     }
 
+    pub fn render(&mut self, simulation: &mut Simulation) {
+        self.ticker.tick();
+
+        let (frame, view) = self.display.get_frame().unwrap();
+
+        self.gui_renderer.pre_render(&self.display);
+        self.gui_renderer
+            .render(&self.display, simulation, &mut self.sim_renderer);
+        self.gui_renderer.post_render(&self.display, &view);
+
+        frame.present();
+    }
+
+    pub fn request_render(&mut self) {
+        self.display.window.request_redraw();
+    }
+
+    pub fn should_redraw(&self, config: &Config) -> bool {
+        let target_delta = 1.0 / (config.max_render_fps as f32);
+        if self.ticker.delta_time().as_secs_f32() > target_delta {
+            return true;
+        }
+        false
+    }
+}
+
+// Event handling
+impl RenderDriver {
+    pub fn handle_window_event(&mut self, event: &winit::event::WindowEvent, control_flow: &mut ControlFlow) {
+        match event {
+            CloseRequested => *control_flow = ControlFlow::Exit,
+            ScaleFactorChanged { new_inner_size, .. } => {
+                self.display.resize(new_inner_size.width, new_inner_size.height);
+            }
+            Resized(new_inner_size) => {
+                self.display.resize(new_inner_size.width, new_inner_size.height);
+            }
+            _ => {}
+        }
+    }
+
     pub fn handle_event(&mut self, _simulation: &mut Simulation, event: &Event<()>) {
         let delta = 10.0;
-        match event {
-            Event::WindowEvent { event, .. } => match event {
+
+        if let Event::WindowEvent { event, .. } = event {
+            match event {
                 KeyboardInput { input, .. } => match input.virtual_keycode.unwrap() {
                     VirtualKeyCode::Left => self.display.cam.translate_by([delta, 0.0].into()),
                     VirtualKeyCode::Right => self.display.cam.translate_by([-delta, 0.0].into()),
@@ -57,50 +99,8 @@ impl RenderDriver {
                     }
                 }
                 _ => {}
-            },
-            _ => {}
+            }
         }
         self.display.handle_event(event);
-    }
-
-    pub fn render(&mut self, simulation: &mut Simulation) {
-        self.ticker.tick();
-
-        let (frame, view) = self.display.get_frame().unwrap();
-
-        self.gui_renderer.pre_render(&self.display);
-        self.gui_renderer
-            .render(&self.display, simulation, &mut self.sim_renderer);
-        self.gui_renderer.post_render(&self.display, &view);
-
-        // cpanel.show(&self.gui_renderer.context, |ui| {
-        // self.sim_renderer.render(ui, &self.display, simulation);
-        // });
-        frame.present();
-    }
-
-    pub fn request_render(&mut self) {
-        self.display.window.request_redraw();
-    }
-
-    pub fn handle_window_event(&mut self, event: &winit::event::WindowEvent, control_flow: &mut ControlFlow) {
-        match event {
-            CloseRequested => *control_flow = ControlFlow::Exit,
-            ScaleFactorChanged { new_inner_size, .. } => {
-                self.display.resize(new_inner_size.width, new_inner_size.height);
-            }
-            Resized(new_inner_size) => {
-                self.display.resize(new_inner_size.width, new_inner_size.height);
-            }
-            _ => {}
-        }
-    }
-
-    pub fn should_redraw(&self, config: &Config) -> bool {
-        let target_delta = 1.0 / (config.max_render_fps as f32);
-        if self.ticker.delta_time().as_secs_f32() > target_delta {
-            return true;
-        }
-        false
     }
 }

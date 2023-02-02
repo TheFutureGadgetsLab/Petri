@@ -31,10 +31,7 @@ impl StatApp {
                 ui.end_row();
 
                 ui.label("Entities:");
-                ui.label(format!(
-                    "{:}",
-                    simulation.world.entities().len().to_formatted_string(&Locale::en)
-                ));
+                ui.label(simulation.world.entities().len().to_formatted_string(&Locale::en));
                 ui.end_row();
             });
 
@@ -75,7 +72,7 @@ impl StatApp {
         let grid = egui::Grid::new("Config Grid").striped(true).num_columns(2);
         grid.show(ui, |ui| {
             ui.label("N Cells:");
-            ui.label(format!("{:}", config.n_cells.to_formatted_string(&Locale::en)));
+            ui.label(config.n_cells.to_formatted_string(&Locale::en));
             ui.end_row();
 
             ui.label("Cell Radius:");
