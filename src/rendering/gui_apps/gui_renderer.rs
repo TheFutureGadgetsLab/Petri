@@ -45,7 +45,7 @@ impl GUIRenderer {
         self.context.begin_frame(input);
     }
 
-    pub fn render(&mut self, display: &Display, simulation: &mut Simulation, sim_renderer: &mut SimRenderer) {
+    pub fn render(&mut self, display: &mut Display, simulation: &mut Simulation, sim_renderer: &mut SimRenderer) {
         let lpanel = egui::SidePanel::left("Debug Info");
         let rpanel = egui::SidePanel::right("Debug Info");
         let cpanel = egui::CentralPanel::default().frame(
@@ -64,6 +64,8 @@ impl GUIRenderer {
 
         cpanel.show(&self.context, |ui| {
             self.grid.update(ui, display, simulation);
+            let size = ui.max_rect();
+            display.cam.resize(size.width(), size.height());
             sim_renderer.render(display, simulation, &mut self.rpass, ui)
         });
     }

@@ -39,7 +39,7 @@ impl RenderDriver {
 
         self.gui_renderer.pre_render(&self.display);
         self.gui_renderer
-            .render(&self.display, simulation, &mut self.sim_renderer);
+            .render(&mut self.display, simulation, &mut self.sim_renderer);
         self.gui_renderer.post_render(&self.display, &view);
 
         frame.present();

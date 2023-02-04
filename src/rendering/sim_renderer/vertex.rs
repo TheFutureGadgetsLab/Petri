@@ -16,6 +16,7 @@ impl Vertex {
     pub fn new(circ: &RigidCircle, color: &[f32; 4]) -> Self {
         Self {
             position: circ.pos.into(),
+            // position: [-0.0, -0.0],
             color: *color,
             radius: circ.radius,
         }

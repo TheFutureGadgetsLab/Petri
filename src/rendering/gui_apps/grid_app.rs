@@ -73,10 +73,7 @@ impl GridApp {
 
         let (minx, miny) = cam.screen2world(Vec2::zero()).into();
         let (maxx, maxy) = cam
-            .screen2world(Vec2::new(
-                display.surface_config.width as _,
-                display.surface_config.height as _,
-            ))
+            .screen2world(Vec2::new(display.cam.window_size.x, display.cam.window_size.y))
             .into();
         Plot::new("SimGrid")
             .show_background(false)
