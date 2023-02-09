@@ -52,8 +52,8 @@ impl Display {
             .unwrap();
 
         let size = window.inner_size();
-        let instance = wgpu::Instance::new(wgpu::Backends::all());
-        let surface = unsafe { instance.create_surface(&window) };
+        let instance = wgpu::Instance::default();
+        let surface = unsafe { instance.create_surface(&window).unwrap() };
         let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
             power_preference: wgpu::PowerPreference::HighPerformance,
             compatible_surface: Some(&surface),
@@ -72,11 +72,12 @@ impl Display {
 
         let surface_config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format: surface.get_supported_formats(&adapter)[0],
+            format: surface.get_capabilities(&adapter).formats[0],
             width: size.width,
             height: size.height,
             present_mode: wgpu::PresentMode::Immediate,
             alpha_mode: wgpu::CompositeAlphaMode::Auto,
+            view_formats: vec![wgpu::TextureFormat::Bgra8UnormSrgb],
         };
 
         Self {
@@ -139,8 +140,6 @@ impl Display {
         self.surface_config.width = width;
         self.surface_config.height = height;
         self.surface.configure(&self.device, &self.surface_config);
-
-        self.cam.resize(width as f32, height as f32);
     }
 
     pub fn get_frame(&self) -> Result<(SurfaceTexture, TextureView), SurfaceError> {

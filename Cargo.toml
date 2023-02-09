@@ -7,12 +7,12 @@ edition = "2021"
 ####################
 # GUI
 ####################
-winit = "0.27.5"
-wgpu = { version = "0.14.2", features = ["glsl"] }
-naga = "0.10.0"
-egui = "0.20.1"
-egui-wgpu = "0.20.0"
-egui-winit = "0.20.1"
+winit = "0.28.1"
+wgpu = { version = "0.15.0", features = ["glsl"] }
+naga = "0.11.0"
+egui = "0.21.0"
+egui-wgpu = "0.21.0"
+egui-winit = "0.21.0"
 num-format = "0.4.4"
 
 ####################
@@ -27,7 +27,7 @@ bevy_tasks = "0.9.1"
 futures = "0.3.26"
 hdrhistogram = "7.5.2"
 lazy_static = "1.4.0"
-spin = { version = "0.9.4", features = ["rwlock", "default"]}
+spin = { version = "0.9.5", features = ["rwlock", "default"]}
 quanta = "0.10.1"
 itertools = "0.10.5"
 ron = { version = "0.8.0", features = ["integer128"] }
