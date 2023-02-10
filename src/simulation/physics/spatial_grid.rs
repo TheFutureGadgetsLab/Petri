@@ -1,43 +1,41 @@
 use bevy_ecs::prelude::*;
-use itertools::Itertools;
 use rayon::prelude::*;
-use spin::RwLock;
+use parking_lot::RwLock;
 use ultraviolet::Vec2;
 
 use crate::simulation::RigidCircle;
 
 #[derive(Resource)]
 pub struct DenseGrid {
-    /// log2(ncells_side)
-    pub log2_side: u32,
-    /// log2(cell_size)
-    pub log2_cell: u32,
+    pub cell_size: i32,
+    pub sim_size: i32,
+    pub ncells_side: i32,
 
     pub cells: Vec<Cell>,
 }
 
 impl DenseGrid {
-    pub fn new(cell_size: u32, side_len: u32) -> Self {
-        assert!(side_len.is_power_of_two());
-        assert!(cell_size.is_power_of_two());
-        let ncells_side = side_len / cell_size;
+    pub fn new(cell_size: i32, sim_size: i32) -> Self {
+        let ncells_side = sim_size / cell_size;
         Self {
-            log2_side: ncells_side.ilog2(),
-            log2_cell: cell_size.ilog2(),
+            cell_size,
+            sim_size,
             cells: (0..(ncells_side * ncells_side)).map(|_| Cell::default()).collect(),
+            ncells_side,
         }
     }
 
     pub fn insert(&self, circ: &RigidCircle, entity: Entity) {
-        let ind = self.flat_ind(circ);
-        let cell = self.cells.get(ind).unwrap();
+        let ind = self.flat_ind(circ.pos);
+        let cell = self.cells.get(ind as usize).unwrap();
         cell.insert(circ, entity);
     }
 
-    pub fn flat_ind(&self, circ: &RigidCircle) -> usize {
-        let x = (circ.pos.x as u32) >> self.log2_cell;
-        let y = (circ.pos.y as u32) >> self.log2_cell;
-        ((y << self.log2_side) | x) as usize
+    pub fn flat_ind(&self, pos: Vec2) -> i32 {
+        // Calculate the cell index
+        let r = (pos.y as i32) / self.cell_size;
+        let c = (pos.x as i32) / self.cell_size;
+        r * self.ncells_side + c
     }
 
     pub fn clear(&mut self) {
@@ -49,7 +47,7 @@ impl DenseGrid {
         let mut hits = Vec::new();
 
         for ind in self.cell_range(pos, radius) {
-            if let Some(cell) = self.cells.get(ind as usize) {
+            if let Some(cell) = self.cells.get(ind) {
                 // We know this is at a read only stage. Safe to disregard lock
                 hits.extend(cell.unlock_unsafe().iter().filter_map(|(other, id)| {
                     if (*id != ignore) && ((pos - other.pos).mag_sq() < radius2) {
@@ -64,15 +62,18 @@ impl DenseGrid {
         hits
     }
 
-    pub fn cell_range(&self, pos: Vec2, radius: f32) -> impl Iterator<Item = u32> {
-        let x1 = ((pos.x - radius) as u32) >> self.log2_cell;
-        let y1 = ((pos.y - radius) as u32) >> self.log2_cell;
-        let x2 = ((pos.x + radius) as u32) >> self.log2_cell;
-        let y2 = ((pos.y + radius) as u32) >> self.log2_cell;
+    pub fn cell_range(&self, pos: Vec2, radius: f32) -> impl Iterator<Item = usize> {
+        let r = (pos.y as i32) / self.cell_size;
+        let c = (pos.x as i32) / self.cell_size;
 
-        let shift = self.log2_side;
+        let shift = self.ncells_side;
+        let radius_cells = (radius / self.cell_size as f32) as i32;
+        let rmin = (r - radius_cells).max(0);
+        let rmax = (r + radius_cells).min(self.ncells_side - 1);
+        let cmin = (c - radius_cells).max(0);
+        let cmax = (c + radius_cells).min(self.ncells_side - 1);
 
-        (x1..=x2).cartesian_product(y1..=y2).map(move |(x, y)| (y << shift) | x)
+        (rmin..=rmax).flat_map(move |r| (cmin..=cmax).map(move |c| (r * shift + c) as usize))
     }
 }
 
@@ -91,6 +92,6 @@ impl Cell {
     }
 
     pub fn unlock_unsafe(&self) -> &Vec<(RigidCircle, Entity)> {
-        unsafe { &*self.ents.as_mut_ptr() }
+        unsafe { &*self.ents.data_ptr() }
     }
 }

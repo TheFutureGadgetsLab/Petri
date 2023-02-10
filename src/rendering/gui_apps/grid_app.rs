@@ -44,24 +44,22 @@ impl GridApp {
 
     pub fn show_spatial_grid(&self, plot_ui: &mut PlotUi, simulation: &Simulation) {
         let grid = simulation.world.get_resource::<DenseGrid>().unwrap();
-        let cell_size = 1 << grid.log2_cell;
-        let cells_per_size = 1 << grid.log2_side;
 
         let config = simulation.world.get_resource::<Config>().unwrap();
         let (minx, miny) = (config.bounds.0.x as f64, config.bounds.0.y as f64);
         let (maxx, maxy) = (config.bounds.1.x as f64, config.bounds.1.y as f64);
 
         // Draw vertical lines
-        for i in 1..cells_per_size {
-            let x = (i * cell_size) as f64;
+        for i in 1..grid.ncells_side {
+            let x = (i * grid.cell_size) as f64;
             let path = vec![[x, miny], [x, maxy]];
             let line = Line::new(PlotPoints::from(path)).color(Color32::LIGHT_BLUE);
             plot_ui.line(line);
         }
 
         // Draw horizontal lines
-        for i in 1..cells_per_size {
-            let y = (i * cell_size) as f64;
+        for i in 1..grid.ncells_side {
+            let y = (i * grid.cell_size) as f64;
             let path = vec![[minx, y], [maxx, y]];
             let line = Line::new(PlotPoints::from(path)).color(Color32::LIGHT_BLUE);
             plot_ui.line(line);

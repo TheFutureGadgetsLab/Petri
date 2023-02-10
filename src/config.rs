@@ -7,10 +7,15 @@ use ultraviolet::Vec2;
 
 #[derive(Debug, Deserialize, Serialize, Clone, Copy, Resource)]
 pub struct Config {
+    // Cells
     pub n_cells: u32,
     pub cell_radius: f32,
-    pub bounds: (Vec2, Vec2),
 
+    // Simulation
+    pub bounds: (Vec2, Vec2),
+    pub spatial_hash_cell_size: usize,
+
+    // Misc
     pub max_render_fps: u64,
     pub max_sim_tps: u64,
 }

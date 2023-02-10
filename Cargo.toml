@@ -27,7 +27,7 @@ bevy_tasks = "0.9.1"
 futures = "0.3.26"
 hdrhistogram = "7.5.2"
 lazy_static = "1.4.0"
-spin = { version = "0.9.5", features = ["rwlock", "default"]}
+parking_lot = { version = "0.12.1", features = ["nightly"] }
 quanta = "0.10.1"
 itertools = "0.10.5"
 ron = { version = "0.8.0", features = ["integer128"] }
@@ -37,7 +37,7 @@ ultraviolet = { version = "0.9.0", features = ["serde", "int"]}
 [profile.dev.package."*"]
 opt-level = 3
 
-#  Maximum optimization for release builds
+# Maximum optimization for release builds
 [profile.release]
 lto = "thin"
 panic = "abort"

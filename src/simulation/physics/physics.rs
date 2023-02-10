@@ -12,7 +12,7 @@ pub struct PhysicsPipeline {
 
 impl PhysicsPipeline {
     pub fn new(world: &mut World, config: &Config) -> Self {
-        let grid = DenseGrid::new((config.cell_radius * 32.0) as u32, (config.bounds.1.x) as u32);
+        let grid = DenseGrid::new(config.spatial_hash_cell_size as i32, (config.bounds.1.x) as i32);
 
         let mut system = Schedule::from_world(world);
 
