@@ -14,10 +14,16 @@ layout (location=2) in float v_size;
 
 layout (location=0) out vec4 out_color;
 
-// Fragment shader
+float edgeRamp(float x, float f, float d) {
+    return clamp(1.0 - f * (x - 1.0 + d + 1.0 / f), 0.0, 1.0);
+}
+
 void main() {
-    if (length(gl_PointCoord.xy - 0.5) > 0.5) {
+    float v = length(gl_PointCoord - 0.5);
+    float a = edgeRamp(v * 2.0, 35.0, 0.05);
+    if (a < 1e-9) {
         discard;
+    } else {
+        out_color = vec4(v_color.rgb, a);
     }
-    out_color = v_color;  
 }

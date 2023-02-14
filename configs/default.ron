@@ -1,12 +1,12 @@
 Config(
-    n_cells: 2,
+    n_cells: 15000,
     cell_radius: 2.0,
     bounds: (
         (x: 0.0,   y: 0.0), 
-        (x: 10.0, y: 10.0), 
+        (x: 1000.0, y: 1000.0), 
     ),
-    spatial_hash_cell_size: 10,
+    spatial_hash_cell_size: 100,
 
     max_render_fps: 144,
-    max_sim_tps: 1,
+    max_sim_tps: 60,
 ) 
