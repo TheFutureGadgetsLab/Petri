@@ -2,29 +2,10 @@
 // https://github.com/sotrh/learn-wgpu/tree/master/code/showcase/framework
 
 use futures::executor::block_on;
-use ultraviolet::Vec2;
 use wgpu::{SurfaceError, SurfaceTexture, TextureView};
-use winit::{
-    event::{ElementState, Event, MouseButton, WindowEvent},
-    event_loop::EventLoop,
-    window::Window,
-};
+use winit::{event_loop::EventLoop, window::Window};
 
 use crate::rendering::sim_renderer::camera::Camera;
-
-#[derive(PartialEq, Eq, Clone, Copy, Default)]
-pub struct InputState {
-    pub pressed: bool,
-    pub released: bool,
-    pub held: bool,
-}
-
-pub struct Mouse {
-    pub pos: Vec2,
-    pub delta: Vec2,
-    /// Left, middle, right
-    pub buttons: [InputState; 3],
-}
 
 pub struct Display {
     pub surface: wgpu::Surface,
@@ -34,11 +15,10 @@ pub struct Display {
     pub window: Window,
 
     pub cam: Camera,
-
-    pub mouse: Mouse,
 }
 
-const INITIAL_SIZE: Vec2 = Vec2 { x: 1920.0, y: 1080.0 };
+const INITIAL_WIDTH: u32 = 1280;
+const INITIAL_HEIGHT: u32 = 720;
 
 impl Display {
     pub fn new(event_loop: &EventLoop<()>) -> Self {
@@ -47,7 +27,7 @@ impl Display {
             .with_resizable(true)
             .with_transparent(false)
             .with_title("Petri")
-            .with_inner_size(winit::dpi::PhysicalSize::new(INITIAL_SIZE.x, INITIAL_SIZE.y))
+            .with_inner_size(winit::dpi::PhysicalSize::new(INITIAL_WIDTH, INITIAL_HEIGHT))
             .build(event_loop)
             .unwrap();
 
@@ -86,53 +66,7 @@ impl Display {
             window,
             device,
             queue,
-            cam: Camera::new(INITIAL_SIZE),
-            mouse: Mouse {
-                pos: Vec2::zero(),
-                delta: Vec2::zero(),
-                buttons: [InputState::default(); 3],
-            },
-        }
-    }
-
-    pub fn handle_event(&mut self, event: &Event<()>) {
-        if let Event::WindowEvent { ref event, .. } = event {
-            match event {
-                WindowEvent::MouseInput { button, state, .. } => {
-                    let mut butt_idx = 0usize;
-                    match button {
-                        MouseButton::Left => butt_idx = 0,
-                        MouseButton::Right => butt_idx = 1,
-                        MouseButton::Middle => butt_idx = 2,
-                        _ => {}
-                    }
-                    let mut bstate = self.mouse.buttons[butt_idx];
-                    match state {
-                        ElementState::Pressed => {
-                            if bstate.held {
-                                bstate.pressed = false;
-                            } else {
-                                bstate.pressed = true;
-                                bstate.held = true;
-                            }
-                        }
-                        ElementState::Released => {
-                            bstate.pressed = false;
-                            bstate.held = false;
-                            if bstate.released {
-                                bstate.released = false;
-                            }
-                        }
-                    }
-                    self.mouse.buttons[butt_idx] = bstate;
-                }
-                WindowEvent::CursorMoved { position, .. } => {
-                    let pos = Vec2::new(position.x as f32, position.y as f32);
-                    self.mouse.delta = pos - self.mouse.pos;
-                    self.mouse.pos = pos;
-                }
-                _ => {}
-            }
+            cam: Camera::default(),
         }
     }
 

@@ -8,17 +8,17 @@ edition = "2021"
 # GUI
 ####################
 winit = "0.28.1"
-wgpu = { version = "0.15.0", features = ["glsl"] }
+wgpu = { version = "0.15.1", features = ["glsl"] }
 naga = "0.11.0"
 egui = "0.21.0"
 egui-wgpu = "0.21.0"
-egui-winit = "0.21.0"
+egui-winit = "0.21.1"
 num-format = "0.4.4"
+bytemuck = { version = "1.13.0", features = [ "derive" ] }
 
 ####################
 # Simulation
 ####################
-bytemuck = { version = "1.13.0", features = [ "derive" ] }
 fps_counter = "2.0.0"
 rayon = "1.6.1"
 rand = "0.8.5"

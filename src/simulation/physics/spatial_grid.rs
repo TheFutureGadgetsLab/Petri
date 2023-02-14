@@ -1,6 +1,6 @@
 use bevy_ecs::prelude::*;
-use rayon::prelude::*;
 use parking_lot::RwLock;
+use rayon::prelude::*;
 use ultraviolet::Vec2;
 
 use crate::simulation::RigidCircle;

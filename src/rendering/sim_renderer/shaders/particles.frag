@@ -2,9 +2,10 @@
 
 layout (std140, binding=0)
 uniform Camera {
-    vec2 u_translation;
-    vec2 u_window_size;
-    vec2 u_zoom;
+    vec2 u_world_xbounds;
+    vec2 u_world_ybounds;
+    float u_screen_height;
+    float u_screen_width;
 };
 
 layout (location=0) in vec4 v_color;
@@ -13,13 +14,14 @@ layout (location=2) in float v_size;
 
 layout (location=0) out vec4 out_color;
 
+// Fragment shader
 void main() {
-    vec2 pcoord = gl_FragCoord.xy / u_window_size;
-    vec2 vcoord = (vec2(v_pos.x, -v_pos.y) * 0.5) + 0.5;
+    vec2 pcoord = gl_FragCoord.xy / vec2(u_screen_width, u_screen_height);
+    vec2 vcoord = (v_pos + 1.0) * 0.5;
 
     float dist = distance(pcoord, vcoord);
-    if (dist > v_size) {
+    if (dist > v_size / u_screen_width) {
         discard;
     }
-    out_color = vec4(v_color.rgb, 1.0);
+    out_color = vec4(v_color.rgb, 1.0);  
 }

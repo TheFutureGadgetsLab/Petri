@@ -1,6 +1,5 @@
-use ultraviolet::Vec2;
 use winit::{
-    event::{Event, MouseScrollDelta, VirtualKeyCode, WindowEvent::*},
+    event::WindowEvent::*,
     event_loop::{ControlFlow, EventLoop},
 };
 
@@ -61,6 +60,11 @@ impl RenderDriver {
 // Event handling
 impl RenderDriver {
     pub fn handle_window_event(&mut self, event: &winit::event::WindowEvent, control_flow: &mut ControlFlow) {
+        let response = self.gui_renderer.state.on_event(&self.gui_renderer.context, event);
+        if response.consumed {
+            return;
+        }
+
         match event {
             CloseRequested => *control_flow = ControlFlow::Exit,
             ScaleFactorChanged { new_inner_size, .. } => {
@@ -71,36 +75,5 @@ impl RenderDriver {
             }
             _ => {}
         }
-    }
-
-    pub fn handle_event(&mut self, _simulation: &mut Simulation, event: &Event<()>) {
-        let delta = 10.0;
-
-        if let Event::WindowEvent { event, .. } = event {
-            match event {
-                KeyboardInput { input, .. } => match input.virtual_keycode.unwrap() {
-                    VirtualKeyCode::Left => self.display.cam.translate_by([delta, 0.0].into()),
-                    VirtualKeyCode::Right => self.display.cam.translate_by([-delta, 0.0].into()),
-                    VirtualKeyCode::Up => self.display.cam.translate_by([0.0, -delta].into()),
-                    VirtualKeyCode::Down => self.display.cam.translate_by([0.0, delta].into()),
-                    _ => {}
-                },
-                MouseWheel {
-                    delta: MouseScrollDelta::LineDelta(_, y),
-                    ..
-                } => {
-                    self.display.cam.zoom *= 1.0 + y.signum() * 0.1;
-                }
-                CursorMoved { .. } => {
-                    if self.display.mouse.buttons[0].held {
-                        self.display
-                            .cam
-                            .translate_by(self.display.mouse.delta * Vec2::new(1.0, -1.0));
-                    }
-                }
-                _ => {}
-            }
-        }
-        self.display.handle_event(event);
     }
 }

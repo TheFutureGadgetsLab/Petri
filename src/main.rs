@@ -20,7 +20,7 @@ fn main() {
         *control_flow = ControlFlow::Poll;
 
         // Forward event to renderers
-        renderer.handle_event(&mut simulation, &event);
+        // renderer.handle_event(&mut simulation, &event);
 
         match event {
             // Rendering

@@ -1,54 +1,48 @@
 use ultraviolet::Vec2;
 
+#[derive(Default)]
 pub struct Camera {
-    pub window_size: Vec2,
-    /// Translation which is used to transform objects in space
-    pub translation: Vec2,
-    pub zoom: f32,
+    pub world_xbounds: Vec2,
+    pub world_ybounds: Vec2,
+    pub screen_height: f32,
+    pub screen_width: f32,
 }
 
 #[allow(dead_code)]
 impl Camera {
-    pub fn new(window_size: Vec2) -> Self {
-        Camera {
-            window_size,
-            translation: Vec2::zero(),
-            zoom: 1.0,
-        }
-    }
-
-    pub fn resize(&mut self, width: f32, height: f32) {
-        self.window_size = Vec2::new(width as _, height as _);
-    }
-
-    pub fn translate_by(&mut self, delta: Vec2) {
-        self.translation += (delta * 2.0) / self.zoom;
-    }
-
-    /// Position of camera (center) in world space
-    pub fn pos(&self) -> Vec2 {
-        -self.translation / 2.0
-    }
-
-    pub fn screen2world(&self, p: Vec2) -> Vec2 {
-        self.pos() + ((p - (self.window_size / 2.0)) * Vec2::new(1.0, -1.0)) / self.zoom
+    pub fn update(&mut self, plot_ui: &egui::plot::PlotUi) {
+        let bounds = plot_ui.plot_bounds();
+        let (minx, miny) = (bounds.min()[0], bounds.min()[1]);
+        let (maxx, maxy) = (bounds.max()[0], bounds.max()[1]);
+        self.world_xbounds = Vec2::new(minx as _, maxx as _);
+        self.world_ybounds = Vec2::new(miny as _, maxy as _);
+        self.screen_height = (plot_ui.screen_from_plot([minx, miny].into())
+            - plot_ui.screen_from_plot([minx, maxy].into()))
+        .round()
+        .y;
+        self.screen_width = (plot_ui.screen_from_plot([maxx, miny].into())
+            - plot_ui.screen_from_plot([minx, miny].into()))
+        .round()
+        .x;
     }
 }
 
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable, Default)]
 pub struct CameraUniform {
-    u_translation: [f32; 2],
-    u_window_size: [f32; 2],
-    u_zoom: [f32; 2],
+    u_world_xbounds: [f32; 2],
+    u_world_ybounds: [f32; 2],
+    u_screen_height: f32,
+    u_screen_width: f32,
 }
 
 impl From<&Camera> for CameraUniform {
     fn from(cam: &Camera) -> Self {
         CameraUniform {
-            u_translation: cam.translation.into(),
-            u_window_size: cam.window_size.into(),
-            u_zoom: [cam.zoom; 2],
+            u_world_xbounds: cam.world_xbounds.into(),
+            u_world_ybounds: cam.world_ybounds.into(),
+            u_screen_height: cam.screen_height,
+            u_screen_width: cam.screen_width,
         }
     }
 }

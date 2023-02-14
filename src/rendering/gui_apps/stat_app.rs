@@ -41,25 +41,20 @@ impl StatApp {
             .striped(true)
             .num_columns(2)
             .show(ui, |ui| {
-                // Camera
-                ui.label("Position:");
-                ui.label(format!("({:}, {:})", cam.pos().x as usize, cam.pos().y as usize));
+                ui.label("World X Bounds:");
+                ui.label(format!("({:.2}, {:.2})", cam.world_xbounds.x, cam.world_xbounds.y));
                 ui.end_row();
 
-                ui.label("Window Size:");
-                ui.label(format!("({:.2}, {:.2})", cam.window_size.x, cam.window_size.y));
+                ui.label("World Y Bounds:");
+                ui.label(format!("({:.2}, {:.2})", cam.world_ybounds.x, cam.world_ybounds.y));
                 ui.end_row();
 
-                ui.label("Zoom Factor");
-                ui.label(format!("({:.2})", cam.zoom));
+                ui.label("Screen width:");
+                ui.label(format!("{:}", cam.screen_width));
                 ui.end_row();
 
-                ui.label("Mouse Position:");
-                ui.label(format!(
-                    "({:}, {:})",
-                    cam.screen2world(display.mouse.pos).x as usize,
-                    cam.screen2world(display.mouse.pos).y as usize,
-                ));
+                ui.label("Screen height:");
+                ui.label(format!("{:}", cam.screen_height));
                 ui.end_row();
             });
 

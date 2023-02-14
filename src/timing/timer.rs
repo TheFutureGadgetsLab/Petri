@@ -2,8 +2,8 @@ use std::{collections::HashMap, time::Duration};
 
 use hdrhistogram::Histogram;
 use lazy_static::lazy_static;
-use quanta::Instant;
 use parking_lot::RwLock;
+use quanta::Instant;
 
 lazy_static! {
     pub static ref TIMING_DATABASE: RwLock<HashMap<String, Timer>> = RwLock::new(HashMap::default());

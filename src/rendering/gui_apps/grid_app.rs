@@ -2,7 +2,6 @@ use egui::{
     epaint::Color32,
     plot::{Line, Plot, PlotPoints, PlotUi},
 };
-use ultraviolet::Vec2;
 
 use crate::{
     config::Config,
@@ -22,11 +21,13 @@ impl Default for GridApp {
 }
 
 impl GridApp {
-    pub fn update(&mut self, ui: &mut egui::Ui, display: &Display, simulation: &Simulation) {
+    pub fn update(&mut self, ui: &mut egui::Ui, display: &mut Display, simulation: &Simulation) {
         let base_plot = self.build_base_plot(display);
         base_plot.show(ui, |plot_ui| {
             self.show_sim_grid(plot_ui, simulation);
             self.show_spatial_grid(plot_ui, simulation);
+
+            display.cam.update(plot_ui);
         });
     }
 
@@ -66,21 +67,11 @@ impl GridApp {
         }
     }
 
-    fn build_base_plot(&self, display: &Display) -> Plot {
-        let cam = &display.cam;
-
-        let (minx, miny) = cam.screen2world(Vec2::zero()).into();
-        let (maxx, maxy) = cam
-            .screen2world(Vec2::new(display.cam.window_size.x, display.cam.window_size.y))
-            .into();
+    fn build_base_plot(&self, _display: &Display) -> Plot {
         Plot::new("SimGrid")
             .show_background(false)
             .allow_zoom(true)
             .allow_drag(true)
             .data_aspect(1.0)
-            .include_x(minx)
-            .include_x(maxx)
-            .include_y(miny)
-            .include_y(maxy)
     }
 }

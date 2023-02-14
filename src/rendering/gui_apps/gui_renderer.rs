@@ -14,7 +14,7 @@ use crate::{
 };
 
 pub struct GUIRenderer {
-    state: State,
+    pub state: State,
     pub context: egui::Context,
     pub rpass: Renderer,
     debug: StatApp,
@@ -64,8 +64,6 @@ impl GUIRenderer {
 
         cpanel.show(&self.context, |ui| {
             self.grid.update(ui, display, simulation);
-            let size = ui.max_rect();
-            display.cam.resize(size.width(), size.height());
             sim_renderer.render(display, simulation, &mut self.rpass, ui)
         });
     }
