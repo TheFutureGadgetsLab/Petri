@@ -8,7 +8,6 @@ pub struct Camera {
     pub screen_width: f32,
 }
 
-#[allow(dead_code)]
 impl Camera {
     pub fn update(&mut self, plot_ui: &egui::plot::PlotUi) {
         let bounds = plot_ui.plot_bounds();
@@ -30,8 +29,8 @@ impl Camera {
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable, Default)]
 pub struct CameraUniform {
-    u_world_xbounds: [f32; 2],
-    u_world_ybounds: [f32; 2],
+    u_world_size: [f32; 2],
+    u_world_ll: [f32; 2],
     u_screen_height: f32,
     u_screen_width: f32,
 }
@@ -39,8 +38,11 @@ pub struct CameraUniform {
 impl From<&Camera> for CameraUniform {
     fn from(cam: &Camera) -> Self {
         CameraUniform {
-            u_world_xbounds: cam.world_xbounds.into(),
-            u_world_ybounds: cam.world_ybounds.into(),
+            u_world_size: [
+                cam.world_xbounds.y - cam.world_xbounds.x,
+                cam.world_ybounds.y - cam.world_ybounds.x,
+            ],
+            u_world_ll: [cam.world_xbounds.x, cam.world_ybounds.x],
             u_screen_height: cam.screen_height,
             u_screen_width: cam.screen_width,
         }

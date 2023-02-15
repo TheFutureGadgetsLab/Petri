@@ -2,8 +2,8 @@
 
 layout (std140, binding=0)
 uniform Camera {
-    vec2 u_world_xbounds;
-    vec2 u_world_ybounds;
+    vec2 u_world_size;
+    vec2 u_world_ll;
     float u_screen_height;
     float u_screen_width;
 };

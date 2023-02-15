@@ -43,14 +43,14 @@ impl DenseGrid {
     }
 
     pub fn query(&self, pos: Vec2, radius: f32, ignore: Entity) -> Vec<&RigidCircle> {
-        let radius2 = radius.powi(2);
         let mut hits = Vec::new();
 
         for ind in self.cell_range(pos, radius) {
             if let Some(cell) = self.cells.get(ind) {
                 // We know this is at a read only stage. Safe to disregard lock
                 hits.extend(cell.unlock_unsafe().iter().filter_map(|(other, id)| {
-                    if (*id != ignore) && ((pos - other.pos).mag_sq() < radius2) {
+                    let hit = (pos - other.pos).mag_sq() < (radius + other.radius).powi(2);
+                    if (*id != ignore) && hit {
                         Some(other)
                     } else {
                         None

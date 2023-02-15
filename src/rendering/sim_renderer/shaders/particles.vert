@@ -2,8 +2,8 @@
 
 layout (std140, binding=0)
 uniform Camera {
-    vec2 u_world_xbounds;
-    vec2 u_world_ybounds;
+    vec2 u_world_size;
+    vec2 u_world_ll;
     float u_screen_height;
     float u_screen_width;
 };
@@ -18,16 +18,13 @@ layout (location=2) out float v_size;
 
 void main() {
     // Convert from world space to screen space [-1, 1]
-    vec2 pos = vec2(
-        (a_pos.x - u_world_xbounds.x) / (u_world_xbounds.y - u_world_xbounds.x) * 2.0 - 1.0,
-        (a_pos.y - u_world_ybounds.x) / (u_world_ybounds.y - u_world_ybounds.x) * 2.0 - 1.0
-    );
+    vec2 pos = (a_pos - u_world_ll) / u_world_size * 2.0 - 1.0;
     
     v_color = a_color;
     v_pos   = pos;
 
     // Convert world space size to screen space size (in pixels)
-    v_size = a_size / (u_world_xbounds.y - u_world_xbounds.x) * u_screen_width * 2.0;
+    v_size = a_size / u_world_size.x * u_screen_width * 2.0;
     
     gl_Position = vec4(pos, 0, 1);
     gl_PointSize = v_size;

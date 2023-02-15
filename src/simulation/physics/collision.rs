@@ -18,7 +18,7 @@ pub struct CollisionResolution;
 
 pub fn collision_resolution(mut query: Query<(&mut RigidCircle, Entity)>, grid: Res<DenseGrid>) {
     query.par_for_each_mut(1024, |(mut circ, entity)| {
-        let around = grid.query(circ.pos, 2.0 * circ.radius, entity);
+        let around = grid.query(circ.pos, circ.radius, entity);
         let impulse = around.iter().map(|e| singular_resolution(&circ, e)).sum();
         circ.vel += impulse;
     });
