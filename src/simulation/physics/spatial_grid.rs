@@ -46,34 +46,34 @@ impl DenseGrid {
         let mut hits = Vec::new();
 
         for ind in self.cell_range(pos, radius) {
-            if let Some(cell) = self.cells.get(ind) {
-                // We know this is at a read only stage. Safe to disregard lock
-                hits.extend(cell.unlock_unsafe().iter().filter_map(|(other, id)| {
-                    let hit = (pos - other.pos).mag_sq() < (radius + other.radius).powi(2);
-                    if (*id != ignore) && hit {
-                        Some(other)
-                    } else {
-                        None
-                    }
-                }));
-            }
+            let cell = self.cells.get(ind).unwrap();
+            // We know this is at a read only stage. Safe to disregard lock
+            hits.extend(cell.unlock_unsafe().iter().filter_map(|(other, id)| {
+                let hit = (pos - other.pos).mag_sq() < (radius + other.radius).powi(2);
+                if (*id != ignore) && hit {
+                    Some(other)
+                } else {
+                    None
+                }
+            }));
         }
 
         hits
     }
 
     pub fn cell_range(&self, pos: Vec2, radius: f32) -> impl Iterator<Item = usize> {
-        let r = (pos.y as i32) / self.cell_size;
-        let c = (pos.x as i32) / self.cell_size;
+        let cell_size = self.cell_size as f32;
+        let extent = radius / cell_size;
+        let r = pos.y / cell_size;
+        let c = pos.x / cell_size;
+
+        let rmin = ((r - extent) as i32).max(0);
+        let rmax = ((r + extent) as i32).min(self.ncells_side - 1);
+        let cmin = ((c - extent) as i32).max(0);
+        let cmax = ((c + extent) as i32).min(self.ncells_side - 1);
 
         let shift = self.ncells_side;
-        let radius_cells = (radius / self.cell_size as f32) as i32;
-        let rmin = (r - radius_cells).max(0);
-        let rmax = (r + radius_cells).min(self.ncells_side - 1);
-        let cmin = (c - radius_cells).max(0);
-        let cmax = (c + radius_cells).min(self.ncells_side - 1);
-
-        (rmin..=rmax).flat_map(move |r| (cmin..=cmax).map(move |c| (r * shift + c) as usize))
+        (rmin..=rmax).flat_map(move |row| (cmin..=cmax).map(move |col| (row * shift + col) as usize))
     }
 }
 
