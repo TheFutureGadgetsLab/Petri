@@ -1,23 +1,17 @@
-use bevy_ecs::prelude::*;
+use bevy_ecs::{prelude::*};
 use ultraviolet::Vec2;
 
 use crate::simulation::{physics::DenseGrid, RigidCircle};
 
-#[derive(StageLabel)]
-pub struct GridBuild;
-
-pub fn grid_build(mut query: Query<(&RigidCircle, Entity)>, mut grid: ResMut<DenseGrid>) {
+pub fn grid_build(query: Query<(&RigidCircle, Entity)>, mut grid: ResMut<DenseGrid>) {
     grid.clear();
-    query.par_for_each_mut(1024, |(circ, entity)| {
+    query.par_iter().for_each(|(circ, entity)| {
         grid.insert(circ, entity);
     })
 }
 
-#[derive(StageLabel)]
-pub struct CollisionResolution;
-
 pub fn collision_resolution(mut query: Query<(&mut RigidCircle, Entity)>, grid: Res<DenseGrid>) {
-    query.par_for_each_mut(1024, |(mut circ, entity)| {
+    query.par_iter_mut().for_each_mut(|(mut circ, entity)| {
         let around = grid.query(circ.pos, circ.radius, entity);
         let impulse = around.iter().map(|e| singular_resolution(&circ, e)).sum();
         circ.vel += impulse;
