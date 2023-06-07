@@ -62,18 +62,20 @@ impl DenseGrid {
     }
 
     pub fn cell_range(&self, pos: Vec2, radius: f32) -> impl Iterator<Item = usize> {
-        let cell_size = self.cell_size as f32;
-        let extent = radius / cell_size;
-        let r = pos.y / cell_size;
-        let c = pos.x / cell_size;
+        let cs = self.cell_size as f32;
+        let nc = self.ncells_side as f32;
 
-        let rmin = ((r - extent) as i32).max(0);
-        let rmax = ((r + extent) as i32).min(self.ncells_side - 1);
-        let cmin = ((c - extent) as i32).max(0);
-        let cmax = ((c + extent) as i32).min(self.ncells_side - 1);
+        let r = pos.y / cs;
+        let c = pos.x / cs;
+
+        let radius_cells = radius / cs;
+        let rmin = (r - radius_cells).max(0.0) as i32;
+        let rmax = (r + radius_cells).min(nc - 1.0) as i32;
+        let cmin = (c - radius_cells).max(0.0) as i32;
+        let cmax = (c + radius_cells).min(nc - 1.0) as i32;
 
         let shift = self.ncells_side;
-        (rmin..=rmax).flat_map(move |row| (cmin..=cmax).map(move |col| (row * shift + col) as usize))
+        (rmin..=rmax).flat_map(move |r| (cmin..=cmax).map(move |c| (r * shift + c) as usize))
     }
 }
 
