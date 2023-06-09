@@ -1,5 +1,5 @@
 use bevy_ecs::prelude::*;
-use glam::Vec2;
+use glam::{Vec2};
 use parking_lot::RwLock;
 use rayon::prelude::*;
 
@@ -32,10 +32,8 @@ impl DenseGrid {
     }
 
     pub fn flat_ind(&self, pos: Vec2) -> i32 {
-        // Calculate the cell index
-        let r = (pos.y as i32) / self.cell_size;
-        let c = (pos.x as i32) / self.cell_size;
-        r * self.ncells_side + c
+        let loc = pos.as_ivec2() / self.cell_size;
+        loc.y * self.ncells_side + loc.x
     }
 
     pub fn clear(&mut self) {
