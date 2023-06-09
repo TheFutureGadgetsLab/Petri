@@ -1,9 +1,10 @@
 use bevy_ecs::prelude::*;
-use ultraviolet::Vec2;
 
-use crate::{config::Config, simulation::RigidCircle};
+use crate::{config::Config, simulation::RigidCircle, timing::timer::time_func};
 
 pub fn update_positions(mut query: Query<&mut RigidCircle>, config: Res<Config>) {
+    time_func!("physics.pos_update");
+
     let bounds = config.bounds;
 
     query.par_iter_mut().for_each_mut(|mut circ| {
@@ -16,7 +17,6 @@ pub fn update_positions(mut query: Query<&mut RigidCircle>, config: Res<Config>)
             circ.vel.y = -circ.vel.y;
         }
 
-        let r = Vec2::broadcast(circ.radius);
-        circ.pos.clamp(bounds.0 + r, bounds.1 - r);
+        circ.pos = circ.pos.clamp(bounds.0 + circ.radius, bounds.1 - circ.radius);
     });
 }

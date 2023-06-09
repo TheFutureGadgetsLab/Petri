@@ -1,6 +1,6 @@
 use bevy_ecs::prelude::*;
+use glam::Vec2;
 use rand::prelude::*;
-use ultraviolet::Vec2;
 
 use crate::config::Config;
 

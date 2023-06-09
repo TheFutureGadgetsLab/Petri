@@ -1,7 +1,7 @@
 use bevy_ecs::prelude::*;
+use glam::Vec2;
 use parking_lot::RwLock;
 use rayon::prelude::*;
-use ultraviolet::Vec2;
 
 use crate::simulation::RigidCircle;
 
@@ -49,7 +49,7 @@ impl DenseGrid {
             let cell = self.cells.get(ind).unwrap();
             // We know this is at a read only stage. Safe to disregard lock
             hits.extend(cell.unlock_unsafe().iter().filter_map(|(other, id)| {
-                let hit = (pos - other.pos).mag_sq() < (radius + other.radius).powi(2);
+                let hit = (pos - other.pos).length_squared() < (radius + other.radius).powi(2);
                 if (*id != ignore) && hit {
                     Some(other)
                 } else {

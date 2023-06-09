@@ -1,0 +1,8 @@
+(
+    n_cells: 600000,
+    cell_radius: 2.0,
+    bounds: ((0.0, 0.0), (8192.0, 8192.0)),
+    spatial_hash_cell_size: 32,
+    max_render_fps: 144,
+    max_sim_tps: 144,
+)

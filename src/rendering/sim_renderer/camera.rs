@@ -1,4 +1,4 @@
-use ultraviolet::Vec2;
+use glam::Vec2;
 
 #[derive(Default)]
 pub struct Camera {

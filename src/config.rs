@@ -1,9 +1,9 @@
 use std::{env, fs::File};
 
 use bevy_ecs::prelude::*;
+use glam::Vec2;
 use ron::de::from_reader;
 use serde::{Deserialize, Serialize};
-use ultraviolet::Vec2;
 
 #[derive(Debug, Deserialize, Serialize, Clone, Copy, Resource)]
 pub struct Config {
@@ -34,7 +34,6 @@ pub fn build_config() -> Config {
         Ok(x) => x,
         Err(e) => {
             println!("Failed to load config: {e}");
-
             std::process::exit(1);
         }
     };
