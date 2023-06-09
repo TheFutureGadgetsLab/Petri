@@ -39,6 +39,7 @@ opt-level = 3
 
 # Maximum optimization for release builds
 [profile.release]
-lto = "thin"
+codegen-units = 1
+lto = true
 panic = "abort"
 incremental = false

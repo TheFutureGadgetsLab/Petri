@@ -31,9 +31,8 @@ fn singular_resolution(c1: &RigidCircle, c2: &RigidCircle) -> Vec2 {
     let vel_along_norm = rel_vel.dot(normal);
 
     // Check if the circles are moving towards each other
-    let impulse = Vec2::ZERO;
     if vel_along_norm > 0.0 {
-        return impulse;
+        return Vec2::ZERO;
     }
     vel_along_norm * normal
 }
