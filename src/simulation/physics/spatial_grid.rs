@@ -1,6 +1,5 @@
 use bevy_ecs::prelude::*;
-use glam::{Vec2};
-use parking_lot::RwLock;
+use glam::Vec2;
 use rayon::prelude::*;
 
 use crate::simulation::RigidCircle;
@@ -36,11 +35,11 @@ impl DenseGrid {
         loc.y * self.ncells_side + loc.x
     }
 
-    pub fn clear(&mut self) {
+    pub fn clear(&self) {
         self.cells.par_iter().for_each(|cell| cell.clear());
     }
 
-    pub fn query(&self, pos: Vec2, radius: f32, ignore: Entity) -> Vec<&RigidCircle> {
+    pub fn query(&self, pos: Vec2, radius: f32, ignore: Entity) -> Vec<RigidCircle> {
         let mut hits = Vec::new();
 
         for ind in self.cell_range(pos, radius) {
@@ -49,7 +48,7 @@ impl DenseGrid {
             hits.extend(cell.unlock_unsafe().iter().filter_map(|(other, id)| {
                 let hit = (pos - other.pos).length_squared() < (radius + other.radius).powi(2);
                 if (*id != ignore) && hit {
-                    Some(other)
+                    Some(*other)
                 } else {
                     None
                 }
@@ -63,14 +62,13 @@ impl DenseGrid {
         let cs = self.cell_size as f32;
         let nc = self.ncells_side as f32;
 
-        let r = pos.y / cs;
-        let c = pos.x / cs;
+        let rc = pos / cs;
+        let radius = radius / cs;
 
-        let radius_cells = radius / cs;
-        let rmin = (r - radius_cells).max(0.0) as i32;
-        let rmax = (r + radius_cells).min(nc - 1.0) as i32;
-        let cmin = (c - radius_cells).max(0.0) as i32;
-        let cmax = (c + radius_cells).min(nc - 1.0) as i32;
+        let rmin = (rc.y - radius).max(0.0) as i32;
+        let rmax = (rc.y + radius).min(nc - 1.0) as i32;
+        let cmin = (rc.x - radius).max(0.0) as i32;
+        let cmax = (rc.x + radius).min(nc - 1.0) as i32;
 
         let shift = self.ncells_side;
         (rmin..=rmax).flat_map(move |r| (cmin..=cmax).map(move |c| (r * shift + c) as usize))
@@ -79,19 +77,19 @@ impl DenseGrid {
 
 #[derive(Default)]
 pub struct Cell {
-    ents: RwLock<Vec<(RigidCircle, Entity)>>,
+    ents: std::sync::Mutex<Vec<(RigidCircle, Entity)>>
 }
 
 impl Cell {
     pub fn insert(&self, circ: &RigidCircle, entity: Entity) {
-        self.ents.write().push((*circ, entity));
+        self.ents.lock().unwrap().push((*circ, entity));
     }
 
     pub fn clear(&self) {
-        self.ents.write().clear();
+        self.ents.lock().unwrap().clear();
     }
 
-    pub fn unlock_unsafe(&self) -> &Vec<(RigidCircle, Entity)> {
-        unsafe { &*self.ents.data_ptr() }
+    pub fn unlock_unsafe(&self) -> Vec<(RigidCircle, Entity)> {
+        self.ents.lock().unwrap().clone()
     }
 }

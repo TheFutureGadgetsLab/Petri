@@ -6,7 +6,7 @@ use crate::{
     timing::timer::time_func,
 };
 
-pub fn grid_build(query: Query<(&RigidCircle, Entity)>, mut grid: ResMut<DenseGrid>) {
+pub fn grid_build(query: Query<(&RigidCircle, Entity)>, grid: Res<DenseGrid>) {
     time_func!("physics.grid_build");
 
     grid.clear();

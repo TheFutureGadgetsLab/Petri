@@ -12,7 +12,7 @@ impl PerfApp {
     pub fn update(&mut self, ui: &mut egui::Ui, _display: &Display, simulation: &Simulation) {
         // Reset timer at 10th tick to ignore startup lag
         if simulation.world.get_resource::<Ticker>().unwrap().tick == 100 {
-            for v in TIMING_DATABASE.write().values_mut() {
+            for v in TIMING_DATABASE.lock().unwrap().values_mut() {
                 v.reset();
             }
         }
@@ -22,7 +22,7 @@ impl PerfApp {
     }
 
     fn draw(&self, ui: &mut egui::Ui) {
-        let database = TIMING_DATABASE.read();
+        let database = TIMING_DATABASE.lock().unwrap();
         // Map to (system, stage, timer)
 
         let mut map = HashMap::new();

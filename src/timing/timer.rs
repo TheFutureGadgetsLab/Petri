@@ -1,12 +1,11 @@
-use std::{collections::HashMap, time::Duration};
+use std::{collections::HashMap, sync::Mutex, time::Duration};
 
 use hdrhistogram::Histogram;
 use lazy_static::lazy_static;
-use parking_lot::RwLock;
 use quanta::Instant;
 
 lazy_static! {
-    pub static ref TIMING_DATABASE: RwLock<HashMap<String, Timer>> = RwLock::new(HashMap::default());
+    pub static ref TIMING_DATABASE: Mutex<HashMap<String, Timer>> = Mutex::new(HashMap::default());
 }
 
 pub struct Timer {
@@ -25,15 +24,15 @@ impl Timer {
         self.hist.record(delta).unwrap();
     }
 
-    pub fn min(&self) -> (u64, String) {
+    pub fn min(&self) -> (u64, &str) {
         self.time_to_readable(self.hist.min())
     }
 
-    pub fn max(&self) -> (u64, String) {
+    pub fn max(&self) -> (u64, &str) {
         self.time_to_readable(self.hist.max())
     }
 
-    pub fn mean(&self) -> (u64, String) {
+    pub fn mean(&self) -> (u64, &str) {
         self.time_to_readable(self.hist.mean() as u64)
     }
 
@@ -45,7 +44,7 @@ impl Timer {
         self.hist.reset();
     }
 
-    fn time_to_readable(&self, nano_seconds: u64) -> (u64, String) {
+    fn time_to_readable(&self, nano_seconds: u64) -> (u64, &str) {
         let (time, unit) = if nano_seconds >= 1_000_000_000 {
             (nano_seconds / 1_000_000_000, "s")
         } else if nano_seconds >= 1_000_000 {
@@ -55,7 +54,7 @@ impl Timer {
         } else {
             (nano_seconds, "ns")
         };
-        (time, String::from(unit))
+        (time, unit)
     }
 }
 
@@ -82,7 +81,8 @@ impl DropTimer {
 impl Drop for DropTimer {
     fn drop(&mut self) {
         TIMING_DATABASE
-            .write()
+            .lock()
+            .unwrap()
             .entry(self.target.clone())
             .or_default()
             .update(Instant::now() - self.start);
