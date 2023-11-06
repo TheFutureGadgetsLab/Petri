@@ -9,7 +9,7 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn update(&mut self, plot_ui: &egui::plot::PlotUi) {
+    pub fn update(&mut self, plot_ui: &egui_plot::PlotUi) {
         let bounds = plot_ui.plot_bounds();
         let (minx, miny) = (bounds.min()[0], bounds.min()[1]);
         let (maxx, maxy) = (bounds.max()[0], bounds.max()[1]);

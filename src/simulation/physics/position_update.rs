@@ -7,7 +7,7 @@ pub fn update_positions(mut query: Query<&mut RigidCircle>, config: Res<Config>)
 
     let bounds = config.bounds;
 
-    query.par_iter_mut().for_each_mut(|mut circ| {
+    query.par_iter_mut().for_each(|mut circ| {
         circ.pos = circ.pos + circ.vel;
 
         if ((circ.pos.x - circ.radius) <= bounds.0.x) || ((circ.pos.x + circ.radius) >= bounds.1.x) {

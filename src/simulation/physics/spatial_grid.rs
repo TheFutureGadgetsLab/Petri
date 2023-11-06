@@ -77,7 +77,7 @@ impl DenseGrid {
 
 #[derive(Default)]
 pub struct Cell {
-    ents: std::sync::Mutex<Vec<(RigidCircle, Entity)>>
+    ents: std::sync::Mutex<Vec<(RigidCircle, Entity)>>,
 }
 
 impl Cell {

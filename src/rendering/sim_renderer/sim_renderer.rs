@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use bytemuck;
 use egui_wgpu::Renderer;
 use naga;
@@ -108,7 +106,7 @@ impl SimRenderer {
 
         let resources = SimRenderResources::new(render_pipeline, bind_group, uniforms_ubo, display);
 
-        renderer.paint_callback_resources.insert(resources);
+        renderer.callback_resources.insert(resources);
 
         Self {}
     }
@@ -117,29 +115,40 @@ impl SimRenderer {
         time_func!("render.step");
         let cam_uniform = CameraUniform::from(&display.cam);
 
-        let resources = ctx.paint_callback_resources.get_mut::<SimRenderResources>().unwrap();
+        let resources = ctx.callback_resources.get_mut::<SimRenderResources>().unwrap();
 
         resources.vertex_buffer.update(simulation);
         resources.camera_uniform = cam_uniform;
 
-        let cb = egui_wgpu::CallbackFn::new()
-            .prepare(move |device, queue, _encoder, paint_callback_resources| {
-                let resources: &SimRenderResources = paint_callback_resources.get().unwrap();
-                resources.prepare(device, queue);
-                Vec::new()
-            })
-            .paint(move |_info, render_pass, paint_callback_resources| {
-                let resources: &SimRenderResources = paint_callback_resources.get().unwrap();
-                resources.paint(render_pass);
-            });
-
         let rect = ui.min_rect();
-        let callback = egui::PaintCallback {
-            rect,
-            callback: Arc::new(cb),
-        };
+        ui.painter()
+            .add(egui_wgpu::Callback::new_paint_callback(rect, SimDrawCallback {}));
+    }
+}
 
-        ui.painter().add(callback);
+struct SimDrawCallback {}
+
+impl egui_wgpu::CallbackTrait for SimDrawCallback {
+    fn prepare(
+        &self,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        _egui_encoder: &mut wgpu::CommandEncoder,
+        resources: &mut egui_wgpu::CallbackResources,
+    ) -> Vec<wgpu::CommandBuffer> {
+        let resources: &mut SimRenderResources = resources.get_mut().unwrap();
+        resources.prepare(device, queue);
+        Vec::new()
+    }
+
+    fn paint<'a>(
+        &self,
+        _info: egui::PaintCallbackInfo,
+        render_pass: &mut wgpu::RenderPass<'a>,
+        resources: &'a egui_wgpu::CallbackResources,
+    ) {
+        let resources: &SimRenderResources = resources.get().unwrap();
+        resources.paint(render_pass);
     }
 }
 
@@ -168,8 +177,8 @@ impl SimRenderResources {
         }
     }
 
-    fn prepare(&self, _device: &wgpu::Device, queue: &wgpu::Queue) {
-        self.vertex_buffer.write(queue);
+    fn prepare(&mut self, device: &wgpu::Device, queue: &wgpu::Queue) {
+        self.vertex_buffer.write(queue, device);
         queue.write_buffer(&self.uniform_buffer, 0, bytemuck::cast_slice(&[self.camera_uniform]));
     }
 

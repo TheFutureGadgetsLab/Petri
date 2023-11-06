@@ -17,7 +17,7 @@ pub fn grid_build(query: Query<(&RigidCircle, Entity)>, grid: Res<DenseGrid>) {
 
 pub fn collision_resolution(mut query: Query<(&mut RigidCircle, Entity)>, grid: Res<DenseGrid>) {
     time_func!("physics.col_detect");
-    query.par_iter_mut().for_each_mut(|(mut circ, entity)| {
+    query.par_iter_mut().for_each(|(mut circ, entity)| {
         let around = grid.query(circ.pos, circ.radius, entity);
         let impulse: Vec2 = around.iter().map(|e| singular_resolution(&circ, e)).sum();
         circ.vel += impulse;

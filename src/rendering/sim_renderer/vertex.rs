@@ -51,13 +51,25 @@ impl VertexBuffer {
         time_func!("render.vertex_update");
 
         let mut query = simulation.world.query::<(&RigidCircle, &Color)>();
-        self.cur_verticies = query
-            .iter(&simulation.world)
-            .map(|(circ, color)| Vertex::new(circ, &color.val))
-            .collect();
+        self.cur_verticies.clear();
+        self.cur_verticies.extend(
+            query
+                .iter(&simulation.world)
+                .map(|(circ, color)| Vertex::new(circ, &color.val)),
+        );
     }
 
-    pub fn write(&self, queue: &wgpu::Queue) {
+    pub fn write(&mut self, queue: &wgpu::Queue, device: &wgpu::Device) {
+        let alloc_size = std::mem::size_of::<Vertex>() * self.cur_verticies.len();
+        // reallocate if buffer is too small
+        if alloc_size > self.buf.size() as usize {
+            self.buf = device.create_buffer(&wgpu::BufferDescriptor {
+                label: Some("Vertex buffer"),
+                size: alloc_size as wgpu::BufferAddress,
+                usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+                mapped_at_creation: false,
+            });
+        }
         queue.write_buffer(&self.buf, 0, bytemuck::cast_slice(&self.cur_verticies));
     }
 }

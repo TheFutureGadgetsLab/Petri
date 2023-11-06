@@ -1,7 +1,5 @@
-use egui::{
-    epaint::Color32,
-    plot::{Line, Plot, PlotPoints, PlotUi},
-};
+use egui::epaint::Color32;
+use egui_plot::{Line, Plot, PlotPoints, PlotUi};
 
 use crate::{
     config::Config,

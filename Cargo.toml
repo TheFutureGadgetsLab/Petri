@@ -7,29 +7,30 @@ edition = "2021"
 ####################
 # GUI
 ####################
-winit = "0.28.6"
-wgpu = { version = "0.16.1", features = ["glsl"] }
-naga = "0.12.2"
-egui = "0.22.0"
-egui-wgpu = "0.22.0"
-egui-winit = "0.22.0"
-num-format = "0.4.4"
-bytemuck = { version = "1.13.1", features = [ "derive" ] }
+winit = "0.28"
+wgpu = { version = "0.17", features = ["glsl"] }
+naga = "0.13"
+egui = "0.23"
+egui_plot = "0.23"
+egui-wgpu = "0.23"
+egui-winit = "0.23"
+num-format = "0.4"
+bytemuck = { version = "1.14", features = [ "derive" ] }
 
 ####################
 # Simulation
 ####################
 fps_counter = "2.0.0"
-rayon = "1.7.0"
+rayon = "1.8"
 rand = "0.8.5"
-bevy_ecs = "0.11.0"
-bevy_tasks = "0.11.0"
-futures = "0.3.28"
-hdrhistogram = "7.5.2"
-lazy_static = "1.4.0"
-quanta = "0.11.1"
-ron = { version = "0.8.0", features = ["integer128"] }
-serde = { version = "1.0.164", features = ["derive"] }
+bevy_ecs = { version = "0.12", features = ["multi-threaded"] }
+bevy_tasks = "0.12"
+futures = "0.3"
+hdrhistogram = "7.5"
+lazy_static = "1.4"
+quanta = "0.12"
+ron = { version = "0.8", features = ["integer128"] }
+serde = { version = "1.0", features = ["derive"] }
 glam = { version = "0.24", default-features = false, features = ["libm", "serde"] }
 
 [profile.dev.package."*"]
